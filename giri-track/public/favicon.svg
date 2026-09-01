@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="100%" height="100%">
+  <defs>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000" flood-opacity="0.25"/>
+    </filter>
+  </defs>
+
+  <!-- Background decorative ring / petals knot -->
+  <g fill="none" stroke="#452829" stroke-width="18" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Outer boundary circular guidelines -->
+    <circle cx="250" cy="250" r="140" stroke-width="14" opacity="0.95" />
+    
+    <!-- 4 Cardinal Petals / Points -->
+    <!-- Top point -->
+    <path d="M 250 50 C 275 120 330 170 330 250 C 330 200 280 140 250 50 Z" fill="#452829" fill-opacity="0.08" />
+    <path d="M 250 50 C 225 120 170 170 170 250 C 170 200 220 140 250 50 Z" fill="#452829" fill-opacity="0.08" />
+    
+    <!-- Bottom point -->
+    <path d="M 250 450 C 275 380 330 330 330 250 C 330 300 280 360 250 450 Z" fill="#452829" fill-opacity="0.08" />
+    <path d="M 250 450 C 225 380 170 330 170 250 C 170 300 220 360 250 450 Z" fill="#452829" fill-opacity="0.08" />
+
+    <!-- Left point -->
+    <path d="M 50 250 C 120 225 170 170 250 170 C 200 170 140 220 50 250 Z" fill="#452829" fill-opacity="0.08" />
+    <path d="M 50 250 C 120 275 170 330 250 330 C 200 330 140 280 50 250 Z" fill="#452829" fill-opacity="0.08" />
+
+    <!-- Right point -->
+    <path d="M 450 250 C 380 225 330 170 250 170 C 300 170 360 220 450 250 Z" fill="#452829" fill-opacity="0.08" />
+    <path d="M 450 250 C 380 275 330 330 250 330 C 300 330 360 280 450 250 Z" fill="#452829" fill-opacity="0.08" />
+
+    <!-- Interlacing Celtic Ribbons -->
+    <path d="M 250 75 C 310 130 370 190 425 250 C 370 310 310 370 250 425 C 190 370 130 310 75 250 C 130 190 190 130 250 75 Z" stroke-width="16" />
+    <circle cx="250" cy="250" r="95" stroke-width="12" opacity="0.8" />
+  </g>
+
+  <!-- Central Location Pin -->
+  <g filter="url(#shadow)">
+    <!-- Pin Body -->
+    <path d="M 250 170 C 220 170 195 195 195 228 C 195 268 250 325 250 325 C 250 325 305 268 305 228 C 305 195 280 170 250 170 Z" fill="#B93838" />
+    <!-- Inner Pin White Dot -->
+    <circle cx="250" cy="225" r="18" fill="#FFFFFF" />
+  </g>
+</svg>
