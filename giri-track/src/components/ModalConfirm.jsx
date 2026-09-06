@@ -14,12 +14,12 @@ export default function ModalConfirm({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity duration-300 animate-fade-in">
-      <div className="bg-white dark:bg-[#2D1C1D] border border-[#DBC4B6] dark:border-[#57595B]/40 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 relative text-[#452829] dark:text-[#F3E8DF] transform transition-all duration-200 scale-100 ease-out">
+      <div className="bg-white dark:bg-[#1C2129] border border-[#E1E5EA] dark:border-[#2C3440] rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 relative text-[#2B3542] dark:text-[#FAF3F3] transform transition-all duration-200 scale-100 ease-out">
         
         {/* Close Button */}
         <button
           onClick={onCancel}
-          className="absolute top-4 right-4 p-1.5 rounded-full text-stone-400 hover:text-stone-700 dark:hover:text-white hover:bg-[#EFE4DC] dark:hover:bg-[#3F2728] transition duration-200 cursor-pointer"
+          className="absolute top-4 right-4 p-1.5 rounded-full text-[#A7BBC7] hover:text-[#2B3542] dark:hover:text-white hover:bg-[#FAF3F3] dark:hover:bg-[#252C36] transition duration-200 cursor-pointer"
         >
           <X className="w-4 h-4" />
         </button>
@@ -30,25 +30,25 @@ export default function ModalConfirm({
             <AlertTriangle className="w-6 h-6" />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-[#452829] dark:text-[#F3E8DF]">
-              {title || t('modal.confirmDeleteTitle')}
+            <h3 className="text-lg font-bold text-[#2B3542] dark:text-[#FAF3F3]">
+              {title || t('modal.deleteTitle')}
             </h3>
-            <p className="text-xs text-[#57595B] dark:text-[#E8D1C5]">
-              {t('modal.cannotUndo')}
+            <p className="text-xs text-[#6B7C8C] dark:text-[#A7BBC7]">
+              {t('modal.deleteWarning')}
             </p>
           </div>
         </div>
 
         {/* Modal Description Body */}
-        <p className="text-xs text-[#452829]/90 dark:text-[#F3E8DF]/90 leading-relaxed bg-[#EFE4DC]/50 dark:bg-[#3F2728]/40 p-3.5 rounded-2xl border border-[#DBC4B6]/40 dark:border-[#57595B]/30">
-          {message || t('modal.confirmDeleteMsg')}
+        <p className="text-xs text-[#2B3542]/90 dark:text-[#FAF3F3]/90 leading-relaxed bg-[#FAF3F3] dark:bg-[#252C36] p-3.5 rounded-2xl border border-[#E1E5EA] dark:border-[#2C3440]">
+          {message || t('modal.deleteMessage')}
         </p>
 
         {/* Actions */}
         <div className="flex items-center justify-end gap-2.5 pt-2">
           <button
             onClick={onCancel}
-            className="px-4 py-2.5 rounded-xl border border-[#DBC4B6] dark:border-[#57595B]/40 text-[#452829] dark:text-[#E8D1C5] hover:bg-[#EFE4DC] dark:hover:bg-[#3F2728] transition duration-200 text-xs font-bold cursor-pointer active:scale-95"
+            className="px-4 py-2.5 rounded-xl border border-[#E1E5EA] dark:border-[#2C3440] text-[#2B3542] dark:text-[#FAF3F3] hover:bg-[#FAF3F3] dark:hover:bg-[#252C36] transition duration-200 text-xs font-bold cursor-pointer active:scale-95"
           >
             {t('btn.cancel')}
           </button>
@@ -57,7 +57,7 @@ export default function ModalConfirm({
             onClick={onConfirm}
             className="px-4 py-2.5 rounded-xl bg-rose-600 text-white hover:bg-rose-700 font-bold text-xs transition duration-200 cursor-pointer shadow-md active:scale-95"
           >
-            {t('btn.deleteConfirm')}
+            {t('btn.confirmDelete')}
           </button>
         </div>
 

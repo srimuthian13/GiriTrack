@@ -1,12 +1,17 @@
-import { MapPin, Navigation, Mountain, Clock, Eye, Edit, Trash2, Lock, Heart } from 'lucide-react';
+import { MapPin, Navigation, Mountain, Clock, Eye, Edit, Trash2, Lock, Heart, Star, Compass, ArrowRight } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import { useTrail } from '../context/TrailContext';
+import { useToast } from '../context/ToastContext';
 
-export default function TrailCard({ trail, onDetail, onEdit, onDelete }) {
+// GiriTrack Signature Earth Tones (Mahogany, Forest Green, Mountain Slate Navy, Deep Ochre)
+const EARTH_TONES = ['#452829', '#233729', '#1E2836', '#3A231C'];
+
+export default function TrailCard({ trail, index, onDetail, onEdit, onDelete }) {
   const { t } = useLanguage();
   const { isAdmin } = useAuth();
   const { isFavorite, toggleFavorite } = useTrail();
+  const { showToast } = useToast();
 
   if (!trail) return null;
 
@@ -21,26 +26,38 @@ export default function TrailCard({ trail, onDetail, onEdit, onDelete }) {
     image,
     description,
     likes_count = 0,
+    ratingAvg = 0,
+    reviews = [],
+    status = 'verified',
   } = trail;
 
+  // Determine alternating earth tone accent color
+  const colorIndex = typeof index === 'number'
+    ? Math.abs(index)
+    : typeof id === 'number'
+    ? Math.abs(id)
+    : Math.abs(String(id || '').split('').reduce((acc, char) => acc + char.charCodeAt(0), 0));
+  const cardBgColor = EARTH_TONES[colorIndex % EARTH_TONES.length];
+
   const favorited = isFavorite(id);
+  const displayRating = Number(ratingAvg) > 0 ? Number(ratingAvg).toFixed(1) : null;
 
   const getDifficultyBadge = (level) => {
     switch (String(level).toLowerCase()) {
       case 'mudah':
       case 'easy':
-        return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border-emerald-300';
+        return 'bg-emerald-500/80 text-white border-emerald-400/60';
       case 'sedang':
       case 'moderate':
-        return 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border-amber-300';
+        return 'bg-amber-500/80 text-white border-amber-400/60';
       case 'sulit':
       case 'hard':
-        return 'bg-orange-100 text-orange-800 dark:bg-orange-950 dark:text-orange-300 border-orange-300';
+        return 'bg-orange-500/80 text-white border-orange-400/60';
       case 'ekstrem':
       case 'extreme':
-        return 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 border-rose-300';
+        return 'bg-rose-500/85 text-white border-rose-400/60';
       default:
-        return 'bg-stone-100 text-stone-800 dark:bg-stone-800 dark:text-stone-300 border-stone-300';
+        return 'bg-white/30 text-white border-white/40';
     }
   };
 
@@ -56,41 +73,74 @@ export default function TrailCard({ trail, onDetail, onEdit, onDelete }) {
   const handleFavoriteClick = (e) => {
     e.stopPropagation();
     toggleFavorite(id);
+    if (!favorited) {
+      showToast(`"${name}" ditambahkan ke daftar Favorit Anda! ❤️`, {
+        type: 'favorite',
+        title: 'Disukai!',
+      });
+    } else {
+      showToast(`"${name}" dihapus dari Favorit`, {
+        type: 'info',
+      });
+    }
+  };
+
+  const handleCardClick = () => {
+    if (onDetail) {
+      onDetail(trail);
+    }
   };
 
   return (
-    <div className="bg-white dark:bg-[#2D1C1D] rounded-2xl overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1.5 border border-[#DBC4B6] hover:border-[#452829]/50 dark:border-[#57595B]/40 dark:hover:border-[#E8D1C5]/50 flex flex-col group text-[#452829] dark:text-[#F3E8DF] relative">
-      
-      {/* Thumbnail Header */}
-      <div className="relative h-48 sm:h-52 w-full overflow-hidden bg-[#57595B]/20">
+    <div
+      onClick={handleCardClick}
+      className="group relative flex flex-col rounded-3xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-[#E1E5EA]/60 dark:border-[#2C3440]/80 cursor-pointer select-none"
+    >
+      {/* ========================================================================= */}
+      {/* 1. SETENGAH BAGIAN ATAS: FOTO LANSKAP PEMANDANGAN GUNUNG (h-56 object-cover) */}
+      {/* ========================================================================= */}
+      <div className="relative h-56 w-full overflow-hidden bg-stone-900">
         <img
           src={image || 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?q=80&w=1000&auto=format&fit=crop'}
           alt={name}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+          className="h-56 object-cover w-full group-hover:scale-108 transition-transform duration-700 ease-out"
           loading="lazy"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-        
-        {/* Favorite Love Button (Top Left) */}
+        {/* Subtle dynamic overlay gradient */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-black/20" />
+
+        {/* Favorite Button (Top Left) */}
         <button
+          type="button"
           onClick={handleFavoriteClick}
-          className="absolute top-3 left-3 p-2 rounded-full bg-white/80 dark:bg-black/60 backdrop-blur-md border border-white/40 dark:border-stone-700/60 shadow-md transition-transform duration-150 active:scale-95 hover:scale-110 cursor-pointer flex items-center gap-1 z-10"
-          title={favorited ? 'Hapus dari Jalur Favorit' : 'Sukai & Tambah ke Favorit'}
+          className="absolute top-3.5 left-3.5 px-3 py-1.5 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-md border border-white/25 text-white shadow-md transition-all duration-200 active:scale-95 flex items-center gap-1.5 z-20 cursor-pointer"
+          title={favorited ? 'Hapus dari Favorit' : 'Sukai & Simpan Favorit'}
         >
           <Heart
             className={`w-4 h-4 transition-colors duration-200 ${
-              favorited
-                ? 'fill-rose-500 text-rose-500'
-                : 'text-stone-500 hover:text-rose-500 dark:text-stone-300'
+              favorited ? 'fill-[#DA7F8F] text-[#DA7F8F]' : 'text-white/90 group-hover:text-[#DA7F8F]'
             }`}
           />
-          <span className="text-[11px] font-extrabold text-stone-800 dark:text-stone-100 pr-0.5">
+          <span className="text-xs font-bold text-white">
             {likes_count}
           </span>
         </button>
 
-        {/* Difficulty Badge (Top Right) */}
-        <div className="absolute top-3 right-3">
+        {/* Status / Rating / Difficulty Badges (Top Right) */}
+        <div className="absolute top-3.5 right-3.5 flex items-center gap-1.5 z-20">
+          {status === 'pending' && (
+            <span className="px-2.5 py-1 text-[10px] font-bold rounded-full bg-[#DA7F8F] text-white shadow-sm backdrop-blur-md">
+              Pending
+            </span>
+          )}
+
+          {displayRating && (
+            <span className="px-2.5 py-1 text-xs font-black rounded-full bg-amber-400 text-amber-950 shadow-sm flex items-center gap-1">
+              <Star className="w-3 h-3 fill-amber-950" />
+              <span>{displayRating}</span>
+            </span>
+          )}
+
           <span
             className={`px-3 py-1 text-xs font-bold rounded-full border shadow-sm backdrop-blur-md transition-colors duration-200 ${getDifficultyBadge(
               difficulty
@@ -100,98 +150,127 @@ export default function TrailCard({ trail, onDetail, onEdit, onDelete }) {
           </span>
         </div>
 
-        {/* Location Badge */}
-        <div className="absolute bottom-3 left-3 right-3 flex items-center gap-1 text-xs font-medium text-stone-200">
-          <MapPin className="w-3.5 h-3.5 text-[#E8D1C5] shrink-0" />
+        {/* Location Info (Bottom of Image) */}
+        <div className="absolute bottom-3.5 left-4 right-4 flex items-center gap-1.5 text-xs font-medium text-white/90 drop-shadow-md z-10">
+          <MapPin className="w-3.5 h-3.5 text-[#DA7F8F] shrink-0" />
           <span className="truncate">{location}</span>
         </div>
       </div>
 
-      {/* Card Content */}
-      <div className="p-5 flex-1 flex flex-col justify-between">
-        <div>
-          <h3 className="text-lg font-bold text-[#452829] dark:text-[#F3E8DF] group-hover:text-[#57595B] dark:group-hover:text-[#E8D1C5] transition-colors duration-200 line-clamp-1 mb-2">
+      {/* ========================================================================= */}
+      {/* 2. SETENGAH BAGIAN BAWAH: CARD BODY DENGAN AKSEN TANAH KHAS GIRITRACK */}
+      {/* ========================================================================= */}
+      <div
+        style={{ backgroundColor: cardBgColor }}
+        className="p-5 sm:p-6 flex-1 flex flex-col justify-between text-white relative transition-colors duration-300"
+      >
+        {/* Subtle glass reflection highlight */}
+        <div className="absolute inset-0 bg-gradient-to-b from-white/10 via-transparent to-black/15 pointer-events-none" />
+
+        <div className="relative z-10">
+          {/* Label kecil atas: "Panduan Jalur" / "Guide" */}
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-white/70">
+              <Compass className="w-3.5 h-3.5 text-[#E8D1C5]" />
+              <span>{t('common.guide') || 'Panduan Jalur'}</span>
+            </div>
+
+            {reviews.length > 0 && (
+              <span className="text-[11px] text-white/60 font-medium">
+                {reviews.length} ulasan
+              </span>
+            )}
+          </div>
+
+          {/* Judul: Nama panduan/gunung tebal */}
+          <h3 className="font-bold text-white text-xl line-clamp-2 mt-1 leading-tight drop-shadow-sm group-hover:text-[#FAF3F3] transition-colors">
             {name}
           </h3>
 
-          <p className="text-xs text-[#57595B] dark:text-[#E8D1C5] line-clamp-2 mb-4">
-            {description || 'Jalur pendakian gunung indah dengan pemandangan alam memukau.'}
+          {/* Deskripsi Singkat */}
+          <p className="text-xs text-white/80 line-clamp-2 mt-2 leading-relaxed font-normal">
+            {description || 'Jalur pendakian gunung indah dengan pemandangan alam memukau dan panorama alam asri.'}
           </p>
         </div>
 
-        {/* Key Metrics Sub-box */}
-        <div className="grid grid-cols-3 gap-2 py-3 border-y border-[#DBC4B6]/60 dark:border-[#57595B]/40 text-center mb-4 bg-[#EFE4DC] dark:bg-[#3F2728] rounded-xl transition-colors duration-200">
+        {/* Key Metrics Pill Grid */}
+        <div className="relative z-10 grid grid-cols-3 gap-2 py-2.5 px-3 my-4 rounded-2xl bg-black/25 backdrop-blur-sm border border-white/15 text-center text-white">
           <div className="flex flex-col items-center">
-            <div className="flex items-center gap-1 text-[#57595B] dark:text-[#E8D1C5] text-xs mb-0.5">
-              <Navigation className="w-3.5 h-3.5 text-[#452829] dark:text-[#E8D1C5]" />
+            <div className="flex items-center gap-1 text-white/70 text-[11px] mb-0.5">
+              <Navigation className="w-3 h-3 text-[#E8D1C5]" />
               <span>{t('common.distance')}</span>
             </div>
-            <span className="text-sm font-bold text-[#452829] dark:text-[#F3E8DF]">
-              {distance_km} <span className="text-xs font-normal">{t('common.km')}</span>
+            <span className="text-xs sm:text-sm font-black text-white">
+              {distance_km} <span className="text-[10px] font-normal text-white/80">{t('common.km')}</span>
             </span>
           </div>
 
-          <div className="flex flex-col items-center border-x border-[#DBC4B6]/80 dark:border-[#57595B]/50">
-            <div className="flex items-center gap-1 text-[#57595B] dark:text-[#E8D1C5] text-xs mb-0.5">
-              <Mountain className="w-3.5 h-3.5 text-[#452829] dark:text-[#E8D1C5]" />
+          <div className="flex flex-col items-center border-x border-white/15">
+            <div className="flex items-center gap-1 text-white/70 text-[11px] mb-0.5">
+              <Mountain className="w-3 h-3 text-[#E8D1C5]" />
               <span>{t('common.elevation')}</span>
             </div>
-            <span className="text-sm font-bold text-[#452829] dark:text-[#F3E8DF]">
-              {elevation_m} <span className="text-xs font-normal">{t('common.mdpl')}</span>
+            <span className="text-xs sm:text-sm font-black text-white">
+              {elevation_m} <span className="text-[10px] font-normal text-white/80">{t('common.mdpl')}</span>
             </span>
           </div>
 
           <div className="flex flex-col items-center">
-            <div className="flex items-center gap-1 text-[#57595B] dark:text-[#E8D1C5] text-xs mb-0.5">
-              <Clock className="w-3.5 h-3.5 text-[#452829] dark:text-[#E8D1C5]" />
+            <div className="flex items-center gap-1 text-white/70 text-[11px] mb-0.5">
+              <Clock className="w-3 h-3 text-[#E8D1C5]" />
               <span>Waktu</span>
             </div>
-            <span className="text-xs font-bold text-[#452829] dark:text-[#F3E8DF] truncate max-w-full px-1">
+            <span className="text-xs font-bold text-white truncate max-w-full px-1">
               {estimated_time || '5-6 Jam'}
             </span>
           </div>
         </div>
 
-        {/* Action Buttons with Role-based Visibility */}
-        <div className="flex items-center gap-2 pt-1">
-          {/* Detail Button */}
-          {onDetail && (
-            <button
-              onClick={() => onDetail(trail)}
-              className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-bold rounded-xl bg-[#452829] text-[#F3E8DF] hover:bg-[#341e1f] dark:bg-[#E8D1C5] dark:text-[#452829] dark:hover:bg-[#dfc2b3] transition-all duration-200 active:scale-95 cursor-pointer shadow-sm"
-            >
-              <Eye className="w-3.5 h-3.5" />
-              <span>{t('btn.detail')}</span>
-            </button>
-          )}
+        {/* ========================================================================= */}
+        {/* BAWAH: TOMBOL PILL "JELAJAHI" / "EXPLORE" (Outline -> Solid Putih saat Hover) */}
+        {/* ========================================================================= */}
+        <div className="relative z-10 flex items-center gap-2 pt-1">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              if (onDetail) onDetail(trail);
+            }}
+            className="flex-1 py-2.5 px-5 rounded-full border-2 border-white/70 text-white bg-transparent font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all duration-300 group-hover:bg-white group-hover:text-stone-900 group-hover:border-white group-hover:shadow-lg active:scale-95 cursor-pointer"
+          >
+            <span>{t('btn.explore') || 'Jelajahi'}</span>
+            <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
+          </button>
 
-          {/* Admin Edit & Delete buttons */}
+          {/* Admin Edit & Delete Actions */}
           {isAdmin ? (
-            <>
+            <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
               {onEdit && (
                 <button
+                  type="button"
                   onClick={() => onEdit(trail)}
-                  className="p-2 text-xs font-semibold rounded-xl bg-[#EFE4DC] text-[#452829] hover:bg-[#DBC4B6] dark:bg-[#3F2728] dark:text-[#E8D1C5] dark:hover:bg-[#4a2e2f] transition-all duration-200 active:scale-95 cursor-pointer"
-                  title="Edit Jalur (Admin Access)"
+                  className="p-2.5 rounded-full bg-white/15 hover:bg-white/30 border border-white/20 text-white transition active:scale-95 cursor-pointer shadow-sm"
+                  title="Edit Jalur (Akses Admin)"
                 >
-                  <Edit className="w-4 h-4" />
+                  <Edit className="w-3.5 h-3.5" />
                 </button>
               )}
 
               {onDelete && (
                 <button
+                  type="button"
                   onClick={() => onDelete(id)}
-                  className="p-2 text-xs font-semibold rounded-xl bg-[#EFE4DC] text-rose-700 hover:bg-rose-100 dark:bg-[#3F2728] dark:text-rose-300 dark:hover:bg-rose-950 transition-all duration-200 active:scale-95 cursor-pointer"
-                  title="Hapus Jalur (Admin Access)"
+                  className="p-2.5 rounded-full bg-rose-500/30 hover:bg-rose-600 border border-rose-400/40 text-white transition active:scale-95 cursor-pointer shadow-sm"
+                  title="Hapus Jalur (Akses Admin)"
                 >
-                  <Trash2 className="w-4 h-4" />
+                  <Trash2 className="w-3.5 h-3.5" />
                 </button>
               )}
-            </>
+            </div>
           ) : (
             (onEdit || onDelete) && (
               <span
-                className="p-2 text-[10px] text-[#57595B] dark:text-[#E8D1C5]/60 flex items-center gap-1"
+                className="p-2 text-white/40 flex items-center"
                 title="Aksi Edit/Hapus hanya tersedia untuk Mode Admin"
               >
                 <Lock className="w-3.5 h-3.5" />
@@ -204,3 +283,4 @@ export default function TrailCard({ trail, onDetail, onEdit, onDelete }) {
     </div>
   );
 }
+

@@ -75,6 +75,8 @@ export default function Trails() {
     switch (sortBy) {
       case 'LIKES_DESC':
         return trailsCopy.sort((a, b) => (b.likes_count || 0) - (a.likes_count || 0));
+      case 'RATING_DESC':
+        return trailsCopy.sort((a, b) => (Number(b.ratingAvg) || 0) - (Number(a.ratingAvg) || 0));
       case 'NAME_ASC':
         return trailsCopy.sort((a, b) => a.name.localeCompare(b.name));
       case 'NAME_DESC':
@@ -136,16 +138,16 @@ export default function Trails() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 space-y-8 pb-12 text-[#452829] dark:text-[#F3E8DF] transition-colors duration-300 ease-in-out">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 space-y-8 pb-12 text-[#2B3542] dark:text-[#FAF3F3] transition-colors duration-300 ease-in-out">
       
       {/* Header Title */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#DBC4B6] dark:border-[#57595B]/40 pb-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#E1E5EA] dark:border-[#2C3440] pb-6">
         <div>
-          <h1 className="text-3xl font-black text-[#452829] dark:text-[#F3E8DF] flex items-center gap-3">
-            <Compass className="w-8 h-8 text-[#452829] dark:text-[#E8D1C5]" />
+          <h1 className="text-3xl font-black text-[#2B3542] dark:text-[#FAF3F3] flex items-center gap-3">
+            <Compass className="w-8 h-8 text-[#DA7F8F]" />
             <span>{t('nav.trails')}</span>
           </h1>
-          <p className="text-sm text-[#57595B] dark:text-[#E8D1C5] mt-1">
+          <p className="text-sm text-[#6B7C8C] dark:text-[#A7BBC7] mt-1">
             Temukan dan jelajahi berbagai rute gunung di Indonesia.
           </p>
         </div>
@@ -160,11 +162,11 @@ export default function Trails() {
             }}
             className={`px-4 py-2.5 rounded-2xl text-xs font-bold transition-all duration-200 active:scale-95 flex items-center gap-2 cursor-pointer shadow-sm border ${
               showOnlyFavorites
-                ? 'bg-rose-500 text-white border-rose-600 dark:bg-rose-600'
-                : 'bg-white dark:bg-[#2D1C1D] border-[#DBC4B6] dark:border-[#57595B]/40 text-[#452829] dark:text-[#F3E8DF] hover:bg-[#EFE4DC] dark:hover:bg-[#3F2728]'
+                ? 'bg-[#DA7F8F] text-white border-[#DA7F8F]'
+                : 'bg-white dark:bg-[#1C2129] border-[#E1E5EA] dark:border-[#2C3440] text-[#2B3542] dark:text-[#FAF3F3] hover:bg-[#FAF3F3] dark:hover:bg-[#252C36]'
             }`}
           >
-            <Heart className={`w-4 h-4 ${showOnlyFavorites ? 'fill-white' : 'text-rose-500'}`} />
+            <Heart className={`w-4 h-4 ${showOnlyFavorites ? 'fill-white' : 'text-[#DA7F8F]'}`} />
             <span>{showOnlyFavorites ? 'Favorit Saya' : 'Lihat Favorit'}</span>
             <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-black/10 dark:bg-white/10 font-mono">
               {favorites.length}
@@ -173,7 +175,7 @@ export default function Trails() {
 
           <button
             onClick={() => navigate('/manage')}
-            className="px-5 py-2.5 rounded-2xl bg-[#452829] text-[#F3E8DF] hover:bg-[#341e1f] dark:bg-[#E8D1C5] dark:text-[#452829] font-bold shadow-md transition-all duration-200 active:scale-95 flex items-center justify-center gap-2 cursor-pointer text-xs"
+            className="px-5 py-2.5 rounded-2xl bg-[#DA7F8F] text-white hover:bg-[#c96c7d] font-bold shadow-md transition-all duration-200 active:scale-95 flex items-center justify-center gap-2 cursor-pointer text-xs"
           >
             <Plus className="w-4 h-4" />
             <span>{t('btn.add')}</span>
@@ -182,12 +184,12 @@ export default function Trails() {
       </div>
 
       {/* Filter & Search Bar */}
-      <div className="bg-white dark:bg-[#2D1C1D] rounded-3xl p-5 shadow-sm border border-[#DBC4B6] dark:border-[#57595B]/40 space-y-4 transition-colors duration-300 ease-in-out">
+      <div className="bg-white/90 dark:bg-[#1C2129] rounded-3xl p-5 shadow-sm border border-[#E1E5EA] dark:border-[#2C3440] space-y-4 transition-colors duration-300 ease-in-out">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
           
           {/* Search Input */}
           <div className="md:col-span-5 relative">
-            <Search className="w-5 h-5 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#57595B] dark:text-[#E8D1C5]" />
+            <Search className="w-5 h-5 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#A7BBC7]" />
             <input
               type="text"
               value={searchTerm}
@@ -197,13 +199,13 @@ export default function Trails() {
                 setCurrentPage(1);
               }}
               placeholder={t('filterSort.searchPlaceholder')}
-              className="w-full pl-10 pr-4 py-2.5 rounded-2xl border border-[#DBC4B6] dark:border-[#57595B]/40 bg-[#EFE4DC]/40 dark:bg-[#3F2728]/40 text-sm text-[#452829] dark:text-[#F3E8DF] focus:outline-none focus:ring-2 focus:ring-[#452829] transition-all duration-200"
+              className="w-full pl-10 pr-4 py-2.5 rounded-2xl border border-[#E1E5EA] dark:border-[#2C3440] bg-[#FAF3F3]/80 dark:bg-[#252C36] text-sm text-[#2B3542] dark:text-[#FAF3F3] focus:outline-none focus:ring-2 focus:ring-[#DA7F8F]/40 transition-all duration-200"
             />
           </div>
 
           {/* Difficulty Filter Dropdown */}
           <div className="md:col-span-3 relative">
-            <Filter className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#57595B] dark:text-[#E8D1C5]" />
+            <Filter className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#A7BBC7]" />
             <select
               value={difficultyFilter}
               onChange={(e) => {
@@ -211,7 +213,7 @@ export default function Trails() {
                 setDifficultyFilter(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full pl-10 pr-4 py-2.5 rounded-2xl border border-[#DBC4B6] dark:border-[#57595B]/40 bg-[#EFE4DC]/40 dark:bg-[#3F2728]/40 text-sm text-[#452829] dark:text-[#F3E8DF] focus:outline-none focus:ring-2 focus:ring-[#452829] transition-all duration-200 cursor-pointer appearance-none"
+              className="w-full pl-10 pr-4 py-2.5 rounded-2xl border border-[#E1E5EA] dark:border-[#2C3440] bg-[#FAF3F3]/80 dark:bg-[#252C36] text-sm text-[#2B3542] dark:text-[#FAF3F3] focus:outline-none focus:ring-2 focus:ring-[#DA7F8F]/40 transition-all duration-200 cursor-pointer appearance-none"
             >
               <option value="ALL">{t('filterSort.allDifficulties')}</option>
               <option value="MUDAH">{t('filterSort.easy')}</option>
@@ -223,17 +225,18 @@ export default function Trails() {
 
           {/* Sorting Dropdown */}
           <div className="md:col-span-4 relative">
-            <ArrowUpDown className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#57595B] dark:text-[#E8D1C5]" />
+            <ArrowUpDown className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#A7BBC7]" />
             <select
               value={sortBy}
               onChange={(e) => {
                 setLoading(true);
                 setSortBy(e.target.value);
               }}
-              className="w-full pl-10 pr-4 py-2.5 rounded-2xl border border-[#DBC4B6] dark:border-[#57595B]/40 bg-[#EFE4DC]/40 dark:bg-[#3F2728]/40 text-sm text-[#452829] dark:text-[#F3E8DF] focus:outline-none focus:ring-2 focus:ring-[#452829] transition-all duration-200 cursor-pointer appearance-none"
+              className="w-full pl-10 pr-4 py-2.5 rounded-2xl border border-[#E1E5EA] dark:border-[#2C3440] bg-[#FAF3F3]/80 dark:bg-[#252C36] text-sm text-[#2B3542] dark:text-[#FAF3F3] focus:outline-none focus:ring-2 focus:ring-[#DA7F8F]/40 transition-all duration-200 cursor-pointer appearance-none"
             >
               <option value="DEFAULT">{t('filterSort.defaultSort')}</option>
               <option value="LIKES_DESC">Disukai Terbanyak</option>
+              <option value="RATING_DESC">Rating Tertinggi ⭐</option>
               <option value="NAME_ASC">{t('filterSort.nameAsc')}</option>
               <option value="DISTANCE_ASC">{t('filterSort.distanceAsc')}</option>
               <option value="DISTANCE_DESC">{t('filterSort.distanceDesc')}</option>
@@ -246,14 +249,14 @@ export default function Trails() {
 
         {/* Active Filter Chips / Reset */}
         {(searchTerm || difficultyFilter !== 'ALL' || showOnlyFavorites || sortBy !== 'DEFAULT') && (
-          <div className="flex items-center justify-between pt-2 text-xs border-t border-[#DBC4B6]/50 dark:border-[#57595B]/30">
-            <span className="text-[#57595B] dark:text-[#E8D1C5] font-medium">
-              Ditemukan <strong className="text-[#452829] dark:text-[#F3E8DF]">{sortedTrails.length}</strong> jalur pendakian
+          <div className="flex items-center justify-between pt-2 text-xs border-t border-[#E1E5EA] dark:border-[#2C3440]">
+            <span className="text-[#6B7C8C] dark:text-[#A7BBC7] font-medium">
+              Ditemukan <strong className="text-[#2B3542] dark:text-[#FAF3F3]">{sortedTrails.length}</strong> jalur pendakian
               {showOnlyFavorites ? ' (Mode Favorit Saya)' : ''}
             </span>
             <button
               onClick={handleResetFilters}
-              className="flex items-center gap-1 text-[#452829] dark:text-[#E8D1C5] hover:underline font-bold cursor-pointer transition-transform duration-150 active:scale-95"
+              className="flex items-center gap-1 text-[#DA7F8F] hover:underline font-bold cursor-pointer transition-transform duration-150 active:scale-95"
             >
               <RotateCcw className="w-3.5 h-3.5" />
               <span>{t('btn.resetFilter')}</span>
@@ -267,10 +270,11 @@ export default function Trails() {
         <TrailGridSkeleton count={6} />
       ) : paginatedTrails.length > 0 ? (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 transition-opacity duration-300 opacity-100">
-          {paginatedTrails.map((trail) => (
+          {paginatedTrails.map((trail, index) => (
             <TrailCard
               key={trail.id}
               trail={trail}
+              index={(currentPage - 1) * itemsPerPage + index}
               onDetail={handleDetail}
               onEdit={handleEdit}
               onDelete={handleDeletePrompt}
@@ -278,14 +282,14 @@ export default function Trails() {
           ))}
         </div>
       ) : (
-        <div className="bg-white dark:bg-[#2D1C1D] rounded-3xl p-12 text-center border border-[#DBC4B6] dark:border-[#57595B]/40 shadow-sm space-y-4 max-w-md mx-auto transition-all duration-300">
-          <div className="w-16 h-16 rounded-full bg-[#EFE4DC] dark:bg-[#3F2728] text-[#452829] dark:text-[#E8D1C5] flex items-center justify-center mx-auto">
+        <div className="bg-white/90 dark:bg-[#1C2129] rounded-3xl p-12 text-center border border-[#E1E5EA] dark:border-[#2C3440] shadow-sm space-y-4 max-w-md mx-auto transition-all duration-300">
+          <div className="w-16 h-16 rounded-full bg-[#FAF3F3] dark:bg-[#252C36] text-[#DA7F8F] flex items-center justify-center mx-auto">
             <AlertCircle className="w-8 h-8" />
           </div>
-          <h3 className="text-lg font-bold text-[#452829] dark:text-[#F3E8DF]">
+          <h3 className="text-lg font-bold text-[#2B3542] dark:text-[#FAF3F3]">
             {showOnlyFavorites ? 'Belum Ada Jalur Favorit' : t('common.noData')}
           </h3>
-          <p className="text-xs text-[#57595B] dark:text-[#E8D1C5]">
+          <p className="text-xs text-[#6B7C8C] dark:text-[#A7BBC7]">
             {showOnlyFavorites
               ? 'Anda belum menyukai jalur pendakian apapun. Klik ikon Hati pada kartu jalur untuk menambahkannya ke favorit.'
               : 'Tidak ada jalur pendakian yang cocok dengan kata kunci pencarian atau filter Anda.'}
@@ -293,13 +297,13 @@ export default function Trails() {
           <div className="flex justify-center gap-3 pt-2">
             <button
               onClick={handleResetFilters}
-              className="px-4 py-2 text-xs font-bold rounded-xl bg-[#452829] text-[#F3E8DF] hover:bg-[#341e1f] dark:bg-[#E8D1C5] dark:text-[#452829] cursor-pointer transition-transform duration-150 active:scale-95"
+              className="px-4 py-2 text-xs font-bold rounded-xl bg-[#DA7F8F] text-white hover:bg-[#c96c7d] cursor-pointer transition-transform duration-150 active:scale-95"
             >
               {t('btn.resetFilter')}
             </button>
             <button
               onClick={resetTrails}
-              className="px-4 py-2 text-xs font-semibold rounded-xl border border-[#DBC4B6] dark:border-[#57595B]/40 text-[#452829] dark:text-[#E8D1C5] hover:bg-[#EFE4DC] dark:hover:bg-[#3F2728] cursor-pointer transition-transform duration-150 active:scale-95"
+              className="px-4 py-2 text-xs font-semibold rounded-xl border border-[#E1E5EA] dark:border-[#2C3440] text-[#2B3542] dark:text-[#FAF3F3] hover:bg-[#FAF3F3] dark:hover:bg-[#252C36] cursor-pointer transition-transform duration-150 active:scale-95"
             >
               Reset Data Awal
             </button>

@@ -22,10 +22,10 @@ export default function Logo({
       {/* Tipografi Brand AllTrails-Style */}
       {showText && (
         <span className={`inline-flex items-center tracking-tight leading-none ${textClassName}`}>
-          <span className="font-extrabold text-[#452829] dark:text-[#F3E8DF]">
+          <span className="font-black text-[#DA7F8F]">
             Giri
           </span>
-          <span className="font-medium text-[#57595B] dark:text-[#E8D1C5]">
+          <span className="font-bold text-[#2B3542] dark:text-[#FAF3F3]">
             Track
           </span>
         </span>

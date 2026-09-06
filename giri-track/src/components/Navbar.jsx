@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { NavLink, useNavigate, useLocation } from 'react-router-dom';
+import { NavLink, Link, useNavigate, useLocation } from 'react-router-dom';
 import {
   Search,
   ChevronDown,
@@ -8,24 +8,28 @@ import {
   Navigation,
   History,
   Settings,
+  ShieldCheck,
   LogIn,
   LogOut,
   User as UserIcon,
-  Languages,
   Menu,
   X,
-  XCircle
+  XCircle,
+  Sun,
+  Moon,
+  Activity,
+  Ticket
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
-import ThemeToggle from './ThemeToggle';
-import RoleToggle from './RoleToggle';
+import { useTheme } from '../context/ThemeContext';
 import ModalConfirm from './ModalConfirm';
 import Logo from './Logo';
 
 export default function Navbar() {
   const { language, toggleLanguage, t } = useLanguage();
   const { isAdmin, user, isLoggedIn, logout } = useAuth();
+  const { isDarkMode, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -34,29 +38,42 @@ export default function Navbar() {
   
   // Dropdown States
   const [isExploreOpen, setIsExploreOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [logoutModalOpen, setLogoutModalOpen] = useState(false);
 
-  const dropdownRef = useRef(null);
+  const exploreDropdownRef = useRef(null);
+  const profileDropdownRef = useRef(null);
 
-  // Close dropdown on outside click
+  // Close dropdowns on outside click
   useEffect(() => {
     function handleClickOutside(event) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+      if (
+        exploreDropdownRef.current &&
+        !exploreDropdownRef.current.contains(event.target)
+      ) {
         setIsExploreOpen(false);
+      }
+      if (
+        profileDropdownRef.current &&
+        !profileDropdownRef.current.contains(event.target)
+      ) {
+        setIsProfileOpen(false);
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Close dropdown and mobile menu when route changes
+  // Close menus when route changes
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsExploreOpen(false);
+    setIsProfileOpen(false);
     setMobileMenuOpen(false);
   }, [location.pathname]);
 
-  // Handle Global Quick Search Submit
+  // Handle Global Search Submit
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     if (searchQuery.trim()) {
@@ -75,241 +92,348 @@ export default function Navbar() {
   const handleConfirmLogout = () => {
     logout();
     setLogoutModalOpen(false);
+    setIsProfileOpen(false);
     setMobileMenuOpen(false);
     navigate('/login');
   };
 
-  // Sub-items for "Jelajah / Explore" Dropdown
-  const exploreItems = [
+  // Sub-items for "Jelajah" Dropdown
+  const baseExploreItems = [
     {
       path: '/trails',
       label: t('nav.trails') || 'Katalog Jalur',
       icon: Compass,
-      desc: 'Daftar rute pendakian lengkap'
+      desc: 'Daftar rute & gunung di Indonesia',
     },
     {
-      path: '/events',
-      label: t('nav.events') || 'Event Tektok',
-      icon: Calendar,
-      desc: 'Agenda muncak bareng komunitas'
-    },
-    {
-      path: '/tracker',
-      label: t('nav.tracker') || 'GPS Tracker',
-      icon: Navigation,
-      desc: 'Pelacak rute & navigasi live'
-    },
-    {
-      path: '/history',
-      label: t('nav.history') || 'Riwayat',
-      icon: History,
-      desc: 'Log & statistik track pendakian'
+      path: '/races',
+      label: t('nav.races') || 'Lomba Lari Gunung',
+      icon: Activity,
+      desc: 'Registrasi event lari lintas alam',
     },
   ];
 
-  if (isAdmin) {
-    exploreItems.push({
-      path: '/manage',
-      label: t('nav.manage') || 'Kelola Jalur',
-      icon: Settings,
-      desc: 'Panel manajemen admin & rute'
-    });
+  if (!isAdmin) {
+    baseExploreItems.push(
+      {
+        path: '/tracker',
+        label: t('nav.tracker') || 'GPS Tracker',
+        icon: Navigation,
+        desc: 'Pelacak rute live & elevasi',
+      },
+      {
+        path: '/history',
+        label: t('nav.history') || 'Riwayat',
+        icon: History,
+        desc: 'Log & statistik track pendakian',
+      }
+    );
   }
+
+  const exploreItems = baseExploreItems;
 
   const isExploreActive = exploreItems.some((item) => location.pathname === item.path);
 
+  // Short display name for user
+  const displayName = user?.name
+    ? user.name.split(' ')[0]
+    : user?.email
+    ? user.email.split('@')[0]
+    : 'Pendaki';
+
   return (
     <>
-      <header className="sticky top-0 z-50 bg-white/90 dark:bg-[#2D1C1D]/90 backdrop-blur-md border-b border-[#DBC4B6] dark:border-[#57595B]/40 text-[#452829] dark:text-[#F3E8DF] transition-colors duration-200 shadow-sm">
+      <header className="sticky top-0 z-50 backdrop-blur-md bg-[#FAF3F3]/90 dark:bg-[#1C2129]/90 border-b border-[#E1E5EA] dark:border-[#2C3440] text-[#2B3542] dark:text-[#FAF3F3] transition-colors duration-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16 gap-3 md:gap-6">
+          <div className="flex items-center justify-between h-16 gap-3 md:gap-4">
             
-            {/* 1. Brand Logo (Kiri) */}
+            {/* ========================================================= */}
+            {/* 1. SISI KIRI: BRAND LOGO */}
+            {/* ========================================================= */}
             <div className="shrink-0">
               <Logo
-                className="h-9 w-auto"
+                className="h-8 sm:h-9 w-auto"
                 showText={true}
-                textClassName="text-xl font-bold tracking-tight"
+                textClassName="text-lg sm:text-xl font-black tracking-tight"
               />
             </div>
 
-            {/* 2. Global Quick Search Bar (Tengah) */}
+            {/* ========================================================= */}
+            {/* 2. SISI TENGAH: SEARCH BAR PROPORSIONAL */}
+            {/* ========================================================= */}
             <form
               onSubmit={handleSearchSubmit}
-              className="hidden sm:flex flex-1 max-w-xs md:max-w-md lg:max-w-lg items-center relative"
+              className="hidden md:flex items-center relative w-full max-w-xs lg:max-w-sm"
             >
-              <div className="relative w-full">
-                <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-[#E8D1C5]/70 pointer-events-none" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Cari jalur, gunung, event..."
-                  className="w-full pl-9 pr-8 py-2 text-xs md:text-sm rounded-full bg-slate-100 dark:bg-[#3F2728] border border-slate-200 dark:border-slate-700 text-[#1E293B] dark:text-[#F3E8DF] placeholder-slate-400 dark:placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-[#2C6E49] focus:bg-white dark:focus:bg-[#4A2F30] transition-all duration-200 shadow-inner"
-                />
-                {searchQuery && (
-                  <button
-                    type="button"
-                    onClick={handleClearSearch}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-stone-200 p-0.5 cursor-pointer"
-                  >
-                    <XCircle className="w-3.5 h-3.5" />
-                  </button>
-                )}
-              </div>
+              <Search className="w-3.5 h-3.5 absolute left-3.5 text-[#A7BBC7] pointer-events-none" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Cari gunung atau jalur..."
+                className="w-full h-9 pl-9 pr-8 rounded-full bg-[#E1E5EA]/60 dark:bg-[#252C36] border border-[#E1E5EA] dark:border-[#2C3440] text-xs text-[#2B3542] dark:text-[#FAF3F3] placeholder-[#A7BBC7] focus:outline-none focus:ring-2 focus:ring-[#DA7F8F]/40 focus:border-[#DA7F8F] transition-all"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={handleClearSearch}
+                  className="absolute right-2.5 text-[#A7BBC7] hover:text-[#2B3542] dark:hover:text-[#FAF3F3] p-0.5 cursor-pointer"
+                  title="Hapus pencarian"
+                >
+                  <XCircle className="w-3.5 h-3.5" />
+                </button>
+              )}
             </form>
 
-            {/* 3. Ringkas Navigation & Controls (Kanan) */}
-            <div className="hidden md:flex items-center space-x-2 lg:space-x-3 shrink-0">
+            {/* ========================================================= */}
+            {/* 3. SISI KANAN: NAVIGATION & STREAMLINED CONTROLS */}
+            {/* ========================================================= */}
+            <div className="hidden md:flex items-center gap-2 lg:gap-3">
               
-              {/* Home Quick Link */}
+              {/* Nav Link: Beranda */}
               <NavLink
                 to="/"
                 className={({ isActive }) =>
-                  `px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
+                  `px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${
                     isActive
-                      ? 'bg-[#2C6E49] text-white dark:bg-[#E8D1C5] dark:text-[#452829] shadow-sm'
-                      : 'text-[#452829] dark:text-[#F3E8DF] hover:bg-slate-100 dark:hover:bg-[#3F2728]'
+                      ? 'text-[#DA7F8F] bg-[#DA7F8F]/10 dark:bg-[#DA7F8F]/15'
+                      : 'text-[#2B3542] dark:text-[#FAF3F3] hover:text-[#DA7F8F] dark:hover:text-[#DA7F8F]'
                   }`
                 }
               >
                 {t('nav.home') || 'Beranda'}
               </NavLink>
 
-              {/* Jelajah / Explore Dropdown Menu */}
-              <div className="relative" ref={dropdownRef}>
+              {/* Nav Link: Jelajah Dropdown */}
+              <div className="relative" ref={exploreDropdownRef}>
                 <button
                   type="button"
                   onClick={() => setIsExploreOpen(!isExploreOpen)}
-                  className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                  className={`px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer ${
                     isExploreActive || isExploreOpen
-                      ? 'bg-[#2C6E49] text-white dark:bg-[#E8D1C5] dark:text-[#452829] shadow-sm'
-                      : 'text-[#452829] dark:text-[#F3E8DF] hover:bg-slate-100 dark:hover:bg-[#3F2728]'
+                      ? 'text-[#DA7F8F] bg-[#DA7F8F]/10 dark:bg-[#DA7F8F]/15'
+                      : 'text-[#2B3542] dark:text-[#FAF3F3] hover:text-[#DA7F8F] dark:hover:text-[#DA7F8F]'
                   }`}
                 >
-                  <span>Jelajah</span>
+                  <span>{t('nav.explore') || 'Jelajah'}</span>
                   <ChevronDown
                     className={`w-3.5 h-3.5 transition-transform duration-200 ${
-                      isExploreOpen ? 'rotate-180' : ''
+                      isExploreOpen ? 'rotate-180 text-[#DA7F8F]' : ''
                     }`}
                   />
                 </button>
 
-                {/* Dropdown Menu Flyout */}
+                {/* Dropdown Menu Popup */}
                 {isExploreOpen && (
-                  <div className="absolute right-0 mt-2 w-64 rounded-2xl bg-white dark:bg-[#2D1C1D] border border-slate-200 dark:border-[#57595B]/40 shadow-xl py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
-                    <div className="px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-stone-400 border-b border-slate-100 dark:border-slate-800">
-                      Menu Eksplorasi
+                  <div className="absolute right-0 mt-2 w-64 rounded-2xl bg-white dark:bg-[#1C2129] border border-[#E1E5EA] dark:border-[#2C3440] shadow-xl py-2 z-50 animate-in fade-in slide-in-from-top-2">
+                    <div className="px-3.5 py-1.5 text-[10px] font-bold uppercase tracking-wider text-[#A7BBC7]">
+                      Fitur Jelajah
                     </div>
-                    <div className="p-1.5 space-y-0.5">
-                      {exploreItems.map((item) => {
-                        const Icon = item.icon;
-                        const active = location.pathname === item.path;
-                        return (
-                          <NavLink
-                            key={item.path}
-                            to={item.path}
-                            onClick={() => setIsExploreOpen(false)}
-                            className={`flex items-start gap-3 p-2.5 rounded-xl transition-all ${
-                              active
-                                ? 'bg-[#2C6E49]/10 dark:bg-[#E8D1C5]/15 text-[#2C6E49] dark:text-[#E8D1C5] font-bold'
-                                : 'text-[#452829] dark:text-[#F3E8DF] hover:bg-slate-100 dark:hover:bg-[#3F2728]'
-                            }`}
-                          >
-                            <div className={`p-1.5 rounded-lg shrink-0 ${
-                              active
-                                ? 'bg-[#2C6E49] text-white dark:bg-[#E8D1C5] dark:text-[#452829]'
-                                : 'bg-slate-100 dark:bg-[#3F2728] text-slate-600 dark:text-stone-300'
-                            }`}>
-                              <Icon className="w-4 h-4" />
-                            </div>
-                            <div className="flex flex-col">
-                              <span className="text-xs font-bold leading-tight">{item.label}</span>
-                              <span className="text-[10px] text-slate-500 dark:text-stone-400 font-normal leading-tight mt-0.5">
-                                {item.desc}
-                              </span>
-                            </div>
-                          </NavLink>
-                        );
-                      })}
-                    </div>
+                    {exploreItems.map((item) => {
+                      const Icon = item.icon;
+                      const isActive = location.pathname === item.path;
+                      return (
+                        <Link
+                          key={item.path}
+                          to={item.path}
+                          onClick={() => setIsExploreOpen(false)}
+                          className={`flex items-start gap-3 px-3.5 py-2.5 text-xs transition-colors ${
+                            isActive
+                              ? 'bg-[#DA7F8F]/10 text-[#DA7F8F]'
+                              : 'text-[#2B3542] dark:text-[#FAF3F3] hover:bg-[#FAF3F3] dark:hover:bg-[#252C36]'
+                          }`}
+                        >
+                          <Icon className="w-4 h-4 mt-0.5 text-[#DA7F8F] shrink-0" />
+                          <div>
+                            <p className="font-bold">{item.label}</p>
+                            <p className="text-[10px] text-[#A7BBC7] font-normal leading-tight">
+                              {item.desc}
+                            </p>
+                          </div>
+                        </Link>
+                      );
+                    })}
                   </div>
                 )}
               </div>
 
-              {/* Language Switcher */}
+              {/* Vertical Divider */}
+              <div className="h-4 w-px bg-[#E1E5EA] dark:bg-[#2C3440] mx-0.5" />
+
+              {/* Quick Utility 1: Theme Toggle (Icon-only) */}
+              <button
+                type="button"
+                onClick={toggleTheme}
+                className="w-8 h-8 rounded-full flex items-center justify-center bg-[#E1E5EA]/70 dark:bg-[#252C36] border border-[#E1E5EA] dark:border-[#2C3440] text-[#2B3542] dark:text-[#FAF3F3] hover:scale-105 active:scale-95 transition cursor-pointer shadow-sm"
+                title={isDarkMode ? 'Beralih ke Mode Terang' : 'Beralih ke Mode Gelap'}
+                aria-label="Toggle Dark Mode"
+              >
+                {isDarkMode ? (
+                  <Sun className="w-4 h-4 text-amber-400 animate-in spin-in-90" />
+                ) : (
+                  <Moon className="w-4 h-4 text-[#DA7F8F]" />
+                )}
+              </button>
+
+              {/* Quick Utility 2: Language Toggle (Small Pill ID | EN) */}
               <button
                 type="button"
                 onClick={toggleLanguage}
-                className="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-bold uppercase border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-[#3F2728] text-[#452829] dark:text-[#F3E8DF] hover:bg-slate-200 dark:hover:bg-[#57595B]/60 transition-all cursor-pointer"
-                title={t('nav.language') || 'Ganti Bahasa'}
+                className="h-8 px-2.5 rounded-full flex items-center justify-center bg-[#E1E5EA]/70 dark:bg-[#252C36] border border-[#E1E5EA] dark:border-[#2C3440] text-[11px] font-bold font-mono tracking-wider text-[#2B3542] dark:text-[#FAF3F3] hover:scale-105 active:scale-95 transition cursor-pointer shadow-sm"
+                title="Ganti Bahasa (ID / EN)"
               >
-                <Languages className="w-3.5 h-3.5 text-[#2C6E49] dark:text-[#E8D1C5]" />
-                <span>{language}</span>
+                <span className={language === 'id' ? 'text-[#DA7F8F] font-black' : 'text-[#A7BBC7]'}>
+                  ID
+                </span>
+                <span className="mx-1 text-[#A7BBC7] font-normal">|</span>
+                <span className={language === 'en' ? 'text-[#DA7F8F] font-black' : 'text-[#A7BBC7]'}>
+                  EN
+                </span>
               </button>
 
-              {/* Theme Toggle Component */}
-              <ThemeToggle />
+              {/* Vertical Divider */}
+              <div className="h-4 w-px bg-[#E1E5EA] dark:bg-[#2C3440] mx-0.5" />
 
-              {/* Role Switcher */}
-              <RoleToggle />
-
-              {/* Authentication Status Badge / Login Button */}
+              {/* User Profile / Auth Action */}
               {isLoggedIn ? (
-                <div className="flex items-center gap-2 bg-slate-100 dark:bg-[#3F2728] p-1 pl-2.5 rounded-full border border-slate-200 dark:border-slate-700 shadow-sm">
-                  <div className="flex items-center gap-1.5 text-xs font-bold">
-                    <UserIcon className="w-3.5 h-3.5 text-[#2C6E49] dark:text-[#E8D1C5]" />
-                    <span className="max-w-[90px] truncate text-[#452829] dark:text-[#F3E8DF]">
-                      {user.name || user.email}
-                    </span>
-                    <span className={`px-1.5 py-0.5 rounded-full text-[10px] uppercase font-mono ${
-                      user.role === 'admin'
-                        ? 'bg-amber-500/20 text-amber-800 dark:text-amber-300'
-                        : 'bg-emerald-500/20 text-emerald-800 dark:text-emerald-300'
-                    }`}>
-                      {user.role === 'admin' ? 'Admin' : 'User'}
-                    </span>
-                  </div>
-
-                  {/* Logout Button */}
+                <div className="relative" ref={profileDropdownRef}>
                   <button
                     type="button"
-                    onClick={() => setLogoutModalOpen(true)}
-                    className="p-1.5 rounded-full text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-950 transition-all cursor-pointer"
-                    title={t('auth.logoutBtn') || 'Keluar'}
+                    onClick={() => setIsProfileOpen(!isProfileOpen)}
+                    className="flex items-center gap-2 pl-1.5 pr-2.5 py-1 rounded-full bg-[#E1E5EA]/70 dark:bg-[#252C36] border border-[#E1E5EA] dark:border-[#2C3440] hover:border-[#DA7F8F]/50 transition cursor-pointer shadow-sm"
                   >
-                    <LogOut className="w-3.5 h-3.5" />
+                    <div className="w-6 h-6 rounded-full bg-[#DA7F8F] text-white flex items-center justify-center text-[11px] font-black uppercase overflow-hidden shrink-0">
+                      {user.avatar ? (
+                        <img src={user.avatar} alt={displayName} className="w-full h-full object-cover" />
+                      ) : (
+                        displayName.charAt(0)
+                      )}
+                    </div>
+                    
+                    <span className="text-xs font-bold text-[#2B3542] dark:text-[#FAF3F3] max-w-[90px] truncate">
+                      {displayName}
+                    </span>
+
+                    {/* Role Badge */}
+                    {isAdmin ? (
+                      <span className="px-1.5 py-0.2 rounded text-[9px] font-black tracking-wider uppercase bg-amber-400/20 text-amber-600 dark:text-amber-400 border border-amber-400/40">
+                        ADMIN
+                      </span>
+                    ) : (
+                      <span className="px-1.5 py-0.2 rounded text-[9px] font-black tracking-wider uppercase bg-emerald-400/20 text-emerald-600 dark:text-emerald-400 border border-emerald-400/40">
+                        PENDAKI
+                      </span>
+                    )}
+
+                    <ChevronDown className="w-3.5 h-3.5 text-[#A7BBC7]" />
                   </button>
+
+                  {/* Profile Menu Popup Card */}
+                  {isProfileOpen && (
+                    <div className="absolute right-0 mt-2 w-56 rounded-2xl bg-white dark:bg-[#1C2129] border border-[#E1E5EA] dark:border-[#2C3440] shadow-xl py-2 z-50 animate-in fade-in slide-in-from-top-2">
+                      <div className="px-4 py-2 border-b border-[#E1E5EA] dark:border-[#2C3440]">
+                        <p className="text-xs font-bold text-[#2B3542] dark:text-white truncate">
+                          {user.name || displayName}
+                        </p>
+                        <p className="text-[10px] text-[#A7BBC7] truncate">
+                          {user.email || 'Akun GiriTrack'}
+                        </p>
+                      </div>
+
+                      <div className="py-1">
+                        {/* Global Profile Links */}
+                        <Link
+                          to="/my-tickets"
+                          onClick={() => setIsProfileOpen(false)}
+                          className="flex items-center gap-2.5 px-4 py-2 text-xs font-bold text-[#2B3542] dark:text-[#FAF3F3] hover:bg-[#FAF3F3] dark:hover:bg-[#252C36] transition"
+                        >
+                          <Ticket className="w-4 h-4 text-[#DA7F8F]" />
+                          <span>{t('nav.myTickets') || 'Tiket Lomba Saya'}</span>
+                        </Link>
+                        <Link
+                          to="/profile"
+                          onClick={() => setIsProfileOpen(false)}
+                          className="flex items-center gap-2.5 px-4 py-2 text-xs font-bold text-[#2B3542] dark:text-[#FAF3F3] hover:bg-[#FAF3F3] dark:hover:bg-[#252C36] transition"
+                        >
+                          <UserIcon className="w-4 h-4 text-[#DA7F8F]" />
+                          <span>{t('nav.profileSettings') || 'Pengaturan Profil'}</span>
+                        </Link>
+
+                        {isAdmin && (
+                          <div className="mt-1 pt-1 border-t border-[#E1E5EA] dark:border-[#2C3440]">
+                            <Link
+                              to="/admin"
+                              onClick={() => setIsProfileOpen(false)}
+                              className="flex items-center gap-2.5 px-4 py-2 text-xs font-bold text-[#DA7F8F] hover:bg-[#DA7F8F]/10 transition"
+                            >
+                              <ShieldCheck className="w-4 h-4" />
+                              <span>Admin Dashboard</span>
+                            </Link>
+                            <Link
+                              to="/admin/races"
+                              onClick={() => setIsProfileOpen(false)}
+                              className="flex items-center gap-2.5 px-4 py-2 text-xs font-bold text-[#DA7F8F] hover:bg-[#DA7F8F]/10 transition"
+                            >
+                              <Activity className="w-4 h-4" />
+                              <span>Kelola Event</span>
+                            </Link>
+                            <Link
+                              to="/manage"
+                              onClick={() => setIsProfileOpen(false)}
+                              className="flex items-center gap-2.5 px-4 py-2 text-xs font-bold text-[#DA7F8F] hover:bg-[#DA7F8F]/10 transition"
+                            >
+                              <Settings className="w-4 h-4" />
+                              <span>Kelola Jalur</span>
+                            </Link>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="border-t border-[#E1E5EA] dark:border-[#2C3440] pt-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsProfileOpen(false);
+                            setLogoutModalOpen(true);
+                          }}
+                          className="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-bold text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition text-left cursor-pointer"
+                        >
+                          <LogOut className="w-4 h-4" />
+                          <span>Keluar / Logout</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <NavLink
                   to="/login"
-                  className="px-4 py-1.5 rounded-full bg-[#2C6E49] text-white hover:bg-[#23583a] dark:bg-[#E8D1C5] dark:text-[#452829] text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 cursor-pointer active:scale-95"
+                  className="px-4 py-1.5 rounded-full bg-[#DA7F8F] hover:bg-[#c96c7d] text-white text-xs font-bold transition shadow-sm flex items-center gap-1.5 active:scale-95 cursor-pointer"
                 >
                   <LogIn className="w-3.5 h-3.5" />
-                  <span>Masuk</span>
+                  <span>{t('auth.loginTitle') || 'Masuk'}</span>
                 </NavLink>
               )}
 
             </div>
 
-            {/* Mobile Header Controls */}
-            <div className="flex items-center gap-1.5 md:hidden">
-              {!isLoggedIn && (
-                <NavLink
-                  to="/login"
-                  className="px-3 py-1.5 rounded-full bg-[#2C6E49] text-white dark:bg-[#E8D1C5] dark:text-[#452829] text-xs font-bold flex items-center gap-1 cursor-pointer active:scale-95"
-                >
-                  <LogIn className="w-3 h-3" />
-                  <span>Masuk</span>
-                </NavLink>
-              )}
-              <ThemeToggle />
+            {/* ========================================================= */}
+            {/* 4. MOBILE HAMBURGER BUTTON */}
+            {/* ========================================================= */}
+            <div className="flex md:hidden items-center gap-2">
+              <button
+                type="button"
+                onClick={toggleTheme}
+                className="w-8 h-8 rounded-full flex items-center justify-center bg-[#E1E5EA]/70 dark:bg-[#252C36] border border-[#E1E5EA] dark:border-[#2C3440] text-[#2B3542] dark:text-[#FAF3F3]"
+              >
+                {isDarkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-[#DA7F8F]" />}
+              </button>
+
               <button
                 type="button"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="p-2 rounded-xl text-[#452829] dark:text-[#F3E8DF] hover:bg-slate-100 dark:hover:bg-[#3F2728] focus:outline-none cursor-pointer"
-                aria-label="Toggle menu"
+                className="p-2 rounded-xl bg-[#E1E5EA]/70 dark:bg-[#252C36] border border-[#E1E5EA] dark:border-[#2C3440] text-[#2B3542] dark:text-[#FAF3F3] cursor-pointer"
+                aria-label="Toggle Mobile Menu"
               >
                 {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
               </button>
@@ -318,57 +442,62 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* Mobile Drawer Menu */}
+        {/* ========================================================= */}
+        {/* MOBILE DRAWER MENU */}
+        {/* ========================================================= */}
         {mobileMenuOpen && (
-          <div className="md:hidden border-t border-slate-200 dark:border-[#57595B]/40 bg-white dark:bg-[#2D1C1D] px-4 pt-3 pb-5 space-y-4 shadow-lg">
+          <div className="md:hidden border-t border-[#E1E5EA] dark:border-[#2C3440] bg-[#FAF3F3]/95 dark:bg-[#1C2129]/95 backdrop-blur-lg px-4 pt-3 pb-6 space-y-4 shadow-xl animate-in slide-in-from-top-2">
             
             {/* Mobile Search Bar */}
             <form onSubmit={handleSearchSubmit} className="relative w-full">
-              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#A7BBC7] pointer-events-none" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Cari jalur, gunung, event..."
-                className="w-full pl-9 pr-8 py-2 text-xs rounded-full bg-slate-100 dark:bg-[#3F2728] border border-slate-200 dark:border-slate-700 text-[#1E293B] dark:text-[#F3E8DF] focus:outline-none focus:ring-2 focus:ring-[#2C6E49]"
+                placeholder="Cari gunung atau jalur..."
+                className="w-full pl-9 pr-8 py-2 text-xs rounded-full bg-[#E1E5EA]/70 dark:bg-[#252C36] border border-[#E1E5EA] dark:border-[#2C3440] text-[#2B3542] dark:text-[#FAF3F3] focus:outline-none focus:ring-2 focus:ring-[#DA7F8F]"
               />
               {searchQuery && (
                 <button
                   type="button"
                   onClick={handleClearSearch}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 p-0.5"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#A7BBC7] p-0.5"
                 >
                   <XCircle className="w-3.5 h-3.5" />
                 </button>
               )}
             </form>
 
-            {/* Mobile User & Role info */}
-            <div className="flex flex-col gap-2 pb-2 border-b border-slate-100 dark:border-slate-800">
-              <div className="flex items-center justify-between">
-                <RoleToggle />
-                <button
-                  type="button"
-                  onClick={toggleLanguage}
-                  className="px-3 py-1 rounded-full text-xs font-bold uppercase bg-slate-100 dark:bg-[#3F2728] border border-slate-200 dark:border-slate-700 text-[#452829] dark:text-[#F3E8DF]"
-                >
-                  {language}
-                </button>
-              </div>
-
+            {/* Mobile User Block */}
+            <div className="pb-3 border-b border-[#E1E5EA] dark:border-[#2C3440]">
               {isLoggedIn ? (
-                <div className="flex items-center justify-between p-2.5 rounded-2xl bg-slate-100 dark:bg-[#3F2728]">
-                  <div className="flex items-center gap-2 text-xs font-bold">
-                    <UserIcon className="w-4 h-4 text-[#2C6E49] dark:text-[#E8D1C5]" />
-                    <span className="truncate">{user.name || user.email}</span>
-                    <span className="px-1.5 py-0.5 rounded text-[10px] uppercase font-mono bg-black/10 dark:bg-white/10">
-                      {user.role}
-                    </span>
+                <div className="flex items-center justify-between p-3 rounded-2xl bg-white dark:bg-[#252C36] border border-[#E1E5EA] dark:border-[#2C3440]">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-full bg-[#DA7F8F] text-white flex items-center justify-center text-xs font-black uppercase">
+                      {displayName.charAt(0)}
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-[#2B3542] dark:text-white leading-tight">
+                        {displayName}
+                      </p>
+                      <span className={`inline-block px-1.5 py-0.2 rounded text-[9px] font-black uppercase mt-0.5 ${
+                        isAdmin
+                          ? 'bg-amber-400/20 text-amber-600 dark:text-amber-400 border border-amber-400/40'
+                          : 'bg-emerald-400/20 text-emerald-600 dark:text-emerald-400 border border-emerald-400/40'
+                      }`}>
+                        {isAdmin ? 'ADMIN' : 'PENDAKI'}
+                      </span>
+                    </div>
                   </div>
+
                   <button
                     type="button"
-                    onClick={() => setLogoutModalOpen(true)}
-                    className="flex items-center gap-1 text-xs font-bold text-rose-600 dark:text-rose-400 hover:underline"
+                    onClick={() => {
+                      setLogoutModalOpen(true);
+                      setMobileMenuOpen(false);
+                    }}
+                    className="text-xs font-bold text-rose-500 flex items-center gap-1 hover:underline cursor-pointer"
                   >
                     <LogOut className="w-3.5 h-3.5" />
                     <span>Logout</span>
@@ -378,24 +507,24 @@ export default function Navbar() {
                 <NavLink
                   to="/login"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="w-full py-2.5 rounded-full bg-[#2C6E49] text-white dark:bg-[#E8D1C5] dark:text-[#452829] text-xs font-bold flex items-center justify-center gap-2"
+                  className="w-full py-2.5 rounded-full bg-[#DA7F8F] hover:bg-[#c96c7d] text-white text-xs font-bold flex items-center justify-center gap-2 shadow-sm"
                 >
                   <LogIn className="w-4 h-4" />
-                  <span>{t('auth.loginTitle') || 'Masuk'}</span>
+                  <span>{t('auth.loginTitle') || 'Masuk / Login'}</span>
                 </NavLink>
               )}
             </div>
 
-            {/* Mobile Nav Links */}
+            {/* Mobile Navigation Links */}
             <div className="space-y-1">
               <NavLink
                 to="/"
                 onClick={() => setMobileMenuOpen(false)}
                 className={({ isActive }) =>
-                  `flex items-center gap-3 px-3.5 py-2 rounded-xl text-xs font-bold transition ${
+                  `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${
                     isActive
-                      ? 'bg-[#2C6E49] text-white dark:bg-[#E8D1C5] dark:text-[#452829]'
-                      : 'text-[#452829] dark:text-[#F3E8DF] hover:bg-slate-100 dark:hover:bg-[#3F2728]'
+                      ? 'bg-[#DA7F8F] text-white'
+                      : 'text-[#2B3542] dark:text-[#FAF3F3] hover:bg-[#E1E5EA]/50 dark:hover:bg-[#252C36]'
                   }`
                 }
               >
@@ -412,8 +541,8 @@ export default function Navbar() {
                     className={({ isActive }) =>
                       `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${
                         isActive
-                          ? 'bg-[#2C6E49] text-white dark:bg-[#E8D1C5] dark:text-[#452829]'
-                          : 'text-[#452829] dark:text-[#F3E8DF] hover:bg-slate-100 dark:hover:bg-[#3F2728]'
+                          ? 'bg-[#DA7F8F] text-white'
+                          : 'text-[#2B3542] dark:text-[#FAF3F3] hover:bg-[#E1E5EA]/50 dark:hover:bg-[#252C36]'
                       }`
                     }
                   >
@@ -422,13 +551,105 @@ export default function Navbar() {
                   </NavLink>
                 );
               })}
+
+              {isLoggedIn && (
+                <>
+                  <NavLink
+                    to="/my-tickets"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={({ isActive }) =>
+                      `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${
+                        isActive
+                          ? 'bg-[#DA7F8F] text-white'
+                          : 'text-[#2B3542] dark:text-[#FAF3F3] hover:bg-[#E1E5EA]/50 dark:hover:bg-[#252C36]'
+                      }`
+                    }
+                  >
+                    <Ticket className="w-4 h-4 text-[#DA7F8F]" />
+                    <span>{t('nav.myTickets') || 'Tiket Lomba Saya'}</span>
+                  </NavLink>
+                  <NavLink
+                    to="/profile"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={({ isActive }) =>
+                      `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${
+                        isActive
+                          ? 'bg-[#DA7F8F] text-white'
+                          : 'text-[#2B3542] dark:text-[#FAF3F3] hover:bg-[#E1E5EA]/50 dark:hover:bg-[#252C36]'
+                      }`
+                    }
+                  >
+                    <UserIcon className="w-4 h-4 text-[#DA7F8F]" />
+                    <span>{t('nav.profileSettings') || 'Pengaturan Profil'}</span>
+                  </NavLink>
+                </>
+              )}
+
+              {isAdmin && (
+                <>
+                  <NavLink
+                    to="/admin"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={({ isActive }) =>
+                      `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${
+                        isActive
+                          ? 'bg-[#DA7F8F] text-white'
+                          : 'text-[#DA7F8F] hover:bg-[#DA7F8F]/10'
+                      }`
+                    }
+                  >
+                    <ShieldCheck className="w-4 h-4" />
+                    <span>Admin Dashboard</span>
+                  </NavLink>
+                  <NavLink
+                    to="/admin/races"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={({ isActive }) =>
+                      `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${
+                        isActive
+                          ? 'bg-[#DA7F8F] text-white'
+                          : 'text-[#DA7F8F] hover:bg-[#DA7F8F]/10'
+                      }`
+                    }
+                  >
+                    <Activity className="w-4 h-4" />
+                    <span>Kelola Event</span>
+                  </NavLink>
+                  <NavLink
+                    to="/manage"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={({ isActive }) =>
+                      `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${
+                        isActive
+                          ? 'bg-[#DA7F8F] text-white'
+                          : 'text-[#DA7F8F] hover:bg-[#DA7F8F]/10'
+                      }`
+                    }
+                  >
+                    <Settings className="w-4 h-4" />
+                    <span>Kelola Jalur</span>
+                  </NavLink>
+                </>
+              )}
+            </div>
+
+            {/* Language Toggle in Mobile */}
+            <div className="pt-2 flex items-center justify-between border-t border-[#E1E5EA] dark:border-[#2C3440] text-xs font-bold">
+              <span className="text-[#A7BBC7]">Bahasa / Language</span>
+              <button
+                type="button"
+                onClick={toggleLanguage}
+                className="px-3 py-1 rounded-full bg-[#E1E5EA]/70 dark:bg-[#252C36] border border-[#E1E5EA] dark:border-[#2C3440] text-xs font-mono font-bold uppercase"
+              >
+                {language}
+              </button>
             </div>
 
           </div>
         )}
       </header>
 
-      {/* Logout Modal Confirmation */}
+      {/* Logout Confirmation Modal */}
       <ModalConfirm
         isOpen={logoutModalOpen}
         onCancel={() => setLogoutModalOpen(false)}

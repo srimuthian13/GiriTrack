@@ -13,7 +13,7 @@ const startIcon = L.divIcon({
 
 const endIcon = L.divIcon({
   className: 'custom-leaflet-marker-end',
-  html: `<div style="background-color: #EF4444; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; border: 3px solid white; box-shadow: 0 4px 6px rgba(0,0,0,0.4); font-weight: bold; font-size: 11px;">B</div>`,
+  html: `<div style="background-color: #DA7F8F; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; border: 3px solid white; box-shadow: 0 4px 6px rgba(0,0,0,0.4); font-weight: bold; font-size: 11px;">B</div>`,
   iconSize: [30, 30],
   iconAnchor: [15, 15],
 });
@@ -50,7 +50,7 @@ export default function MapViewer({ coordinates = [], trailName = 'Jalur Pendaki
   const centerPoint = validCoords[Math.floor(validCoords.length / 2)] || startPoint;
 
   return (
-    <div className="relative w-full h-[350px] sm:h-[450px] rounded-2xl overflow-hidden shadow-inner border border-[#DBC4B6] dark:border-[#57595B]/40 z-0">
+    <div className="relative w-full h-[350px] sm:h-[450px] rounded-2xl overflow-hidden shadow-inner border border-[#E1E5EA] dark:border-[#2C3440] z-0">
       <MapContainer
         center={centerPoint}
         zoom={13}
@@ -65,11 +65,11 @@ export default function MapViewer({ coordinates = [], trailName = 'Jalur Pendaki
 
         <ChangeView bounds={validCoords} />
 
-        {/* High-Contrast Mahogany/Red Contour Winding Polyline Route */}
+        {/* High-Contrast Rose Polyline Route */}
         <Polyline
           positions={validCoords}
           pathOptions={{
-            color: '#452829', // Mahogany Dark Earth
+            color: '#DA7F8F',
             weight: 5,
             opacity: 0.9,
             dashArray: '6, 8',
@@ -90,7 +90,7 @@ export default function MapViewer({ coordinates = [], trailName = 'Jalur Pendaki
         <Marker position={endPoint} icon={endIcon}>
           <Popup>
             <div className="text-xs font-sans">
-              <strong className="text-rose-700 block">Titik Akhir (Puncak B)</strong>
+              <strong className="text-[#DA7F8F] block">Titik Akhir (Puncak B)</strong>
               <span>{trailName}</span>
             </div>
           </Popup>

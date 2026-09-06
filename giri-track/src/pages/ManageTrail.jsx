@@ -3,10 +3,12 @@ import { useSearchParams } from 'react-router-dom';
 import { Settings, Plus, Save, Edit, Trash2, CheckCircle2, AlertCircle, RefreshCw, Upload, Image as ImageIcon, Link as LinkIcon, X } from 'lucide-react';
 import { useTrail } from '../context/TrailContext';
 import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
 import ModalConfirm from '../components/ModalConfirm';
 
 export default function ManageTrail() {
-  const { trails, addTrail, updateTrail, deleteTrail, resetTrails } = useTrail();
+  const { trails, addTrail, updateTrail, deleteTrail, resetTrails, locations, difficultyLevels } = useTrail();
+  const { isAdmin } = useAuth();
   const { t } = useLanguage();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -165,8 +167,12 @@ export default function ManageTrail() {
       setFormSuccess(t('modal.successEdit'));
       resetForm();
     } else {
-      addTrail(payload);
-      setFormSuccess(t('modal.successAdd'));
+      addTrail(payload, isAdmin ? 'admin' : 'user');
+      setFormSuccess(
+        isAdmin
+          ? t('modal.successAdd')
+          : 'Jalur berhasil diajukan! Status jalur sekarang "Pending" dan menunggu verifikasi admin.'
+      );
       resetForm();
     }
 
@@ -195,23 +201,23 @@ export default function ManageTrail() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 space-y-8 pb-12 text-[#452829] dark:text-[#F3E8DF]">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 space-y-8 pb-12 text-[#2B3542] dark:text-[#FAF3F3]">
       
       {/* Page Title */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#DBC4B6] dark:border-[#57595B]/40 pb-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#E1E5EA] dark:border-[#2C3440] pb-6">
         <div>
-          <h1 className="text-3xl font-black text-[#452829] dark:text-[#F3E8DF] flex items-center gap-3">
-            <Settings className="w-8 h-8 text-[#452829] dark:text-[#E8D1C5]" />
+          <h1 className="text-3xl font-black text-[#2B3542] dark:text-[#FAF3F3] flex items-center gap-3">
+            <Settings className="w-8 h-8 text-[#DA7F8F]" />
             <span>{t('nav.manage')}</span>
           </h1>
-          <p className="text-sm text-[#57595B] dark:text-[#E8D1C5] mt-1">
+          <p className="text-sm text-[#6B7C8C] dark:text-[#A7BBC7] mt-1">
             Tambah, edit, dan hapus data jalur pendakian GiriTrack.
           </p>
         </div>
 
         <button
           onClick={resetTrails}
-          className="px-4 py-2 text-xs font-bold rounded-xl border border-[#DBC4B6] dark:border-[#57595B]/40 text-[#452829] dark:text-[#E8D1C5] hover:bg-[#EFE4DC] dark:hover:bg-[#3F2728] transition flex items-center gap-2 cursor-pointer"
+          className="px-4 py-2 text-xs font-bold rounded-xl border border-[#E1E5EA] dark:border-[#2C3440] text-[#2B3542] dark:text-[#FAF3F3] hover:bg-[#FAF3F3] dark:hover:bg-[#252C36] transition flex items-center gap-2 cursor-pointer"
         >
           <RefreshCw className="w-3.5 h-3.5" />
           <span>Reset Data Awal Default</span>
@@ -219,17 +225,17 @@ export default function ManageTrail() {
       </div>
 
       {/* Form Container */}
-      <div className="bg-white dark:bg-[#2D1C1D] rounded-3xl p-6 sm:p-8 shadow-lg border border-[#DBC4B6] dark:border-[#57595B]/40 space-y-6">
-        <div className="flex items-center justify-between border-b border-[#DBC4B6]/60 dark:border-[#57595B]/40 pb-4">
-          <h2 className="text-xl font-bold text-[#452829] dark:text-[#F3E8DF] flex items-center gap-2">
-            {editId ? <Edit className="w-5 h-5 text-amber-600" /> : <Plus className="w-5 h-5 text-[#452829] dark:text-[#E8D1C5]" />}
+      <div className="bg-white/90 dark:bg-[#1C2129] rounded-3xl p-6 sm:p-8 shadow-lg border border-[#E1E5EA] dark:border-[#2C3440] space-y-6">
+        <div className="flex items-center justify-between border-b border-[#E1E5EA] dark:border-[#2C3440] pb-4">
+          <h2 className="text-xl font-bold text-[#2B3542] dark:text-[#FAF3F3] flex items-center gap-2">
+            {editId ? <Edit className="w-5 h-5 text-[#DA7F8F]" /> : <Plus className="w-5 h-5 text-[#DA7F8F]" />}
             <span>{editId ? t('form.editTitle') : t('form.addTitle')}</span>
           </h2>
 
           {editId && (
             <button
               onClick={resetForm}
-              className="text-xs font-bold text-[#57595B] dark:text-[#E8D1C5] hover:underline cursor-pointer"
+              className="text-xs font-bold text-[#DA7F8F] hover:underline cursor-pointer"
             >
               Batal Edit (Tambah Baru)
             </button>
@@ -257,7 +263,7 @@ export default function ManageTrail() {
             
             {/* Trail Name */}
             <div>
-              <label className="block text-xs font-bold text-[#452829] dark:text-[#F3E8DF] mb-1">
+              <label className="block text-xs font-bold text-[#2B3542] dark:text-[#FAF3F3] mb-1">
                 {t('form.nameLabel')} *
               </label>
               <input
@@ -266,46 +272,53 @@ export default function ManageTrail() {
                 value={formData.name}
                 onChange={handleInputChange}
                 placeholder={t('form.namePlaceholder')}
-                className="w-full px-3.5 py-2 rounded-xl border border-[#DBC4B6] dark:border-[#57595B]/40 bg-[#EFE4DC]/40 dark:bg-[#3F2728]/40 text-xs text-[#452829] dark:text-[#F3E8DF] focus:outline-none focus:ring-2 focus:ring-[#452829]"
+                className="w-full px-3.5 py-2 rounded-xl border border-[#E1E5EA] dark:border-[#2C3440] bg-[#FAF3F3]/80 dark:bg-[#252C36] text-xs text-[#2B3542] dark:text-[#FAF3F3] focus:outline-none focus:ring-2 focus:ring-[#DA7F8F]/40"
               />
             </div>
 
             {/* Location */}
             <div>
-              <label className="block text-xs font-bold text-[#452829] dark:text-[#F3E8DF] mb-1">
+              <label className="block text-xs font-bold text-[#2B3542] dark:text-[#FAF3F3] mb-1">
                 {t('form.locationLabel')} *
               </label>
               <input
                 type="text"
                 name="location"
+                list="location-options-list"
                 value={formData.location}
                 onChange={handleInputChange}
                 placeholder={t('form.locationPlaceholder')}
-                className="w-full px-3.5 py-2 rounded-xl border border-[#DBC4B6] dark:border-[#57595B]/40 bg-[#EFE4DC]/40 dark:bg-[#3F2728]/40 text-xs text-[#452829] dark:text-[#F3E8DF] focus:outline-none focus:ring-2 focus:ring-[#452829]"
+                className="w-full px-3.5 py-2 rounded-xl border border-[#E1E5EA] dark:border-[#2C3440] bg-[#FAF3F3]/80 dark:bg-[#252C36] text-xs text-[#2B3542] dark:text-[#FAF3F3] focus:outline-none focus:ring-2 focus:ring-[#DA7F8F]/40"
               />
+              <datalist id="location-options-list">
+                {locations.map((loc) => (
+                  <option key={loc.id} value={loc.name} />
+                ))}
+              </datalist>
             </div>
 
             {/* Difficulty */}
             <div>
-              <label className="block text-xs font-bold text-[#452829] dark:text-[#F3E8DF] mb-1">
+              <label className="block text-xs font-bold text-[#2B3542] dark:text-[#FAF3F3] mb-1">
                 {t('form.difficultyLabel')}
               </label>
               <select
                 name="difficulty"
                 value={formData.difficulty}
                 onChange={handleInputChange}
-                className="w-full px-3.5 py-2 rounded-xl border border-[#DBC4B6] dark:border-[#57595B]/40 bg-[#EFE4DC]/40 dark:bg-[#3F2728]/40 text-xs text-[#452829] dark:text-[#F3E8DF] focus:outline-none focus:ring-2 focus:ring-[#452829] cursor-pointer"
+                className="w-full px-3.5 py-2 rounded-xl border border-[#E1E5EA] dark:border-[#2C3440] bg-[#FAF3F3]/80 dark:bg-[#252C36] text-xs text-[#2B3542] dark:text-[#FAF3F3] focus:outline-none focus:ring-2 focus:ring-[#DA7F8F]/40 cursor-pointer"
               >
-                <option value="Mudah">Mudah (Easy)</option>
-                <option value="Sedang">Sedang (Moderate)</option>
-                <option value="Sulit">Sulit (Hard)</option>
-                <option value="Ekstrem">Ekstrem (Extreme)</option>
+                {difficultyLevels.map((d) => (
+                  <option key={d.id} value={d.label}>
+                    {d.label}
+                  </option>
+                ))}
               </select>
             </div>
 
             {/* Distance */}
             <div>
-              <label className="block text-xs font-bold text-[#452829] dark:text-[#F3E8DF] mb-1">
+              <label className="block text-xs font-bold text-[#2B3542] dark:text-[#FAF3F3] mb-1">
                 {t('form.distanceLabel')} *
               </label>
               <input
@@ -315,13 +328,13 @@ export default function ManageTrail() {
                 value={formData.distance_km}
                 onChange={handleInputChange}
                 placeholder={t('form.distancePlaceholder')}
-                className="w-full px-3.5 py-2 rounded-xl border border-[#DBC4B6] dark:border-[#57595B]/40 bg-[#EFE4DC]/40 dark:bg-[#3F2728]/40 text-xs text-[#452829] dark:text-[#F3E8DF] focus:outline-none focus:ring-2 focus:ring-[#452829]"
+                className="w-full px-3.5 py-2 rounded-xl border border-[#E1E5EA] dark:border-[#2C3440] bg-[#FAF3F3]/80 dark:bg-[#252C36] text-xs text-[#2B3542] dark:text-[#FAF3F3] focus:outline-none focus:ring-2 focus:ring-[#DA7F8F]/40"
               />
             </div>
 
             {/* Elevation */}
             <div>
-              <label className="block text-xs font-bold text-[#452829] dark:text-[#F3E8DF] mb-1">
+              <label className="block text-xs font-bold text-[#2B3542] dark:text-[#FAF3F3] mb-1">
                 {t('form.elevationLabel')} *
               </label>
               <input
@@ -330,13 +343,13 @@ export default function ManageTrail() {
                 value={formData.elevation_m}
                 onChange={handleInputChange}
                 placeholder={t('form.elevationPlaceholder')}
-                className="w-full px-3.5 py-2 rounded-xl border border-[#DBC4B6] dark:border-[#57595B]/40 bg-[#EFE4DC]/40 dark:bg-[#3F2728]/40 text-xs text-[#452829] dark:text-[#F3E8DF] focus:outline-none focus:ring-2 focus:ring-[#452829]"
+                className="w-full px-3.5 py-2 rounded-xl border border-[#E1E5EA] dark:border-[#2C3440] bg-[#FAF3F3]/80 dark:bg-[#252C36] text-xs text-[#2B3542] dark:text-[#FAF3F3] focus:outline-none focus:ring-2 focus:ring-[#DA7F8F]/40"
               />
             </div>
 
             {/* Estimated Time */}
             <div>
-              <label className="block text-xs font-bold text-[#452829] dark:text-[#F3E8DF] mb-1">
+              <label className="block text-xs font-bold text-[#2B3542] dark:text-[#FAF3F3] mb-1">
                 Estimasi Waktu Pendakian
               </label>
               <input
@@ -345,29 +358,29 @@ export default function ManageTrail() {
                 value={formData.estimated_time}
                 onChange={handleInputChange}
                 placeholder="Contoh: 6-7 Jam"
-                className="w-full px-3.5 py-2 rounded-xl border border-[#DBC4B6] dark:border-[#57595B]/40 bg-[#EFE4DC]/40 dark:bg-[#3F2728]/40 text-xs text-[#452829] dark:text-[#F3E8DF] focus:outline-none focus:ring-2 focus:ring-[#452829]"
+                className="w-full px-3.5 py-2 rounded-xl border border-[#E1E5EA] dark:border-[#2C3440] bg-[#FAF3F3]/80 dark:bg-[#252C36] text-xs text-[#2B3542] dark:text-[#FAF3F3] focus:outline-none focus:ring-2 focus:ring-[#DA7F8F]/40"
               />
             </div>
 
           </div>
 
           {/* Image Selection & Upload System Section */}
-          <div className="space-y-3 p-4 rounded-2xl bg-[#EFE4DC]/50 dark:bg-[#3F2728]/40 border border-[#DBC4B6]/50 dark:border-[#57595B]/30">
+          <div className="space-y-3 p-4 rounded-2xl bg-[#FAF3F3] dark:bg-[#252C36] border border-[#E1E5EA] dark:border-[#2C3440]">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <label className="block text-xs font-bold text-[#452829] dark:text-[#F3E8DF] flex items-center gap-1.5">
-                <ImageIcon className="w-4 h-4 text-[#452829] dark:text-[#E8D1C5]" />
+              <label className="block text-xs font-bold text-[#2B3542] dark:text-[#FAF3F3] flex items-center gap-1.5">
+                <ImageIcon className="w-4 h-4 text-[#DA7F8F]" />
                 <span>Foto Banner Jalur Pendakian</span>
               </label>
 
               {/* Image Input Mode Tabs */}
-              <div className="flex items-center gap-1 bg-white dark:bg-[#2D1C1D] p-1 rounded-xl border border-[#DBC4B6]/50 text-[11px] font-bold">
+              <div className="flex items-center gap-1 bg-white dark:bg-[#1C2129] p-1 rounded-xl border border-[#E1E5EA] dark:border-[#2C3440] text-[11px] font-bold">
                 <button
                   type="button"
                   onClick={() => setImageTab('upload')}
-                  className={`px-2.5 py-1 rounded-lg transition ${
+                  className={`px-2.5 py-1 rounded-lg transition cursor-pointer ${
                     imageTab === 'upload'
-                      ? 'bg-[#452829] text-[#F3E8DF] dark:bg-[#E8D1C5] dark:text-[#452829]'
-                      : 'text-[#57595B] dark:text-[#E8D1C5]'
+                      ? 'bg-[#DA7F8F] text-white'
+                      : 'text-[#6B7C8C] dark:text-[#A7BBC7]'
                   }`}
                 >
                   Unggah File
@@ -375,10 +388,10 @@ export default function ManageTrail() {
                 <button
                   type="button"
                   onClick={() => setImageTab('url')}
-                  className={`px-2.5 py-1 rounded-lg transition ${
+                  className={`px-2.5 py-1 rounded-lg transition cursor-pointer ${
                     imageTab === 'url'
-                      ? 'bg-[#452829] text-[#F3E8DF] dark:bg-[#E8D1C5] dark:text-[#452829]'
-                      : 'text-[#57595B] dark:text-[#E8D1C5]'
+                      ? 'bg-[#DA7F8F] text-white'
+                      : 'text-[#6B7C8C] dark:text-[#A7BBC7]'
                   }`}
                 >
                   URL Gambar
@@ -386,10 +399,10 @@ export default function ManageTrail() {
                 <button
                   type="button"
                   onClick={() => setImageTab('preset')}
-                  className={`px-2.5 py-1 rounded-lg transition ${
+                  className={`px-2.5 py-1 rounded-lg transition cursor-pointer ${
                     imageTab === 'preset'
-                      ? 'bg-[#452829] text-[#F3E8DF] dark:bg-[#E8D1C5] dark:text-[#452829]'
-                      : 'text-[#57595B] dark:text-[#E8D1C5]'
+                      ? 'bg-[#DA7F8F] text-white'
+                      : 'text-[#6B7C8C] dark:text-[#A7BBC7]'
                   }`}
                 >
                   Rekomendasi
@@ -400,12 +413,12 @@ export default function ManageTrail() {
             {/* Tab 1: Local File Upload */}
             {imageTab === 'upload' && (
               <div className="space-y-2">
-                <label className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-[#DBC4B6] dark:border-[#57595B] rounded-2xl bg-white dark:bg-[#2D1C1D] hover:bg-[#EFE4DC]/40 cursor-pointer transition text-center">
-                  <Upload className="w-7 h-7 text-[#452829] dark:text-[#E8D1C5] mb-1" />
-                  <span className="text-xs font-bold text-[#452829] dark:text-[#F3E8DF]">
+                <label className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-[#A7BBC7]/60 dark:border-[#2C3440] rounded-2xl bg-white dark:bg-[#1C2129] hover:bg-[#FAF3F3]/80 cursor-pointer transition text-center">
+                  <Upload className="w-7 h-7 text-[#DA7F8F] mb-1" />
+                  <span className="text-xs font-bold text-[#2B3542] dark:text-[#FAF3F3]">
                     Pilih File Gambar dari Perangkat Anda
                   </span>
-                  <span className="text-[11px] text-[#57595B] dark:text-[#E8D1C5] mt-0.5">
+                  <span className="text-[11px] text-[#6B7C8C] dark:text-[#A7BBC7] mt-0.5">
                     Format JPG, PNG, WebP (Maksimal 5 MB)
                   </span>
                   <input
@@ -421,14 +434,14 @@ export default function ManageTrail() {
             {/* Tab 2: Direct URL Input */}
             {imageTab === 'url' && (
               <div className="relative">
-                <LinkIcon className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#57595B] dark:text-[#E8D1C5]" />
+                <LinkIcon className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#A7BBC7]" />
                 <input
                   type="text"
                   name="image"
                   value={formData.image}
                   onChange={handleInputChange}
                   placeholder="https://images.unsplash.com/photo-..."
-                  className="w-full pl-10 pr-4 py-2 rounded-xl border border-[#DBC4B6] dark:border-[#57595B]/40 bg-white dark:bg-[#2D1C1D] text-xs text-[#452829] dark:text-[#F3E8DF] focus:outline-none focus:ring-2 focus:ring-[#452829]"
+                  className="w-full pl-10 pr-4 py-2 rounded-xl border border-[#E1E5EA] dark:border-[#2C3440] bg-white dark:bg-[#1C2129] text-xs text-[#2B3542] dark:text-[#FAF3F3] focus:outline-none focus:ring-2 focus:ring-[#DA7F8F]/40"
                 />
               </div>
             )}
@@ -443,8 +456,8 @@ export default function ManageTrail() {
                     onClick={() => handleSelectPresetImage(preset.url)}
                     className={`relative rounded-xl overflow-hidden h-16 border-2 transition text-left group ${
                       formData.image === preset.url
-                        ? 'border-[#452829] dark:border-[#E8D1C5] ring-2 ring-[#452829]'
-                        : 'border-transparent hover:border-[#DBC4B6]'
+                        ? 'border-[#DA7F8F] ring-2 ring-[#DA7F8F]'
+                        : 'border-transparent hover:border-[#A7BBC7]'
                     }`}
                   >
                     <img src={preset.url} alt={preset.name} className="w-full h-full object-cover group-hover:scale-105 transition" />
@@ -460,7 +473,7 @@ export default function ManageTrail() {
 
             {/* Live Image Preview Card */}
             {formData.image && (
-              <div className="relative rounded-2xl overflow-hidden border border-[#DBC4B6] dark:border-[#57595B]/40 h-32 sm:h-40 w-full group">
+              <div className="relative rounded-2xl overflow-hidden border border-[#E1E5EA] dark:border-[#2C3440] h-32 sm:h-40 w-full group">
                 <img
                   src={formData.image}
                   alt="Preview"
@@ -485,7 +498,7 @@ export default function ManageTrail() {
 
           {/* Description */}
           <div>
-            <label className="block text-xs font-bold text-[#452829] dark:text-[#F3E8DF] mb-1">
+            <label className="block text-xs font-bold text-[#2B3542] dark:text-[#FAF3F3] mb-1">
               {t('form.descLabel')}
             </label>
             <textarea
@@ -494,13 +507,13 @@ export default function ManageTrail() {
               value={formData.description}
               onChange={handleInputChange}
               placeholder={t('form.descPlaceholder')}
-              className="w-full px-3.5 py-2 rounded-xl border border-[#DBC4B6] dark:border-[#57595B]/40 bg-[#EFE4DC]/40 dark:bg-[#3F2728]/40 text-xs text-[#452829] dark:text-[#F3E8DF] focus:outline-none focus:ring-2 focus:ring-[#452829]"
+              className="w-full px-3.5 py-2 rounded-xl border border-[#E1E5EA] dark:border-[#2C3440] bg-[#FAF3F3]/80 dark:bg-[#252C36] text-xs text-[#2B3542] dark:text-[#FAF3F3] focus:outline-none focus:ring-2 focus:ring-[#DA7F8F]/40"
             />
           </div>
 
           {/* Coordinates JSON Raw */}
           <div>
-            <label className="block text-xs font-bold text-[#452829] dark:text-[#F3E8DF] mb-1">
+            <label className="block text-xs font-bold text-[#2B3542] dark:text-[#FAF3F3] mb-1">
               {t('form.coordinatesLabel')}
             </label>
             <textarea
@@ -509,7 +522,7 @@ export default function ManageTrail() {
               value={formData.coordinatesRaw}
               onChange={handleInputChange}
               placeholder={t('form.coordinatesPlaceholder')}
-              className="w-full px-3.5 py-2 rounded-xl border border-[#DBC4B6] dark:border-[#57595B]/40 bg-[#EFE4DC]/40 dark:bg-[#3F2728]/40 text-xs font-mono text-[#452829] dark:text-[#F3E8DF] focus:outline-none focus:ring-2 focus:ring-[#452829]"
+              className="w-full px-3.5 py-2 rounded-xl border border-[#E1E5EA] dark:border-[#2C3440] bg-[#FAF3F3]/80 dark:bg-[#252C36] text-xs font-mono text-[#2B3542] dark:text-[#FAF3F3] focus:outline-none focus:ring-2 focus:ring-[#DA7F8F]/40"
             />
           </div>
 
@@ -517,7 +530,7 @@ export default function ManageTrail() {
           <div className="flex items-center gap-3 pt-2">
             <button
               type="submit"
-              className="px-6 py-2.5 rounded-xl bg-[#452829] text-[#F3E8DF] hover:bg-[#341e1f] dark:bg-[#E8D1C5] dark:text-[#452829] font-bold shadow-md transition-all duration-200 active:scale-95 flex items-center gap-2 cursor-pointer text-xs"
+              className="px-6 py-2.5 rounded-xl bg-[#DA7F8F] text-white hover:bg-[#c96c7d] font-bold shadow-md transition-all duration-200 active:scale-95 flex items-center gap-2 cursor-pointer text-xs"
             >
               <Save className="w-4 h-4" />
               <span>{editId ? t('btn.save') : t('btn.add')}</span>
@@ -527,7 +540,7 @@ export default function ManageTrail() {
               <button
                 type="button"
                 onClick={resetForm}
-                className="px-4 py-2.5 rounded-xl border border-[#DBC4B6] dark:border-[#57595B]/40 text-[#452829] dark:text-[#E8D1C5] text-xs font-semibold hover:bg-[#EFE4DC] dark:hover:bg-[#3F2728] cursor-pointer"
+                className="px-4 py-2.5 rounded-xl border border-[#E1E5EA] dark:border-[#2C3440] text-[#2B3542] dark:text-[#FAF3F3] text-xs font-semibold hover:bg-[#FAF3F3] dark:hover:bg-[#252C36] cursor-pointer"
               >
                 {t('btn.cancel')}
               </button>
@@ -537,15 +550,15 @@ export default function ManageTrail() {
       </div>
 
       {/* Existing Trails Table */}
-      <div className="bg-white dark:bg-[#2D1C1D] rounded-3xl p-6 shadow-lg border border-[#DBC4B6] dark:border-[#57595B]/40 space-y-4">
-        <h2 className="text-xl font-bold text-[#452829] dark:text-[#F3E8DF]">
+      <div className="bg-white/90 dark:bg-[#1C2129] rounded-3xl p-6 shadow-lg border border-[#E1E5EA] dark:border-[#2C3440] space-y-4">
+        <h2 className="text-xl font-bold text-[#2B3542] dark:text-[#FAF3F3]">
           Daftar Jalur Pendakian Terdaftar ({trails.length})
         </h2>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
-              <tr className="border-b border-[#DBC4B6] dark:border-[#57595B]/40 text-[#57595B] dark:text-[#E8D1C5]">
+              <tr className="border-b border-[#E1E5EA] dark:border-[#2C3440] text-[#6B7C8C] dark:text-[#A7BBC7]">
                 <th className="py-3 px-3">Foto</th>
                 <th className="py-3 px-3">Nama Jalur</th>
                 <th className="py-3 px-3">Lokasi</th>
@@ -555,44 +568,44 @@ export default function ManageTrail() {
                 <th className="py-3 px-3 text-right">Aksi</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#DBC4B6]/40 dark:divide-[#57595B]/30">
+            <tbody className="divide-y divide-[#E1E5EA] dark:divide-[#2C3440]">
               {trails.map((tItem) => (
-                <tr key={tItem.id} className="hover:bg-[#EFE4DC]/50 dark:hover:bg-[#3F2728]/50 transition">
+                <tr key={tItem.id} className="hover:bg-[#FAF3F3] dark:hover:bg-[#252C36] transition">
                   <td className="py-2.5 px-3">
                     <img
                       src={tItem.image || 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?q=80&w=1000&auto=format&fit=crop'}
                       alt={tItem.name}
-                      className="w-10 h-10 rounded-xl object-cover border border-[#DBC4B6]"
+                      className="w-10 h-10 rounded-xl object-cover border border-[#E1E5EA]"
                     />
                   </td>
-                  <td className="py-3 px-3 font-bold text-[#452829] dark:text-[#F3E8DF]">
+                  <td className="py-3 px-3 font-bold text-[#2B3542] dark:text-[#FAF3F3]">
                     {tItem.name}
                   </td>
-                  <td className="py-3 px-3 text-[#57595B] dark:text-[#E8D1C5]">
+                  <td className="py-3 px-3 text-[#6B7C8C] dark:text-[#A7BBC7]">
                     {tItem.location}
                   </td>
                   <td className="py-3 px-3">
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#EFE4DC] text-[#452829] dark:bg-[#3F2728] dark:text-[#E8D1C5]">
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#E1E5EA] text-[#2B3542] dark:bg-[#252C36] dark:text-[#FAF3F3]">
                       {tItem.difficulty}
                     </span>
                   </td>
-                  <td className="py-3 px-3 text-[#57595B] dark:text-[#E8D1C5]">
+                  <td className="py-3 px-3 text-[#6B7C8C] dark:text-[#A7BBC7]">
                     {tItem.distance_km} km
                   </td>
-                  <td className="py-3 px-3 text-[#57595B] dark:text-[#E8D1C5]">
+                  <td className="py-3 px-3 text-[#6B7C8C] dark:text-[#A7BBC7]">
                     {tItem.elevation_m} mdpl
                   </td>
                   <td className="py-3 px-3 text-right space-x-1">
                     <button
                       onClick={() => handleEditClick(tItem)}
-                      className="p-1.5 rounded-lg bg-[#EFE4DC] text-amber-700 dark:bg-[#3F2728] dark:text-amber-400 hover:bg-amber-100 cursor-pointer"
+                      className="p-1.5 rounded-lg bg-[#E1E5EA] text-[#DA7F8F] dark:bg-[#252C36] hover:bg-[#A7BBC7]/30 cursor-pointer"
                       title="Edit"
                     >
                       <Edit className="w-3.5 h-3.5" />
                     </button>
                     <button
                       onClick={() => handleDeleteClick(tItem.id)}
-                      className="p-1.5 rounded-lg bg-[#EFE4DC] text-rose-700 dark:bg-[#3F2728] dark:text-rose-400 hover:bg-rose-100 cursor-pointer"
+                      className="p-1.5 rounded-lg bg-[#E1E5EA] text-rose-600 dark:bg-[#252C36] dark:text-rose-400 hover:bg-rose-100 cursor-pointer"
                       title="Hapus"
                     >
                       <Trash2 className="w-3.5 h-3.5" />

@@ -1,18 +1,21 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Compass, Navigation, Users, Calendar, ArrowRight, Mountain, Trophy, ChevronLeft, ChevronRight, MapPin } from 'lucide-react';
+import { Compass, Navigation, Users, Calendar, ArrowRight, Mountain, Trophy, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useTrail } from '../context/TrailContext';
 import { useLanguage } from '../context/LanguageContext';
 import TrailCard from '../components/TrailCard';
+import PastRaceCard from '../components/PastRaceCard';
+import UpcomingRaceSection from '../components/UpcomingRaceSection';
+import { pastRaces } from '../data/pastRacesData';
 import heroBromo from '../assets/hero-bromo.jpg';
 
+
 export default function Home() {
-  const { trails, events, joinEvent, leaveEvent } = useTrail();
+  const { trails } = useTrail();
   const { t } = useLanguage();
   const navigate = useNavigate();
 
-  const featuredTrails = trails.slice(0, 3);
-  const upcomingEvents = events.slice(0, 3);
+
 
   // Background Hero Slides derived from mountain photos
   const heroSlides = [
@@ -58,288 +61,249 @@ export default function Home() {
     navigate(`/trails/${trail.id}`);
   };
 
+  const sectionRef = useRef(null);
+  const [scrollProgress, setScrollProgress] = useState(0);
+
+  // Reset scroll to top when page mounts
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (!sectionRef.current) return;
+      const rect = sectionRef.current.getBoundingClientRect();
+      const windowHeight = window.innerHeight;
+
+      // Titik tengah dari section (Jalur Pendakian Populer)
+      const sectionCenter = rect.top + (rect.height / 2);
+      // Titik tengah dari layar (viewport)
+      const viewportCenter = windowHeight / 2;
+
+      // Hitung jarak absolut antara tengah section dengan tengah layar
+      const distance = Math.abs(sectionCenter - viewportCenter);
+
+      // Jarak toleransi (zona aman) di mana kartu akan sejajar rapi (progress = 0)
+      const safeZone = 100; // px
+      // Jarak maksimal di mana kartu akan menumpuk penuh (progress = 1)
+      const maxDistance = windowHeight * 0.6; 
+
+      if (distance <= safeZone) {
+        // Jika section ada persis di tengah-tengah layar (zona aman), kartu tidak menumpuk sama sekali
+        setScrollProgress(0);
+      } else if (distance >= maxDistance) {
+        // Jika section terlalu jauh di atas atau di bawah layar, tumpuk maksimal
+        setScrollProgress(1);
+      } else {
+        // Semakin menjauh dari zona aman, semakin menumpuk
+        const progress = (distance - safeZone) / (maxDistance - safeZone);
+        setScrollProgress(progress);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   return (
-    <div className="space-y-12 pb-12 text-[#452829] dark:text-[#F3E8DF]">
+    <div className="-mt-6 space-y-12 pb-12 text-[#2B3542] dark:text-[#FAF3F3]">
       
-      {/* 1. Proportional Hero Banner (AllTrails Inspired) */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6">
-        <section className="relative overflow-hidden rounded-3xl bg-[#2D1C1D] text-white shadow-xl border border-[#DBC4B6]/40 dark:border-[#57595B]/40 h-[460px] md:h-[500px] max-h-[70vh] flex items-center justify-center group">
-          
-          {/* Background Images with Slow Motion Zoom Effect */}
-          {heroSlides.map((slide, index) => {
-            const isActive = index === activeSlide;
-            return (
-              <div
-                key={index}
-                className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
-                  isActive ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'
+      {/* 1. Immersive Full-Screen Edge-to-Edge Hero Banner */}
+      <section className="relative w-screen left-1/2 right-1/2 -mx-[50vw] h-[calc(100vh-64px)] flex flex-col justify-between overflow-hidden px-6 md:px-12 py-4 text-white shadow-2xl">
+        {/* Background image & overlays */}
+        {heroSlides.map((slide, index) => {
+          const isActive = index === activeSlide;
+          return (
+            <div
+              key={index}
+              className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
+                isActive ? 'opacity-100 z-0' : 'opacity-0 -z-10 pointer-events-none'
+              }`}
+            >
+              <img
+                src={slide.image}
+                alt={slide.peak}
+                className={`w-full h-full object-cover transition-transform duration-[8000ms] ease-out transform ${
+                  isActive ? 'scale-105' : 'scale-100'
                 }`}
+              />
+            </div>
+          );
+        })}
+        <div className="absolute inset-0 bg-gradient-to-t from-stone-950 via-stone-950/60 to-stone-950/30 z-0" />
+
+        {/* Carousel Arrow Controls */}
+        <button
+          type="button"
+          onClick={handlePrevSlide}
+          className="absolute left-4 top-1/2 -translate-y-1/2 z-30 p-2.5 rounded-full bg-black/40 backdrop-blur-md border border-white/20 text-white hover:bg-white/25 hover:scale-105 active:scale-95 transition-all cursor-pointer"
+          title="Slide Sebelumnya"
+        >
+          <ChevronLeft className="w-5 h-5" />
+        </button>
+        <button
+          type="button"
+          onClick={handleNextSlide}
+          className="absolute right-4 top-1/2 -translate-y-1/2 z-30 p-2.5 rounded-full bg-black/40 backdrop-blur-md border border-white/20 text-white hover:bg-white/25 hover:scale-105 active:scale-95 transition-all cursor-pointer"
+          title="Slide Selanjutnya"
+        >
+          <ChevronRight className="w-5 h-5" />
+        </button>
+        
+        {/* Top Content (Hero Text & CTA) */}
+        <div className="relative z-10 flex flex-col items-center text-center mt-auto mb-auto max-w-3xl mx-auto">
+          <span className="text-[11px] py-0.5 px-3 mb-1 rounded-full bg-white/10 backdrop-blur-md border border-white/20 font-bold uppercase tracking-[0.2em]">
+            {t('home.badge')}
+          </span>
+          <h1 className="text-2xl md:text-4xl lg:text-5xl font-black leading-tight drop-shadow-lg text-white">
+            {t('home.heroTitlePrefix')} <span className="text-rose-400">GiriTrack</span>
+          </h1>
+          <p className="text-xs md:text-sm text-stone-200 max-w-lg mt-1 mb-3 text-center leading-relaxed drop-shadow">
+            {t('home.heroDesc')}
+          </p>
+          
+          <div className="flex flex-col sm:flex-row items-center gap-3">
+            <Link
+              to="/trails"
+              className="py-2 px-4 text-xs font-semibold rounded-full bg-rose-600 hover:bg-rose-500 text-white uppercase tracking-wider shadow-[0_0_20px_rgba(225,29,72,0.4)] transition-all duration-300 hover:scale-105 flex items-center gap-2"
+            >
+              <Compass className="w-4 h-4" />
+              <span>{t('home.btnExplore')}</span>
+            </Link>
+            <Link
+              to="/tracker"
+              className="py-2 px-4 text-xs font-semibold rounded-full bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 text-white uppercase tracking-wider transition-all duration-300 hover:scale-105 flex items-center gap-2"
+            >
+              <Navigation className="w-4 h-4 text-rose-300" />
+              <span>{t('home.btnTracker')}</span>
+            </Link>
+          </div>
+          
+          {/* Slide Indicators */}
+          <div className="flex items-center justify-center gap-1.5 my-1 mt-4">
+            {heroSlides.map((_, idx) => (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => setActiveSlide(idx)}
+                className={`h-1 rounded-full transition-all duration-300 cursor-pointer ${
+                  idx === activeSlide ? 'w-6 bg-rose-500' : 'w-1.5 bg-white/40 hover:bg-white/70'
+                }`}
+                title={`Pindah ke slide ${idx + 1}`}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Bottom Content (Stats Cards) */}
+        <div className="relative z-10 grid grid-cols-2 md:grid-cols-4 gap-3 w-full max-w-5xl mx-auto pb-2">
+          <div className="bg-stone-950/40 backdrop-blur-md border border-white/10 rounded-xl p-2.5 flex items-center gap-2.5 transition-transform hover:-translate-y-1">
+            <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-rose-400 shrink-0">
+              <Compass className="w-4 h-4" />
+            </div>
+            <div>
+              <p className="text-base md:text-lg font-bold text-white leading-none">{trails.length}+</p>
+              <p className="text-[10px] text-stone-300 mt-1 uppercase tracking-wide leading-tight">{t('home.stats.trails')}</p>
+            </div>
+          </div>
+
+          <div className="bg-stone-950/40 backdrop-blur-md border border-white/10 rounded-xl p-2.5 flex items-center gap-2.5 transition-transform hover:-translate-y-1">
+            <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-amber-400 shrink-0">
+              <Calendar className="w-4 h-4" />
+            </div>
+            <div>
+              <p className="text-base md:text-lg font-bold text-white leading-none">3+</p>
+              <p className="text-[10px] text-stone-300 mt-1 uppercase tracking-wide leading-tight">{t('home.stats.races')}</p>
+            </div>
+          </div>
+
+          <div className="bg-stone-950/40 backdrop-blur-md border border-white/10 rounded-xl p-2.5 flex items-center gap-2.5 transition-transform hover:-translate-y-1">
+            <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-emerald-400 shrink-0">
+              <Users className="w-4 h-4" />
+            </div>
+            <div>
+              <p className="text-base md:text-lg font-bold text-white leading-none">1,250+</p>
+              <p className="text-[10px] text-stone-300 mt-1 uppercase tracking-wide leading-tight">{t('home.stats.community')}</p>
+            </div>
+          </div>
+
+          <div className="bg-stone-950/40 backdrop-blur-md border border-white/10 rounded-xl p-2.5 flex items-center gap-2.5 transition-transform hover:-translate-y-1">
+            <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-blue-400 shrink-0">
+              <Trophy className="w-4 h-4" />
+            </div>
+            <div>
+              <p className="text-base md:text-lg font-bold text-white leading-none">100%</p>
+              <p className="text-[10px] text-stone-300 mt-1 uppercase tracking-wide leading-tight">{t('home.stats.local')}</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 3. Past Events Recap Section */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+          <div>
+            <div className="inline-block px-2.5 py-1 mb-2 text-[10px] font-bold tracking-widest text-[#DA7F8F] bg-[#DA7F8F]/10 rounded-full border border-[#DA7F8F]/20">
+              {t('home.pastBadge')}
+            </div>
+            <h2 className="text-2xl font-bold text-[#2B3542] dark:text-[#FAF3F3] flex items-center gap-2">
+              <Mountain className="w-6 h-6 text-[#DA7F8F]" />
+              <span>{t('home.pastTitle')}</span>
+            </h2>
+            <p className="text-xs text-[#6B7C8C] dark:text-[#A7BBC7] mt-1 max-w-xl">
+              {t('home.pastSubtitle')}
+            </p>
+          </div>
+          <Link
+            to="/races"
+            className="text-xs font-bold text-[#DA7F8F] hover:underline flex items-center gap-1 cursor-pointer shrink-0"
+          >
+            <span>{t('btn.viewGallery')}</span>
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
+
+        <div 
+          ref={sectionRef}
+          className="flex flex-col lg:flex-row justify-center items-center lg:items-stretch py-8 min-h-[400px]"
+        >
+          {pastRaces.map((race, index) => {
+            const isStacked = scrollProgress > 0.4;
+            const baseGap = 24; 
+            const maxOverlap = -160; 
+            const currentOffset = index === 0 ? 0 : baseGap - (scrollProgress * (baseGap - maxOverlap));
+
+            return (
+              <div 
+                key={race.id}
+                style={{
+                  marginLeft: index > 0 ? `${currentOffset}px` : '0px',
+                  zIndex: 10 + index, 
+                  transform: scrollProgress > 0
+                    ? `scale(${1 - ((1 - scrollProgress) * 0.03 * (pastRaces.length - 1 - index))})`
+                    : 'scale(1)',
+                }}
+                className={`
+                  relative w-full sm:w-[300px] shrink-0
+                  transition-all duration-500 ease-out h-[400px]
+                  ${isStacked ? 'hover:-translate-y-6 hover:scale-105 hover:z-50 hover:shadow-2xl cursor-pointer' : ''}
+                `}
               >
-                <img
-                  src={slide.image}
-                  alt={slide.peak}
-                  className={`w-full h-full object-cover transition-transform duration-[8000ms] ease-out transform ${
-                    isActive ? 'scale-105' : 'scale-100'
-                  }`}
+                <PastRaceCard
+                  race={race}
+                  index={index}
                 />
-                {/* Proportional Dark Overlay Gradients for Perfect Text Contrast */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
-                <div className="absolute inset-0 bg-black/20 mix-blend-multiply" />
               </div>
             );
           })}
-
-          {/* Hero Content Overlay */}
-          <div className="relative z-20 max-w-3xl mx-auto px-6 py-8 flex flex-col items-center text-center space-y-4">
-            
-            {/* Top Location Tag */}
-            <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/30 text-[#F3E8DF] text-xs font-semibold uppercase tracking-wider shadow-sm transition-all duration-300">
-              <MapPin className="w-3.5 h-3.5 text-emerald-400" />
-              <span>{heroSlides[activeSlide].location}</span>
-            </div>
-
-            {/* Main Title */}
-            <h1 className="text-3xl md:text-5xl font-black text-white leading-tight max-w-2xl mx-auto drop-shadow-md">
-              Jelajahi Keindahan Gunung Bersama <span className="text-[#E8D1C5] underline decoration-[#2C6E49]/60 underline-offset-4">GiriTrack</span>
-            </h1>
-
-            {/* Subtitle / Description */}
-            <p className="text-sm md:text-base text-slate-200 max-w-xl mx-auto line-clamp-2 mt-2 font-normal drop-shadow">
-              {heroSlides[activeSlide].subtitle}
-            </p>
-
-            {/* Hero CTA Action Buttons (Frosted Glass & Solid Nature Accents) */}
-            <div className="flex flex-wrap items-center justify-center gap-3 pt-3">
-              <Link
-                to="/trails"
-                className="px-5 py-2.5 rounded-full bg-[#2C6E49] hover:bg-[#23583a] text-white font-bold shadow-lg transition-all duration-200 hover:scale-105 active:scale-95 flex items-center gap-2 text-xs md:text-sm cursor-pointer"
-              >
-                <Compass className="w-4 h-4 text-white" />
-                <span>Eksplor Jalur Pendakian</span>
-              </Link>
-              
-              <Link
-                to="/tracker"
-                className="px-5 py-2.5 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/40 text-white font-semibold transition-all duration-200 hover:scale-105 active:scale-95 flex items-center gap-2 text-xs md:text-sm cursor-pointer shadow-md"
-              >
-                <Navigation className="w-4 h-4 text-[#E8D1C5]" />
-                <span>Mulai Pelacak GPS</span>
-              </Link>
-            </div>
-          </div>
-
-          {/* Carousel Arrow Controls */}
-          <button
-            type="button"
-            onClick={handlePrevSlide}
-            className="absolute left-4 top-1/2 -translate-y-1/2 z-30 p-2 rounded-full bg-black/40 backdrop-blur-md border border-white/20 text-white hover:bg-white/25 hover:scale-105 active:scale-95 transition-all opacity-0 group-hover:opacity-100 cursor-pointer"
-            title="Slide Sebelumnya"
-          >
-            <ChevronLeft className="w-5 h-5" />
-          </button>
-
-          <button
-            type="button"
-            onClick={handleNextSlide}
-            className="absolute right-4 top-1/2 -translate-y-1/2 z-30 p-2 rounded-full bg-black/40 backdrop-blur-md border border-white/20 text-white hover:bg-white/25 hover:scale-105 active:scale-95 transition-all opacity-0 group-hover:opacity-100 cursor-pointer"
-            title="Slide Selanjutnya"
-          >
-            <ChevronRight className="w-5 h-5" />
-          </button>
-
-          {/* Slide Indicators & Peak Title Pill */}
-          <div className="absolute bottom-4 left-0 right-0 z-30 flex flex-col items-center gap-2 pointer-events-auto">
-            <span className="text-[11px] font-medium text-stone-200 backdrop-blur-md bg-black/40 px-3 py-0.5 rounded-full border border-white/20 shadow-sm">
-              {heroSlides[activeSlide].peak}
-            </span>
-            <div className="flex items-center justify-center gap-1.5">
-              {heroSlides.map((_, idx) => (
-                <button
-                  key={idx}
-                  type="button"
-                  onClick={() => setActiveSlide(idx)}
-                  className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
-                    idx === activeSlide ? 'w-6 bg-[#2C6E49] dark:bg-[#E8D1C5]' : 'w-2 bg-white/40 hover:bg-white/70'
-                  }`}
-                  title={`Pindah ke slide ${idx + 1}`}
-                />
-              ))}
-            </div>
-          </div>
-
-        </section>
-      </div>
-
-      {/* 2. Community Statistics */}
-      <section className="grid grid-cols-2 lg:grid-cols-4 gap-4 max-w-7xl mx-auto px-4 sm:px-6">
-        <div className="p-5 rounded-2xl bg-white dark:bg-[#2D1C1D] border border-[#DBC4B6] dark:border-[#57595B]/40 shadow-sm flex items-center gap-4">
-          <div className="p-3 rounded-2xl bg-emerald-50 text-[#2C6E49] dark:bg-[#3F2728] dark:text-[#E8D1C5] shrink-0">
-            <Compass className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-2xl font-black text-[#1E293B] dark:text-[#F3E8DF]">{trails.length}+</p>
-            <p className="text-xs text-[#57595B] dark:text-[#E8D1C5] font-medium">Jalur Pendakian Terdata</p>
-          </div>
-        </div>
-
-        <div className="p-5 rounded-2xl bg-white dark:bg-[#2D1C1D] border border-[#DBC4B6] dark:border-[#57595B]/40 shadow-sm flex items-center gap-4">
-          <div className="p-3 rounded-2xl bg-emerald-50 text-[#2C6E49] dark:bg-[#3F2728] dark:text-[#E8D1C5] shrink-0">
-            <Calendar className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-2xl font-black text-[#1E293B] dark:text-[#F3E8DF]">{events.length}</p>
-            <p className="text-xs text-[#57595B] dark:text-[#E8D1C5] font-medium">Event Tektok Terjadwal</p>
-          </div>
-        </div>
-
-        <div className="p-5 rounded-2xl bg-white dark:bg-[#2D1C1D] border border-[#DBC4B6] dark:border-[#57595B]/40 shadow-sm flex items-center gap-4">
-          <div className="p-3 rounded-2xl bg-emerald-50 text-[#2C6E49] dark:bg-[#3F2728] dark:text-[#E8D1C5] shrink-0">
-            <Users className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-2xl font-black text-[#1E293B] dark:text-[#F3E8DF]">1,250+</p>
-            <p className="text-xs text-[#57595B] dark:text-[#E8D1C5] font-medium">Pendaki Komunitas</p>
-          </div>
-        </div>
-
-        <div className="p-5 rounded-2xl bg-white dark:bg-[#2D1C1D] border border-[#DBC4B6] dark:border-[#57595B]/40 shadow-sm flex items-center gap-4">
-          <div className="p-3 rounded-2xl bg-emerald-50 text-[#2C6E49] dark:bg-[#3F2728] dark:text-[#E8D1C5] shrink-0">
-            <Trophy className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-2xl font-black text-[#1E293B] dark:text-[#F3E8DF]">100%</p>
-            <p className="text-xs text-[#57595B] dark:text-[#E8D1C5] font-medium">Lokal & Tanpa Server</p>
-          </div>
         </div>
       </section>
 
-      {/* 3. Featured Trails Section */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-          <div>
-            <h2 className="text-2xl font-bold text-[#1E293B] dark:text-[#F3E8DF] flex items-center gap-2">
-              <Mountain className="w-6 h-6 text-[#2C6E49] dark:text-[#E8D1C5]" />
-              <span>Jalur Pendakian Populer</span>
-            </h2>
-            <p className="text-xs text-[#57595B] dark:text-[#E8D1C5] mt-1">
-              Rekomendasi jalur muncak favorit pendaki Indonesia dengan estimasi teknis lengkap.
-            </p>
-          </div>
-          <Link
-            to="/trails"
-            className="text-xs font-bold text-[#2C6E49] hover:underline dark:text-[#E8D1C5] flex items-center gap-1 cursor-pointer"
-          >
-            <span>Lihat Semua Jalur</span>
-            <ArrowRight className="w-4 h-4" />
-          </Link>
-        </div>
+      {/* 4. Upcoming Race Series Section */}
+      <UpcomingRaceSection />
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {featuredTrails.map((trail) => (
-            <TrailCard
-              key={trail.id}
-              trail={trail}
-              onDetail={handleTrailDetail}
-            />
-          ))}
-        </div>
-      </section>
 
-      {/* 4. Upcoming Tektok Events */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-          <div>
-            <h2 className="text-2xl font-bold text-[#1E293B] dark:text-[#F3E8DF] flex items-center gap-2">
-              <Calendar className="w-6 h-6 text-[#2C6E49] dark:text-[#E8D1C5]" />
-              <span>Agenda Event Tektok Terdekat</span>
-            </h2>
-            <p className="text-xs text-[#57595B] dark:text-[#E8D1C5] mt-1">
-              Muncak sehari tanpa nginep bersama pendaki tektok lainnya.
-            </p>
-          </div>
-          <Link
-            to="/events"
-            className="text-xs font-bold text-[#2C6E49] hover:underline dark:text-[#E8D1C5] flex items-center gap-1 cursor-pointer"
-          >
-            <span>Lihat Semua Event</span>
-            <ArrowRight className="w-4 h-4" />
-          </Link>
-        </div>
-
-        <div className="grid md:grid-cols-3 gap-6">
-          {upcomingEvents.map((evt) => (
-            <div
-              key={evt.id}
-              className="bg-white dark:bg-[#2D1C1D] rounded-2xl p-5 border border-[#DBC4B6] dark:border-[#57595B]/40 shadow-sm flex flex-col justify-between space-y-4"
-            >
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-[#57595B] dark:text-[#E8D1C5]">
-                    {evt.date}
-                  </span>
-                  <span
-                    className={`px-2.5 py-0.5 text-xs font-bold rounded-full ${
-                      evt.is_joined
-                        ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
-                        : evt.current_participants >= evt.max_quota
-                        ? 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300'
-                        : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
-                    }`}
-                  >
-                    {evt.is_joined
-                      ? t('event.statusJoined')
-                      : evt.current_participants >= evt.max_quota
-                      ? t('event.statusFull')
-                      : t('event.statusOpen')}
-                  </span>
-                </div>
-
-                <h3 className="font-bold text-lg text-[#1E293B] dark:text-[#F3E8DF]">
-                  {evt.name}
-                </h3>
-                <p className="text-xs text-[#57595B] dark:text-[#E8D1C5]">
-                  Target: <strong className="text-[#1E293B] dark:text-[#F3E8DF]">{evt.peak_target}</strong>
-                </p>
-                <p className="text-xs text-[#57595B] dark:text-[#E8D1C5]">
-                  Lead: {evt.organizer}
-                </p>
-              </div>
-
-              <div className="pt-3 border-t border-[#DBC4B6]/50 dark:border-[#57595B]/30 flex items-center justify-between">
-                <div className="text-xs font-semibold text-[#57595B] dark:text-[#E8D1C5]">
-                  <span>Partisipan: </span>
-                  <span className="font-bold text-[#1E293B] dark:text-[#F3E8DF]">
-                    {evt.current_participants}/{evt.max_quota}
-                  </span>
-                </div>
-
-                {evt.is_joined ? (
-                  <button
-                    type="button"
-                    onClick={() => leaveEvent(evt.id)}
-                    className="px-3 py-1.5 text-xs font-bold rounded-full bg-[#EFE4DC] text-rose-700 hover:bg-rose-100 dark:bg-[#3F2728] dark:text-rose-400 cursor-pointer transition"
-                  >
-                    {t('btn.leaveEvent')}
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => joinEvent(evt.id)}
-                    disabled={evt.current_participants >= evt.max_quota}
-                    className={`px-3.5 py-1.5 text-xs font-bold rounded-full transition ${
-                      evt.current_participants >= evt.max_quota
-                        ? 'bg-stone-200 text-stone-400 cursor-not-allowed dark:bg-[#3F2728] dark:text-stone-500'
-                        : 'bg-[#2C6E49] text-white hover:bg-[#23583a] dark:bg-[#E8D1C5] dark:text-[#452829] cursor-pointer'
-                    }`}
-                  >
-                    {t('btn.joinEvent')}
-                  </button>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
 
     </div>
   );

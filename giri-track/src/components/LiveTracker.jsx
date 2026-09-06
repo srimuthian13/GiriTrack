@@ -4,6 +4,9 @@ import L from 'leaflet';
 import { Play, Pause, Square, MapPin, Gauge, Clock, Navigation, CheckCircle2, AlertCircle, Map as MapIcon } from 'lucide-react';
 import { useTrail } from '../context/TrailContext';
 import { useLanguage } from '../context/LanguageContext';
+import { useNavigate } from 'react-router-dom';
+import { useToast } from '../context/ToastContext';
+import SaveActivityModal from './SaveActivityModal';
 import 'leaflet/dist/leaflet.css';
 
 // Leaflet custom marker icons
@@ -62,6 +65,7 @@ function LiveMapAutoPan({ currentPos, pathCoordinates }) {
 export default function LiveTracker({ selectedTrailId, onSessionComplete }) {
   const { trails, addHistoryRecord } = useTrail();
   const { t } = useLanguage();
+  const { showToast } = useToast();
 
   const [trackingState, setTrackingState] = useState('idle'); // 'idle' | 'active' | 'paused'
   const [durationSeconds, setDurationSeconds] = useState(0);
@@ -70,6 +74,9 @@ export default function LiveTracker({ selectedTrailId, onSessionComplete }) {
   const [pathCoordinates, setPathCoordinates] = useState([]);
   const [gpsError, setGpsError] = useState(null);
   const [saveSuccessMsg, setSaveSuccessMsg] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  const navigate = useNavigate();
 
   const watchIdRef = useRef(null);
   const timerIntervalRef = useRef(null);
@@ -94,6 +101,22 @@ export default function LiveTracker({ selectedTrailId, onSessionComplete }) {
   }, [trackingState]);
 
   useEffect(() => {
+    // Initial position fetch when opened
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setCurrentPos({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          });
+        },
+        (err) => {
+          console.warn('Initial GPS fetch failed:', err);
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
+    }
+
     return () => {
       if (watchIdRef.current !== null) {
         navigator.geolocation.clearWatch(watchIdRef.current);
@@ -168,24 +191,40 @@ export default function LiveTracker({ selectedTrailId, onSessionComplete }) {
     setTrackingState('idle');
 
     if (durationSeconds > 0 || distanceKm > 0) {
-      const avgSpeed = durationSeconds > 0 ? Number(((distanceKm / (durationSeconds / 3600))).toFixed(2)) : 0;
-
-      const record = {
-        trail_id: selectedTrail ? selectedTrail.id : null,
-        trail_name: selectedTrail ? selectedTrail.name : 'Jalur Bebas GPS',
-        duration_seconds: durationSeconds,
-        distance_km: distanceKm,
-        avg_speed_kmh: avgSpeed,
-        coordinates: pathCoordinates.length > 0 ? pathCoordinates : selectedTrail?.coordinates || [],
-      };
-
-      addHistoryRecord(record);
-      setSaveSuccessMsg(true);
-
-      if (onSessionComplete) {
-        onSessionComplete(record);
-      }
+      setIsModalOpen(true);
     }
+  };
+
+  const handleModalSave = (modalData) => {
+    setIsModalOpen(false);
+    
+    const avgSpeed = durationSeconds > 0 ? Number(((distanceKm / (durationSeconds / 3600))).toFixed(2)) : 0;
+
+    const record = {
+      id: 'act_' + Date.now(),
+      trail_id: selectedTrail ? selectedTrail.id : null,
+      trail_name: modalData.title,
+      duration_seconds: durationSeconds,
+      distance_km: distanceKm,
+      avg_speed_kmh: avgSpeed,
+      coordinates: pathCoordinates.length > 0 ? pathCoordinates : selectedTrail?.coordinates || [],
+      photos: modalData.photos,
+      notes: modalData.notes,
+      date: new Date().toISOString()
+    };
+
+    addHistoryRecord(record);
+    setSaveSuccessMsg(true);
+    showToast(`Aktivitas berhasil disimpan! 📍`, {
+      type: 'success',
+      title: 'Tersimpan',
+    });
+
+    if (onSessionComplete) {
+      onSessionComplete(record);
+    }
+
+    navigate('/history');
   };
 
   const handleReset = () => {
@@ -201,16 +240,16 @@ export default function LiveTracker({ selectedTrailId, onSessionComplete }) {
   const avgSpeed = durationSeconds > 0 ? ((distanceKm / (durationSeconds / 3600))).toFixed(1) : '0.0';
 
   return (
-    <div className="bg-white dark:bg-[#2D1C1D] rounded-3xl p-6 shadow-sm border border-[#DBC4B6] dark:border-[#57595B]/40 space-y-6 text-[#452829] dark:text-[#F3E8DF] transition-colors duration-200">
+    <div className="bg-white/90 dark:bg-[#1C2129] rounded-3xl p-6 shadow-sm border border-[#E1E5EA] dark:border-[#2C3440] space-y-6 text-[#2B3542] dark:text-[#FAF3F3] transition-colors duration-200">
       
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#DBC4B6]/60 dark:border-[#57595B]/40 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#E1E5EA] dark:border-[#2C3440] pb-4">
         <div>
-          <h2 className="text-xl font-bold text-[#452829] dark:text-[#F3E8DF] flex items-center gap-2">
-            <Navigation className="w-5 h-5 text-[#452829] dark:text-[#E8D1C5]" />
+          <h2 className="text-xl font-bold text-[#2B3542] dark:text-[#FAF3F3] flex items-center gap-2">
+            <Navigation className="w-5 h-5 text-[#DA7F8F]" />
             <span>{t('tracker.title')}</span>
           </h2>
-          <p className="text-xs text-[#57595B] dark:text-[#E8D1C5] mt-1">
+          <p className="text-xs text-[#6B7C8C] dark:text-[#A7BBC7] mt-1">
             {selectedTrail ? `Jalur Target: ${selectedTrail.name}` : t('tracker.subtitle')}
           </p>
         </div>
@@ -223,7 +262,7 @@ export default function LiveTracker({ selectedTrailId, onSessionComplete }) {
                 ? 'bg-emerald-100 text-emerald-900 border border-emerald-300 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800 animate-pulse'
                 : trackingState === 'paused'
                 ? 'bg-amber-100 text-amber-900 border border-amber-300 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-800'
-                : 'bg-[#EFE4DC] text-[#57595B] border border-[#DBC4B6] dark:bg-[#3F2728] dark:text-[#E8D1C5] dark:border-[#57595B]/40'
+                : 'bg-[#FAF3F3] text-[#6B7C8C] border border-[#E1E5EA] dark:bg-[#252C36] dark:text-[#A7BBC7] dark:border-[#2C3440]'
             }`}
           >
             <span
@@ -263,34 +302,34 @@ export default function LiveTracker({ selectedTrailId, onSessionComplete }) {
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
         
         {/* Hike Duration Box */}
-        <div className="p-4 rounded-2xl bg-[#EFE4DC] dark:bg-[#3F2728] text-[#452829] dark:text-[#F3E8DF] border border-[#DBC4B6]/60 dark:border-[#57595B]/30 flex flex-col items-center justify-center text-center">
-          <div className="flex items-center gap-1 text-xs font-semibold text-[#57595B] dark:text-[#E8D1C5] mb-1">
-            <Clock className="w-4 h-4 text-[#452829] dark:text-[#E8D1C5]" />
+        <div className="p-4 rounded-2xl bg-[#FAF3F3] dark:bg-[#252C36] text-[#2B3542] dark:text-[#FAF3F3] border border-[#E1E5EA] dark:border-[#2C3440] flex flex-col items-center justify-center text-center">
+          <div className="flex items-center gap-1 text-xs font-semibold text-[#6B7C8C] dark:text-[#A7BBC7] mb-1">
+            <Clock className="w-4 h-4 text-[#DA7F8F]" />
             <span>{t('tracker.duration')}</span>
           </div>
-          <span className="text-2xl font-black tracking-tight text-[#452829] dark:text-[#F3E8DF] font-mono">
+          <span className="text-2xl font-black tracking-tight text-[#2B3542] dark:text-[#FAF3F3] font-mono">
             {formatTime(durationSeconds)}
           </span>
         </div>
 
         {/* Distance Box */}
-        <div className="p-4 rounded-2xl bg-[#EFE4DC] dark:bg-[#3F2728] text-[#452829] dark:text-[#F3E8DF] border border-[#DBC4B6]/60 dark:border-[#57595B]/30 flex flex-col items-center justify-center text-center">
-          <div className="flex items-center gap-1 text-xs font-semibold text-[#57595B] dark:text-[#E8D1C5] mb-1">
-            <Navigation className="w-4 h-4 text-[#452829] dark:text-[#E8D1C5]" />
+        <div className="p-4 rounded-2xl bg-[#FAF3F3] dark:bg-[#252C36] text-[#2B3542] dark:text-[#FAF3F3] border border-[#E1E5EA] dark:border-[#2C3440] flex flex-col items-center justify-center text-center">
+          <div className="flex items-center gap-1 text-xs font-semibold text-[#6B7C8C] dark:text-[#A7BBC7] mb-1">
+            <Navigation className="w-4 h-4 text-[#DA7F8F]" />
             <span>{t('tracker.distance')}</span>
           </div>
-          <span className="text-2xl font-black tracking-tight text-[#452829] dark:text-[#F3E8DF]">
+          <span className="text-2xl font-black tracking-tight text-[#2B3542] dark:text-[#FAF3F3]">
             {distanceKm} <span className="text-xs font-normal">{t('common.km')}</span>
           </span>
         </div>
 
         {/* Speed Box */}
-        <div className="p-4 rounded-2xl bg-[#EFE4DC] dark:bg-[#3F2728] text-[#452829] dark:text-[#F3E8DF] border border-[#DBC4B6]/60 dark:border-[#57595B]/30 flex flex-col items-center justify-center text-center col-span-2 sm:col-span-1">
-          <div className="flex items-center gap-1 text-xs font-semibold text-[#57595B] dark:text-[#E8D1C5] mb-1">
-            <Gauge className="w-4 h-4 text-[#452829] dark:text-[#E8D1C5]" />
+        <div className="p-4 rounded-2xl bg-[#FAF3F3] dark:bg-[#252C36] text-[#2B3542] dark:text-[#FAF3F3] border border-[#E1E5EA] dark:border-[#2C3440] flex flex-col items-center justify-center text-center col-span-2 sm:col-span-1">
+          <div className="flex items-center gap-1 text-xs font-semibold text-[#6B7C8C] dark:text-[#A7BBC7] mb-1">
+            <Gauge className="w-4 h-4 text-[#DA7F8F]" />
             <span>{t('tracker.speed')}</span>
           </div>
-          <span className="text-2xl font-black tracking-tight text-[#452829] dark:text-[#F3E8DF]">
+          <span className="text-2xl font-black tracking-tight text-[#2B3542] dark:text-[#FAF3F3]">
             {avgSpeed} <span className="text-xs font-normal">{t('common.kmh')}</span>
           </span>
         </div>
@@ -298,17 +337,17 @@ export default function LiveTracker({ selectedTrailId, onSessionComplete }) {
 
       {/* Embedded Live Leaflet Map Container */}
       <div className="space-y-2">
-        <div className="flex items-center justify-between text-xs font-bold text-[#452829] dark:text-[#F3E8DF]">
+        <div className="flex items-center justify-between text-xs font-bold text-[#2B3542] dark:text-[#FAF3F3]">
           <span className="flex items-center gap-1.5">
-            <MapIcon className="w-4 h-4 text-[#452829] dark:text-[#E8D1C5]" />
+            <MapIcon className="w-4 h-4 text-[#DA7F8F]" />
             <span>{t('tracker.liveMapTitle')}</span>
           </span>
-          <span className="font-mono text-[11px] text-[#57595B] dark:text-[#E8D1C5]">
+          <span className="font-mono text-[11px] text-[#6B7C8C] dark:text-[#A7BBC7]">
             {pathCoordinates.length} Titik GPS Terekam
           </span>
         </div>
 
-        <div className="relative w-full h-[350px] sm:h-[400px] rounded-2xl overflow-hidden shadow-inner border border-[#DBC4B6] dark:border-[#57595B]/40 z-0">
+        <div className="relative w-full h-[350px] sm:h-[400px] rounded-2xl overflow-hidden shadow-inner border border-[#E1E5EA] dark:border-[#2C3440] z-0">
           <MapContainer
             center={currentPos ? [currentPos.lat, currentPos.lng] : defaultCenter}
             zoom={14}
@@ -327,7 +366,7 @@ export default function LiveTracker({ selectedTrailId, onSessionComplete }) {
               <Polyline
                 positions={pathCoordinates}
                 pathOptions={{
-                  color: '#2563eb', // Thick blue line
+                  color: '#DA7F8F', // Accent color
                   weight: 5,
                   opacity: 0.9,
                 }}
@@ -353,14 +392,14 @@ export default function LiveTracker({ selectedTrailId, onSessionComplete }) {
                 radius={9}
                 pathOptions={{
                   color: '#ffffff',
-                  fillColor: '#2563eb',
+                  fillColor: '#DA7F8F',
                   fillOpacity: 1,
                   weight: 3,
                 }}
               >
                 <Popup>
                   <div className="text-xs font-sans">
-                    <strong className="text-blue-600 block">Posisi Anda Saat Ini (Live)</strong>
+                    <strong className="text-[#DA7F8F] block">Posisi Anda Saat Ini (Live)</strong>
                     <span>{currentPos.lat.toFixed(5)}, {currentPos.lng.toFixed(5)}</span>
                   </div>
                 </Popup>
@@ -372,9 +411,9 @@ export default function LiveTracker({ selectedTrailId, onSessionComplete }) {
 
       {/* Current Position Display */}
       {currentPos && (
-        <div className="p-3 rounded-xl bg-[#EFE4DC]/60 dark:bg-[#3F2728]/50 text-xs flex items-center justify-between text-[#57595B] dark:text-[#E8D1C5] font-mono border border-[#DBC4B6]/50 dark:border-[#57595B]/30">
+        <div className="p-3 rounded-xl bg-[#FAF3F3] dark:bg-[#252C36] text-xs flex items-center justify-between text-[#6B7C8C] dark:text-[#A7BBC7] font-mono border border-[#E1E5EA] dark:border-[#2C3440]">
           <span className="flex items-center gap-1">
-            <MapPin className="w-3.5 h-3.5 text-[#452829] dark:text-[#E8D1C5]" />
+            <MapPin className="w-3.5 h-3.5 text-[#DA7F8F]" />
             <span>{t('tracker.currentPos')}:</span>
           </span>
           <span>
@@ -388,7 +427,7 @@ export default function LiveTracker({ selectedTrailId, onSessionComplete }) {
         {trackingState === 'idle' ? (
           <button
             onClick={handleStart}
-            className="flex-1 py-3 px-4 rounded-2xl bg-[#452829] text-[#F3E8DF] hover:bg-[#341e1f] dark:bg-[#E8D1C5] dark:hover:bg-[#dfc2b3] dark:text-[#452829] font-bold shadow-md transition flex items-center justify-center gap-2 cursor-pointer"
+            className="flex-1 py-3 px-4 rounded-2xl bg-[#DA7F8F] text-white hover:bg-[#c96c7d] font-bold shadow-md transition flex items-center justify-center gap-2 cursor-pointer"
           >
             <Play className="w-5 h-5 fill-current" />
             <span>{t('btn.startTracking')}</span>
@@ -398,7 +437,7 @@ export default function LiveTracker({ selectedTrailId, onSessionComplete }) {
             {trackingState === 'active' ? (
               <button
                 onClick={handlePause}
-                className="flex-1 py-3 px-4 rounded-2xl bg-amber-600 text-white font-bold hover:bg-amber-700 transition shadow-md flex items-center justify-center gap-2 cursor-pointer"
+                className="flex-1 py-3 px-4 rounded-2xl bg-amber-500 text-white font-bold hover:bg-amber-600 transition shadow-md flex items-center justify-center gap-2 cursor-pointer"
               >
                 <Pause className="w-5 h-5 fill-current" />
                 <span>{t('btn.pauseTracking')}</span>
@@ -426,13 +465,22 @@ export default function LiveTracker({ selectedTrailId, onSessionComplete }) {
         {(durationSeconds > 0 || distanceKm > 0) && trackingState === 'idle' && (
           <button
             onClick={handleReset}
-            className="py-3 px-4 rounded-2xl border border-[#DBC4B6] dark:border-[#57595B]/40 text-[#452829] dark:text-[#E8D1C5] hover:bg-[#EFE4DC] dark:hover:bg-[#3F2728] transition text-xs font-semibold cursor-pointer"
+            className="py-3 px-4 rounded-2xl border border-[#E1E5EA] dark:border-[#2C3440] text-[#2B3542] dark:text-[#FAF3F3] hover:bg-[#FAF3F3] dark:hover:bg-[#252C36] transition text-xs font-semibold cursor-pointer"
           >
             {t('btn.reset')}
           </button>
         )}
       </div>
 
+      <SaveActivityModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSave={handleModalSave}
+        durationSeconds={durationSeconds}
+        distanceKm={distanceKm}
+        avgSpeed={avgSpeed}
+        defaultTitle={selectedTrail ? selectedTrail.name : 'Jelajah Bebas GPS'}
+      />
     </div>
   );
 }

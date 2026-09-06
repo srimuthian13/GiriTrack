@@ -1,37 +1,83 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState, useEffect } from 'react';
-import { initialTrails, initialEvents, initialHistory } from '../data/initialData';
+import {
+  initialTrails,
+  initialEvents,
+  initialHistory,
+  initialLocations,
+  initialDifficultyLevels,
+  initialUsers
+} from '../data/initialData';
+import { useAuth } from './AuthContext';
 
 const TrailContext = createContext();
 
 export const TrailProvider = ({ children }) => {
-  // State 1: Daftar Jalur Pendakian (CRUD + Comments)
+  const { user } = useAuth();
+
+  // State 1: Daftar Jalur Pendakian (CRUD + Reviews + Status)
   const [trails, setTrails] = useState(() => {
     const savedTrails = localStorage.getItem('giri_trails');
     if (savedTrails) {
-      const parsed = JSON.parse(savedTrails);
-      return parsed.map((tr) => ({
-        ...tr,
-        comments: Array.isArray(tr.comments) ? tr.comments : [],
-        likes_count: Number(tr.likes_count) || 0,
-      }));
+      try {
+        const parsed = JSON.parse(savedTrails);
+        return parsed.map((tr) => {
+          const revs = Array.isArray(tr.reviews) ? tr.reviews : [];
+          let calculatedRating = tr.ratingAvg;
+          if (revs.length > 0) {
+            const sum = revs.reduce((acc, r) => acc + (Number(r.rating) || 0), 0);
+            calculatedRating = Number((sum / revs.length).toFixed(1));
+          } else if (calculatedRating === undefined) {
+            calculatedRating = 4.5;
+          }
+
+          return {
+            ...tr,
+            status: tr.status || 'verified',
+            ratingAvg: calculatedRating,
+            reviews: revs,
+            comments: Array.isArray(tr.comments) ? tr.comments : [],
+            likes_count: Number(tr.likes_count) || 0,
+          };
+        });
+      } catch (e) {
+        console.error('Failed to parse saved trails:', e);
+      }
     }
     return initialTrails;
   });
 
-  // State 2: Favorites / Disukai (Bookmark IDs)
+  // State 2: Master Data Lokasi / Wilayah
+  const [locations, setLocations] = useState(() => {
+    const saved = localStorage.getItem('giri_locations');
+    return saved ? JSON.parse(saved) : initialLocations;
+  });
+
+  // State 3: Master Data Tingkat Kesulitan
+  const [difficultyLevels, setDifficultyLevels] = useState(() => {
+    const saved = localStorage.getItem('giri_difficulties');
+    return saved ? JSON.parse(saved) : initialDifficultyLevels;
+  });
+
+  // State 4: Mock Users Data
+  const [users, setUsers] = useState(() => {
+    const saved = localStorage.getItem('giri_users');
+    return saved ? JSON.parse(saved) : initialUsers;
+  });
+
+  // State 5: Favorites / Disukai (Bookmark IDs)
   const [favorites, setFavorites] = useState(() => {
     const savedFavs = localStorage.getItem('giritrack_favorites');
     return savedFavs ? JSON.parse(savedFavs) : ['trail-1', 'trail-2'];
   });
 
-  // State 3: Daftar Event Tektok
+  // State 6: Daftar Event Tektok
   const [events, setEvents] = useState(() => {
     const savedEvents = localStorage.getItem('giri_events');
     return savedEvents ? JSON.parse(savedEvents) : initialEvents;
   });
 
-  // State 4: Riwayat Log GPS Tracking
+  // State 7: Riwayat Log GPS Tracking
   const [history, setHistory] = useState(() => {
     const savedHistory = localStorage.getItem('giri_history');
     return savedHistory ? JSON.parse(savedHistory) : initialHistory;
@@ -41,6 +87,18 @@ export const TrailProvider = ({ children }) => {
   useEffect(() => {
     localStorage.setItem('giri_trails', JSON.stringify(trails));
   }, [trails]);
+
+  useEffect(() => {
+    localStorage.setItem('giri_locations', JSON.stringify(locations));
+  }, [locations]);
+
+  useEffect(() => {
+    localStorage.setItem('giri_difficulties', JSON.stringify(difficultyLevels));
+  }, [difficultyLevels]);
+
+  useEffect(() => {
+    localStorage.setItem('giri_users', JSON.stringify(users));
+  }, [users]);
 
   useEffect(() => {
     localStorage.setItem('giritrack_favorites', JSON.stringify(favorites));
@@ -58,16 +116,10 @@ export const TrailProvider = ({ children }) => {
   // 1. FAVORITE / LIKE TOGGLE ACTIONS
   // ==========================================
 
-  /**
-   * Check whether a trail is favorited
-   */
   const isFavorite = (trailId) => {
     return favorites.includes(String(trailId));
   };
 
-  /**
-   * Toggle favorite status of a trail
-   */
   const toggleFavorite = (trailId) => {
     const targetIdStr = String(trailId);
 
@@ -81,7 +133,6 @@ export const TrailProvider = ({ children }) => {
         updatedFavs = [...prevFavs, targetIdStr];
       }
 
-      // Also adjust likes_count on trail
       setTrails((prevTrails) =>
         prevTrails.map((tr) => {
           if (String(tr.id) === targetIdStr) {
@@ -103,10 +154,16 @@ export const TrailProvider = ({ children }) => {
   // 2. CRUD JALUR PENDAKIAN (TRAILS)
   // ==========================================
 
-  const addTrail = (newTrailData) => {
+  const addTrail = (newTrailData, userRole = 'user') => {
+    // Default: admin -> 'verified', regular user -> 'pending'
+    const status = newTrailData.status || (userRole === 'admin' ? 'verified' : 'pending');
+
     const createdTrail = {
       ...newTrailData,
       id: `trail-${Date.now()}`,
+      status: status,
+      ratingAvg: 0,
+      reviews: [],
       distance_km: Number(newTrailData.distance_km) || 0,
       elevation_m: Number(newTrailData.elevation_m) || 0,
       likes_count: 0,
@@ -144,43 +201,141 @@ export const TrailProvider = ({ children }) => {
     setFavorites((prevFavs) => prevFavs.filter((favId) => favId !== targetIdStr));
   };
 
+  // Verifikasi Jalur (Ubah status pending -> verified)
+  const verifyTrail = (trailId) => {
+    setTrails((prevTrails) =>
+      prevTrails.map((tr) =>
+        String(tr.id) === String(trailId) ? { ...tr, status: 'verified' } : tr
+      )
+    );
+  };
+
   const resetTrails = () => {
     setTrails(initialTrails);
     setFavorites(['trail-1', 'trail-2']);
+    setLocations(initialLocations);
+    setDifficultyLevels(initialDifficultyLevels);
+    setUsers(initialUsers);
   };
 
   // ==========================================
-  // 3. FITUR KOMENTAR & ULASAN JALUR
+  // 3. FITUR RATING & ULASAN / REVIEW
   // ==========================================
 
-  const addComment = (trailId, commentData) => {
-    if (!trailId || !commentData.text) return;
+  const addReview = (trailId, reviewData) => {
+    if (!trailId) return null;
 
-    const newCommentObj = {
-      id: `c-${Date.now()}`,
-      user: commentData.user.trim() || 'Pendaki Anonim',
-      text: commentData.text.trim(),
+    const ratingNum = Math.max(1, Math.min(5, Number(reviewData.rating) || 5));
+    const newReview = {
+      id: `rev-${Date.now()}`,
+      userId: reviewData.userId || `user-guest-${Date.now().toString().slice(-4)}`,
+      userName: (reviewData.userName || reviewData.user || 'Pendaki Giri').trim(),
+      userAvatar:
+        reviewData.userAvatar ||
+        'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=200&auto=format&fit=crop',
+      rating: ratingNum,
+      comment: (reviewData.comment || reviewData.text || '').trim(),
       date: new Date().toISOString().split('T')[0],
     };
 
     setTrails((prevTrails) =>
       prevTrails.map((tr) => {
         if (String(tr.id) === String(trailId)) {
+          const currentReviews = Array.isArray(tr.reviews) ? tr.reviews : [];
+          const updatedReviews = [newReview, ...currentReviews];
+          const totalRating = updatedReviews.reduce((sum, r) => sum + (Number(r.rating) || 0), 0);
+          const newAvg = Number((totalRating / updatedReviews.length).toFixed(1));
+
+          // Also mirror to comments array for backward compatibility
           const currentComments = Array.isArray(tr.comments) ? tr.comments : [];
+          const newComment = {
+            id: `c-${Date.now()}`,
+            user: newReview.userName,
+            text: newReview.comment,
+            date: newReview.date,
+          };
+
           return {
             ...tr,
-            comments: [newCommentObj, ...currentComments],
+            reviews: updatedReviews,
+            ratingAvg: newAvg,
+            comments: [newComment, ...currentComments],
           };
         }
         return tr;
       })
     );
 
-    return newCommentObj;
+    return newReview;
+  };
+
+  const deleteReview = (trailId, reviewId) => {
+    setTrails((prevTrails) =>
+      prevTrails.map((tr) => {
+        if (String(tr.id) === String(trailId)) {
+          const currentReviews = Array.isArray(tr.reviews) ? tr.reviews : [];
+          const updatedReviews = currentReviews.filter((r) => String(r.id) !== String(reviewId));
+          let newAvg = 0;
+          if (updatedReviews.length > 0) {
+            const totalRating = updatedReviews.reduce((sum, r) => sum + (Number(r.rating) || 0), 0);
+            newAvg = Number((totalRating / updatedReviews.length).toFixed(1));
+          }
+
+          return {
+            ...tr,
+            reviews: updatedReviews,
+            ratingAvg: newAvg,
+          };
+        }
+        return tr;
+      })
+    );
+  };
+
+  // Backwards compatible addComment
+  const addComment = (trailId, commentData) => {
+    return addReview(trailId, {
+      userName: commentData.user,
+      comment: commentData.text,
+      rating: 5,
+    });
   };
 
   // ==========================================
-  // 4. TEKTOK EVENT ACTIONS
+  // 4. MASTER DATA LOCATIONS & DIFFICULTIES
+  // ==========================================
+
+  const addLocation = (locationData) => {
+    const newLoc = {
+      id: `loc-${Date.now()}`,
+      name: locationData.name.trim(),
+    };
+    setLocations((prev) => [...prev, newLoc]);
+    return newLoc;
+  };
+
+  const deleteLocation = (locationId) => {
+    setLocations((prev) => prev.filter((loc) => String(loc.id) !== String(locationId)));
+  };
+
+  const addDifficultyLevel = (difficultyData) => {
+    const newDiff = {
+      id: `diff-${Date.now()}`,
+      label: difficultyData.label.trim(),
+      colorBadge:
+        difficultyData.colorBadge ||
+        'bg-stone-100 text-stone-800 dark:bg-stone-800 dark:text-stone-300 border-stone-300',
+    };
+    setDifficultyLevels((prev) => [...prev, newDiff]);
+    return newDiff;
+  };
+
+  const deleteDifficultyLevel = (difficultyId) => {
+    setDifficultyLevels((prev) => prev.filter((d) => String(d.id) !== String(difficultyId)));
+  };
+
+  // ==========================================
+  // 5. TEKTOK EVENT ACTIONS
   // ==========================================
 
   const joinEvent = (eventId) => {
@@ -229,12 +384,13 @@ export const TrailProvider = ({ children }) => {
   };
 
   // ==========================================
-  // 5. RIWAYAT GPS TRACKER ACTIONS
+  // 6. RIWAYAT GPS TRACKER ACTIONS
   // ==========================================
 
   const addHistoryRecord = (recordData) => {
     const newRecord = {
       ...recordData,
+      userEmail: user?.email || '',
       id: `hist-${Date.now()}`,
       date: new Date().toISOString(),
       photos: Array.isArray(recordData.photos) ? recordData.photos : [],
@@ -290,7 +446,7 @@ export const TrailProvider = ({ children }) => {
   };
 
   // ==========================================
-  // 6. ES6 REST PARAMETER FUNCTION
+  // 7. ES6 REST PARAMETER FUNCTION
   // ==========================================
   const calculateTotalSummary = (...hikeRecords) => {
     const flatRecords = hikeRecords.flat(Infinity).filter(Boolean);
@@ -342,8 +498,22 @@ export const TrailProvider = ({ children }) => {
         getTrailById,
         updateTrail,
         deleteTrail,
+        verifyTrail,
         resetTrails,
+
+        // Rating & Reviews
+        addReview,
+        deleteReview,
         addComment,
+
+        // Master Data
+        locations,
+        addLocation,
+        deleteLocation,
+        difficultyLevels,
+        addDifficultyLevel,
+        deleteDifficultyLevel,
+        users,
 
         // Favorites / Love System
         favorites,
@@ -378,3 +548,4 @@ export const useTrail = () => {
   }
   return context;
 };
+
