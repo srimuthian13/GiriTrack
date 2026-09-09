@@ -1,8 +1,9 @@
 import React, { useState, useMemo, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { RaceContext } from '../context/RaceContext';
-import { MapPin, Calendar, Users, Target, ArrowRight, Activity, Filter, RotateCcw, AlertCircle, X, ChevronDown } from 'lucide-react';
-import { useLanguage } from '../context/LanguageContext';
+import { RaceContext } from '../../context/RaceContext';
+import { useAuth } from '../../context/AuthContext';
+import { MapPin, Calendar, Users, Target, ArrowRight, Activity, Filter, RotateCcw, AlertCircle, X, ChevronDown, Plus, ArrowLeft } from 'lucide-react';
+import { useLanguage } from '../../context/LanguageContext';
 
 const EARTH_TONES = ['#452829', '#233729', '#1E2836', '#3A231C'];
 
@@ -41,6 +42,7 @@ const INDONESIAN_PROVINCES = [
 
 export default function RaceCatalog() {
   const { races } = useContext(RaceContext);
+  const { isAdmin } = useAuth();
   const navigate = useNavigate();
   const { t, language } = useLanguage();
 
@@ -96,9 +98,21 @@ export default function RaceCatalog() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-4">
+      {/* Back Button */}
+      <div>
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          className="inline-flex items-center gap-2 text-xs font-bold text-[#6B7C8C] dark:text-[#A7BBC7] hover:text-[#DA7F8F] dark:hover:text-[#DA7F8F] transition-all cursor-pointer active:scale-95"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>{t('btn.back') || 'Kembali'}</span>
+        </button>
+      </div>
+
       {/* Header Sejajar dengan Kontrol Filter Dropdown */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8 pb-6 border-b border-stone-200 dark:border-stone-800/80">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-6 border-b border-stone-200 dark:border-stone-800/80">
         <div>
           <h1 className="text-3xl sm:text-4xl font-black text-[#2B3542] dark:text-[#FAF3F3] mb-2 drop-shadow-sm tracking-tight">
             {t('races.catalogTitle') || 'GiriTrack Races'}
@@ -168,6 +182,19 @@ export default function RaceCatalog() {
               <span>Reset</span>
             </button>
           )}
+
+          {/* Tombol Admin: Tambah Lomba */}
+          {isAdmin && (
+            <button
+              onClick={() => navigate('/admin/races')}
+              type="button"
+              className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-xl bg-[#DA7F8F] hover:bg-[#c96c7d] text-white shadow-sm transition-all duration-200 active:scale-95 cursor-pointer"
+              title="Tambah Lomba Trail Running Baru"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Tambah Lomba</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -235,7 +262,7 @@ export default function RaceCatalog() {
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {filteredRaces.map((race, index) => {
             const colorIndex = Math.abs(index);
             const cardBgColor = EARTH_TONES[colorIndex % EARTH_TONES.length];
@@ -249,22 +276,22 @@ export default function RaceCatalog() {
               <div
                 key={race.id}
                 onClick={() => navigate(`/races/${race.id}`)}
-                className="group relative flex flex-col rounded-3xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-[#E1E5EA]/60 dark:border-[#2C3440]/80 cursor-pointer select-none"
+                className="group relative flex flex-col rounded-2xl sm:rounded-3xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1.5 border border-[#E1E5EA]/60 dark:border-[#2C3440]/80 cursor-pointer select-none"
               >
-                {/* ATAS: Foto */}
-                <div className="relative h-56 w-full overflow-hidden bg-stone-900">
+                {/* ATAS: Foto (h-36 sm:h-38) */}
+                <div className="relative h-36 sm:h-38 w-full overflow-hidden bg-stone-900 shrink-0">
                   <img
                     src={race.banner}
                     alt={race.title}
-                    className="h-56 object-cover w-full group-hover:scale-108 transition-transform duration-700 ease-out"
+                    className="h-36 sm:h-38 object-cover w-full group-hover:scale-105 transition-transform duration-700 ease-out"
                     loading="lazy"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-black/20" />
                   
                   {/* Date Badge */}
-                  <div className="absolute top-3.5 right-3.5 px-3 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-white/25 text-white shadow-md flex items-center gap-1.5 z-20">
-                    <Calendar className="w-3.5 h-3.5 text-[#E8D1C5]" />
-                    <span className="text-xs font-bold">
+                  <div className="absolute top-2.5 right-2.5 px-2.5 py-0.5 rounded-full bg-black/40 backdrop-blur-md border border-white/25 text-white shadow-md flex items-center gap-1 z-20">
+                    <Calendar className="w-2.5 h-2.5 text-[#E8D1C5]" />
+                    <span className="text-[10px] font-bold">
                       {new Date(race.date).toLocaleDateString(language === 'id' ? 'id-ID' : 'en-US', {
                         month: 'short',
                         day: 'numeric',
@@ -273,8 +300,8 @@ export default function RaceCatalog() {
                     </span>
                   </div>
 
-                  <div className="absolute bottom-3.5 left-4 right-4 flex items-center gap-1.5 text-xs font-medium text-white/90 drop-shadow-md z-10">
-                    <MapPin className="w-3.5 h-3.5 text-[#DA7F8F] shrink-0" />
+                  <div className="absolute bottom-2 left-3 right-3 flex items-center gap-1 text-[10px] sm:text-[11px] font-medium text-white/90 drop-shadow-md z-10">
+                    <MapPin className="w-3 h-3 text-[#DA7F8F] shrink-0" />
                     <span className="truncate">{race.location}</span>
                   </div>
                 </div>
@@ -282,59 +309,64 @@ export default function RaceCatalog() {
                 {/* BAWAH: Info */}
                 <div
                   style={{ backgroundColor: cardBgColor }}
-                  className="p-5 sm:p-6 flex-1 flex flex-col justify-between text-white relative transition-colors duration-300"
+                  className="p-3.5 sm:p-4 flex-1 flex flex-col justify-between text-white relative transition-colors duration-300"
                 >
                   <div className="absolute inset-0 bg-gradient-to-b from-white/10 via-transparent to-black/15 pointer-events-none" />
 
-                  <div className="relative z-10">
-                    <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-white/70">
-                      <Activity className="w-3.5 h-3.5 text-[#E8D1C5]" />
+                  <div className="relative z-10 flex-1 flex flex-col">
+                    <div className="flex items-center gap-1 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-white/70">
+                      <Activity className="w-3 h-3 text-[#E8D1C5]" />
                       <span>{t('races.cardBadge') || 'Trail Race Event'}</span>
                     </div>
 
-                    <h3 className="font-bold text-white text-xl line-clamp-2 mt-1 leading-tight drop-shadow-sm group-hover:text-[#FAF3F3] transition-colors">
+                    <h3 className="font-bold text-white text-sm sm:text-base line-clamp-1 mt-0.5 leading-snug drop-shadow-sm group-hover:text-[#FAF3F3] transition-colors">
                       {race.title}
                     </h3>
 
-                    <div className="flex flex-wrap gap-2 mt-3">
-                      {race.categories.map(cat => (
-                        <span key={cat.id} className="px-2 py-0.5 rounded-md bg-white/10 border border-white/20 text-[10px] font-semibold">
+                    <div className="flex flex-wrap gap-1 mt-1.5">
+                      {race.categories.slice(0, 3).map(cat => (
+                        <span key={cat.id} className="px-1.5 py-0.5 rounded-md bg-white/10 border border-white/20 text-[9px] font-semibold">
                           {cat.name}
                         </span>
                       ))}
+                      {race.categories.length > 3 && (
+                        <span className="px-1 py-0.5 rounded-md bg-white/10 text-[9px] font-semibold text-white/70">
+                          +{race.categories.length - 3}
+                        </span>
+                      )}
                     </div>
                   </div>
 
-                  <div className="relative z-10 grid grid-cols-2 gap-2 py-2.5 px-3 my-4 rounded-2xl bg-black/25 backdrop-blur-sm border border-white/15 text-center text-white">
-                    <div className="flex flex-col items-center">
-                      <div className="flex items-center gap-1 text-white/70 text-[11px] mb-0.5">
-                        <Target className="w-3 h-3 text-[#E8D1C5]" />
+                  <div className="relative z-10 grid grid-cols-2 gap-1 py-1.5 px-2 my-2 rounded-xl bg-black/25 backdrop-blur-sm border border-white/15 text-center text-white">
+                    <div className="flex flex-col items-center justify-center">
+                      <div className="flex items-center justify-center gap-0.5 text-white/70 text-[9px] mb-0.5">
+                        <Target className="w-2.5 h-2.5 text-[#E8D1C5]" />
                         <span>{t('races.categoryLabel') || 'Kategori'}</span>
                       </div>
-                      <span className="text-xs sm:text-sm font-black text-white">
-                        {race.categories.length} <span className="text-[10px] font-normal text-white/80">{t('races.categoryLabel') || 'Kategori'}</span>
+                      <span className="text-xs font-black text-white">
+                        {race.categories.length} <span className="text-[9px] font-normal text-white/80">{t('races.categoryLabel') || 'Kategori'}</span>
                       </span>
                     </div>
 
-                    <div className="flex flex-col items-center border-l border-white/15">
-                      <div className="flex items-center gap-1 text-white/70 text-[11px] mb-0.5">
-                        <Users className="w-3 h-3 text-[#E8D1C5]" />
+                    <div className="flex flex-col items-center justify-center border-l border-white/15">
+                      <div className="flex items-center justify-center gap-0.5 text-white/70 text-[9px] mb-0.5">
+                        <Users className="w-2.5 h-2.5 text-[#E8D1C5]" />
                         <span>{t('races.slotLabel') || 'Slot'}</span>
                       </div>
-                      <span className="text-xs sm:text-sm font-black text-white">
-                        {totalQuota - totalSlotsTaken} <span className="text-[10px] font-normal text-white/80">{t('races.slotRemaining') || 'Sisa'}</span>
+                      <span className="text-xs font-black text-white">
+                        {totalQuota - totalSlotsTaken} <span className="text-[9px] font-normal text-white/80">{t('races.slotRemaining') || 'Sisa'}</span>
                       </span>
                     </div>
                   </div>
 
-                  <div className="relative z-10 flex items-center gap-2 pt-1">
+                  <div className="relative z-10 flex items-center pt-0.5 mt-auto">
                     <button
                       disabled={isSoldOut}
                       type="button"
-                      className={`flex-1 py-2.5 px-5 rounded-full border-2 ${isSoldOut ? 'border-white/30 text-white/50 bg-black/20' : 'border-white/70 text-white bg-transparent hover:bg-white hover:text-stone-900 hover:border-white hover:shadow-lg'} font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all duration-300 active:scale-95 cursor-pointer`}
+                      className={`w-full py-1.5 sm:py-2 px-3 rounded-full border ${isSoldOut ? 'border-white/30 text-white/50 bg-black/20 cursor-not-allowed' : 'border-white/70 text-white bg-transparent hover:bg-white hover:text-stone-900 hover:border-white hover:shadow-md'} font-bold text-xs flex items-center justify-center gap-1.5 transition-all duration-300 active:scale-95 cursor-pointer`}
                     >
                       <span>{isSoldOut ? (t('registration.soldOut') || 'Sold Out') : (language === 'id' ? 'Daftar Sekarang' : 'Register Now')}</span>
-                      {!isSoldOut && <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />}
+                      {!isSoldOut && <ArrowRight className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-1" />}
                     </button>
                   </div>
 

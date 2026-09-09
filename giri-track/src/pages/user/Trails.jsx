@@ -1,15 +1,17 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Search, Filter, ArrowUpDown, Compass, Plus, RotateCcw, AlertCircle, Heart } from 'lucide-react';
-import { useTrail } from '../context/TrailContext';
-import { useLanguage } from '../context/LanguageContext';
-import TrailCard from '../components/TrailCard';
-import Pagination from '../components/Pagination';
-import ModalConfirm from '../components/ModalConfirm';
-import { TrailGridSkeleton } from '../components/skeleton/TrailCardSkeleton';
+import { Search, Filter, ArrowUpDown, Compass, Plus, RotateCcw, AlertCircle, Heart, Settings, ArrowLeft } from 'lucide-react';
+import { useTrail } from '../../context/TrailContext';
+import { useLanguage } from '../../context/LanguageContext';
+import { useAuth } from '../../context/AuthContext';
+import TrailCard from '../../components/TrailCard';
+import Pagination from '../../components/Pagination';
+import ModalConfirm from '../../components/ModalConfirm';
+import { TrailGridSkeleton } from '../../components/skeleton/TrailCardSkeleton';
 
 export default function Trails() {
   const { trails, deleteTrail, resetTrails, favorites, isFavorite } = useTrail();
+  const { isAdmin, isLoggedIn } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -52,6 +54,10 @@ export default function Trails() {
   // 1. Filtering using JavaScript Array .filter()
   const filteredTrails = useMemo(() => {
     return trails.filter((trail) => {
+      // Visibility Filter: Public only sees verified trails, Admin sees all
+      const isVisible = trail.status === 'verified' || !trail.status || isAdmin;
+      if (!isVisible) return false;
+
       // Search match
       const matchesSearch =
         trail.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -67,7 +73,7 @@ export default function Trails() {
 
       return matchesSearch && matchesDifficulty && matchesFavorite;
     });
-  }, [trails, searchTerm, difficultyFilter, showOnlyFavorites, isFavorite]);
+  }, [trails, searchTerm, difficultyFilter, showOnlyFavorites, isFavorite, isAdmin]);
 
   // 2. Sorting using JavaScript Array .sort()
   const sortedTrails = useMemo(() => {
@@ -138,21 +144,33 @@ export default function Trails() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 space-y-8 pb-12 text-[#2B3542] dark:text-[#FAF3F3] transition-colors duration-300 ease-in-out">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 space-y-4 pb-10 text-[#2B3542] dark:text-[#FAF3F3] transition-colors duration-300 ease-in-out">
       
+      {/* Back Button */}
+      <div>
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          className="inline-flex items-center gap-2 text-xs font-bold text-[#6B7C8C] dark:text-[#A7BBC7] hover:text-[#DA7F8F] dark:hover:text-[#DA7F8F] transition-all cursor-pointer active:scale-95"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>{t('btn.back') || 'Kembali'}</span>
+        </button>
+      </div>
+
       {/* Header Title */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#E1E5EA] dark:border-[#2C3440] pb-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-[#E1E5EA] dark:border-[#2C3440] pb-4">
         <div>
-          <h1 className="text-3xl font-black text-[#2B3542] dark:text-[#FAF3F3] flex items-center gap-3">
-            <Compass className="w-8 h-8 text-[#DA7F8F]" />
+          <h1 className="text-2xl sm:text-3xl font-black text-[#2B3542] dark:text-[#FAF3F3] flex items-center gap-2.5">
+            <Compass className="w-7 h-7 text-[#DA7F8F]" />
             <span>{t('nav.trails')}</span>
           </h1>
-          <p className="text-sm text-[#6B7C8C] dark:text-[#A7BBC7] mt-1">
+          <p className="text-xs sm:text-sm text-[#6B7C8C] dark:text-[#A7BBC7] mt-0.5">
             Temukan dan jelajahi berbagai rute gunung di Indonesia.
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
           {/* Favorite Only Filter Tab Toggle */}
           <button
             onClick={() => {
@@ -160,13 +178,13 @@ export default function Trails() {
               setShowOnlyFavorites(!showOnlyFavorites);
               setCurrentPage(1);
             }}
-            className={`px-4 py-2.5 rounded-2xl text-xs font-bold transition-all duration-200 active:scale-95 flex items-center gap-2 cursor-pointer shadow-sm border ${
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all duration-200 active:scale-95 flex items-center gap-2 cursor-pointer shadow-sm border ${
               showOnlyFavorites
                 ? 'bg-[#DA7F8F] text-white border-[#DA7F8F]'
                 : 'bg-white dark:bg-[#1C2129] border-[#E1E5EA] dark:border-[#2C3440] text-[#2B3542] dark:text-[#FAF3F3] hover:bg-[#FAF3F3] dark:hover:bg-[#252C36]'
             }`}
           >
-            <Heart className={`w-4 h-4 ${showOnlyFavorites ? 'fill-white' : 'text-[#DA7F8F]'}`} />
+            <Heart className={`w-3.5 h-3.5 ${showOnlyFavorites ? 'fill-white' : 'text-[#DA7F8F]'}`} />
             <span>{showOnlyFavorites ? 'Favorit Saya' : 'Lihat Favorit'}</span>
             <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-black/10 dark:bg-white/10 font-mono">
               {favorites.length}
@@ -174,22 +192,29 @@ export default function Trails() {
           </button>
 
           <button
-            onClick={() => navigate('/manage')}
-            className="px-5 py-2.5 rounded-2xl bg-[#DA7F8F] text-white hover:bg-[#c96c7d] font-bold shadow-md transition-all duration-200 active:scale-95 flex items-center justify-center gap-2 cursor-pointer text-xs"
+            onClick={() => {
+              if (!isLoggedIn) {
+                localStorage.setItem('giritrack_intended_path', '/manage');
+                navigate('/login');
+              } else {
+                navigate('/manage');
+              }
+            }}
+            className="px-4 py-2 rounded-xl bg-[#DA7F8F] text-white hover:bg-[#c96c7d] font-bold shadow-md transition-all duration-200 active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer text-xs"
           >
-            <Plus className="w-4 h-4" />
-            <span>{t('btn.add')}</span>
+            {isAdmin ? <Settings className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
+            <span>{isAdmin ? 'Kelola Jalur' : 'Ajukan Jalur Baru'}</span>
           </button>
         </div>
       </div>
 
       {/* Filter & Search Bar */}
-      <div className="bg-white/90 dark:bg-[#1C2129] rounded-3xl p-5 shadow-sm border border-[#E1E5EA] dark:border-[#2C3440] space-y-4 transition-colors duration-300 ease-in-out">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+      <div className="bg-white/90 dark:bg-[#1C2129] rounded-2xl sm:rounded-3xl p-3.5 sm:p-4 shadow-sm border border-[#E1E5EA] dark:border-[#2C3440] space-y-3 transition-colors duration-300 ease-in-out">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
           
           {/* Search Input */}
           <div className="md:col-span-5 relative">
-            <Search className="w-5 h-5 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#A7BBC7]" />
+            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#A7BBC7]" />
             <input
               type="text"
               value={searchTerm}
@@ -199,7 +224,7 @@ export default function Trails() {
                 setCurrentPage(1);
               }}
               placeholder={t('filterSort.searchPlaceholder')}
-              className="w-full pl-10 pr-4 py-2.5 rounded-2xl border border-[#E1E5EA] dark:border-[#2C3440] bg-[#FAF3F3]/80 dark:bg-[#252C36] text-sm text-[#2B3542] dark:text-[#FAF3F3] focus:outline-none focus:ring-2 focus:ring-[#DA7F8F]/40 transition-all duration-200"
+              className="w-full pl-9 pr-3.5 py-2 rounded-xl border border-[#E1E5EA] dark:border-[#2C3440] bg-[#FAF3F3]/80 dark:bg-[#252C36] text-xs text-[#2B3542] dark:text-[#FAF3F3] focus:outline-none focus:ring-2 focus:ring-[#DA7F8F]/40 transition-all duration-200"
             />
           </div>
 

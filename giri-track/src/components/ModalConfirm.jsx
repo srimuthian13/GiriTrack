@@ -6,7 +6,9 @@ export default function ModalConfirm({
   onConfirm,
   onCancel,
   title,
+  subtitle,
   message,
+  confirmText,
 }) {
   const { t } = useLanguage();
 
@@ -34,7 +36,7 @@ export default function ModalConfirm({
               {title || t('modal.deleteTitle')}
             </h3>
             <p className="text-xs text-[#6B7C8C] dark:text-[#A7BBC7]">
-              {t('modal.deleteWarning')}
+              {subtitle || t('modal.deleteWarning')}
             </p>
           </div>
         </div>
@@ -57,7 +59,7 @@ export default function ModalConfirm({
             onClick={onConfirm}
             className="px-4 py-2.5 rounded-xl bg-rose-600 text-white hover:bg-rose-700 font-bold text-xs transition duration-200 cursor-pointer shadow-md active:scale-95"
           >
-            {t('btn.confirmDelete')}
+            {confirmText || t('btn.confirmDelete')}
           </button>
         </div>
 

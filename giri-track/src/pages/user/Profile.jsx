@@ -1,9 +1,13 @@
 import { useState } from 'react';
-import { useAuth } from '../context/AuthContext';
-import { User, Mail, Phone, Droplet, Lock, Camera, CheckCircle2, ShieldAlert } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
+import { User, Mail, Phone, Droplet, Lock, Camera, CheckCircle2, ShieldAlert, ArrowLeft, Upload } from 'lucide-react';
+import CameraCaptureModal from '../../components/CameraCaptureModal';
 
 export default function Profile() {
+  const navigate = useNavigate();
   const { currentUser, updateUserProfile } = useAuth();
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
   
   const [formData, setFormData] = useState({
     name: currentUser?.name || '',
@@ -68,6 +72,18 @@ export default function Profile() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10">
+      {/* Back Button */}
+      <div className="mb-6">
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          className="inline-flex items-center gap-2 text-xs font-bold text-[#6B7C8C] dark:text-[#A7BBC7] hover:text-[#DA7F8F] dark:hover:text-[#DA7F8F] transition-all cursor-pointer active:scale-95"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>Kembali</span>
+        </button>
+      </div>
+
       <div className="mb-8">
         <h1 className="text-3xl font-black text-[#2B3542] dark:text-[#FAF3F3] mb-2 flex items-center gap-3">
           <User className="w-8 h-8 text-[#DA7F8F]" />
@@ -107,8 +123,31 @@ export default function Profile() {
                   </div>
                 )}
               </div>
-              <label className="absolute bottom-0 right-0 p-2.5 bg-[#DA7F8F] hover:bg-[#c96c7d] text-white rounded-full shadow-lg cursor-pointer transition-colors z-10 group-hover:scale-110">
+              
+              {/* Camera Trigger */}
+              <button
+                type="button"
+                onClick={() => setIsCameraOpen(true)}
+                className="absolute bottom-0 right-0 p-2.5 bg-[#DA7F8F] hover:bg-[#c96c7d] text-white rounded-full shadow-lg cursor-pointer transition-colors z-10 group-hover:scale-110"
+                title="Buka Kamera Langsung"
+              >
                 <Camera className="w-4 h-4" />
+              </button>
+            </div>
+            
+            <div className="flex items-center gap-2 mt-3">
+              <button
+                type="button"
+                onClick={() => setIsCameraOpen(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-xs font-bold hover:bg-emerald-500/20 cursor-pointer transition"
+              >
+                <Camera className="w-3.5 h-3.5" />
+                <span>Foto Kamera</span>
+              </button>
+
+              <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#FAF3F3] dark:bg-[#252C36] border border-[#E1E5EA] dark:border-[#2C3440] text-[#2B3542] dark:text-[#FAF3F3] text-xs font-bold hover:border-[#DA7F8F] cursor-pointer transition">
+                <Upload className="w-3.5 h-3.5 text-[#DA7F8F]" />
+                <span>Upload File</span>
                 <input 
                   type="file" 
                   accept="image/*" 
@@ -117,7 +156,7 @@ export default function Profile() {
                 />
               </label>
             </div>
-            <p className="text-xs text-[#6B7C8C] dark:text-[#A7BBC7] mt-3">Upload foto (Maks. 2MB)</p>
+            <p className="text-[11px] text-[#6B7C8C] dark:text-[#A7BBC7] mt-1.5">Foto kamera langsung atau upload file gambar (Maks. 2MB)</p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
@@ -227,7 +266,7 @@ export default function Profile() {
           <div className="flex justify-end pt-6 border-t border-[#E1E5EA] dark:border-[#2C3440]">
             <button
               type="submit"
-              className="px-8 py-3.5 bg-[#452829] hover:bg-[#3A231C] text-white font-bold rounded-xl transition-all shadow-md active:scale-95 text-sm"
+              className="px-8 py-3.5 bg-[#452829] hover:bg-[#3A231C] text-white font-bold rounded-xl transition-all shadow-md active:scale-95 text-sm cursor-pointer"
             >
               Simpan Perubahan Profil
             </button>
@@ -235,6 +274,15 @@ export default function Profile() {
 
         </form>
       </div>
+
+      {/* Live Camera Modal for Avatar */}
+      <CameraCaptureModal
+        isOpen={isCameraOpen}
+        onClose={() => setIsCameraOpen(false)}
+        onCapture={(base64) => {
+          setFormData((prev) => ({ ...prev, avatar: base64 }));
+        }}
+      />
     </div>
   );
 }

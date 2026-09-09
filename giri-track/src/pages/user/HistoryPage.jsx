@@ -1,11 +1,13 @@
 import { useState } from 'react';
-import { History, Trash2, MapPin, Trophy } from 'lucide-react';
-import { useTrail } from '../context/TrailContext';
-import { useLanguage } from '../context/LanguageContext';
-import { useAuth } from '../context/AuthContext';
-import HistoryMapModal from '../components/HistoryMapModal';
+import { useNavigate } from 'react-router-dom';
+import { History, Trash2, MapPin, Trophy, ArrowLeft } from 'lucide-react';
+import { useTrail } from '../../context/TrailContext';
+import { useLanguage } from '../../context/LanguageContext';
+import { useAuth } from '../../context/AuthContext';
+import HistoryMapModal from '../../components/HistoryMapModal';
 
 export default function HistoryPage() {
+  const navigate = useNavigate();
   const { history, deleteHistoryRecord, clearHistory, calculateTotalSummary } = useTrail();
   const { t, language } = useLanguage();
   const { user } = useAuth();
@@ -35,8 +37,20 @@ export default function HistoryPage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 space-y-8 pb-12 text-[#2B3542] dark:text-[#FAF3F3]">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 space-y-6 pb-12 text-[#2B3542] dark:text-[#FAF3F3]">
       
+      {/* Back Button */}
+      <div>
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          className="inline-flex items-center gap-2 text-xs font-bold text-[#6B7C8C] dark:text-[#A7BBC7] hover:text-[#DA7F8F] dark:hover:text-[#DA7F8F] transition-all cursor-pointer active:scale-95"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>{t('btn.back') || 'Kembali'}</span>
+        </button>
+      </div>
+
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#E1E5EA] dark:border-[#2C3440] pb-6">
         <div>

@@ -8,27 +8,28 @@ import { ToastProvider } from './context/ToastContext';
 import { RaceProvider } from './context/RaceContext';
 import Navbar from './components/Navbar';
 
-// Pages
-import Home from './pages/Home';
-import Trails from './pages/Trails';
-import TrailDetail from './pages/TrailDetail';
-import ManageTrail from './pages/ManageTrail';
-import Events from './pages/Events';
-import TrackerPage from './pages/TrackerPage';
-import HistoryPage from './pages/HistoryPage';
-import AuthPage from './pages/AuthPage';
-import MyTickets from './pages/MyTickets';
-import Profile from './pages/Profile';
-import AdminDashboard from './pages/AdminDashboard';
-import NotFound from './pages/NotFound';
-import Logo from './components/Logo';
+// User Pages
+import Home from './pages/user/Home';
+import Trails from './pages/user/Trails';
+import TrailDetail from './pages/user/TrailDetail';
+import TrackerPage from './pages/user/TrackerPage';
+import HistoryPage from './pages/user/HistoryPage';
+import AuthPage from './pages/user/AuthPage';
+import MyTickets from './pages/user/MyTickets';
+import Profile from './pages/user/Profile';
+import NotFound from './pages/user/NotFound';
+import RaceCatalog from './pages/user/RaceCatalog';
+import RaceDetail from './pages/user/RaceDetail';
+import RaceRegister from './pages/user/RaceRegister';
+import RaceTicket from './pages/user/RaceTicket';
 
-// Race Pages
-import RaceCatalog from './pages/RaceCatalog';
-import RaceDetail from './pages/RaceDetail';
-import RaceRegister from './pages/RaceRegister';
-import RaceTicket from './pages/RaceTicket';
-import AdminRaceManager from './pages/AdminRaceManager';
+// Admin Pages
+import AdminDashboard from './pages/admin/AdminDashboard';
+import ManageTrail from './pages/admin/ManageTrail';
+import AdminRaceManager from './pages/admin/AdminRaceManager';
+
+import Logo from './components/Logo';
+import BackToTop from './components/BackToTop';
 
 function Footer() {
   return (
@@ -114,7 +115,7 @@ export default function App() {
                     
                     <Navbar />
 
-                    <main className="flex-1 pt-6">
+                    <main className="flex-1 pt-6 pb-20 md:pb-0">
                       <Routes>
                         <Route path="/" element={<Home />} />
                         <Route path="/trails" element={<Trails />} />
@@ -138,6 +139,8 @@ export default function App() {
                     </main>
 
                     <Footer />
+
+                    <BackToTop />
 
                   </div>
                 </BrowserRouter>

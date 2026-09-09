@@ -1,11 +1,11 @@
 import { useState, useEffect, useContext, useMemo } from 'react';
 import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
-import { RaceContext } from '../context/RaceContext';
-import { flagshipRace } from '../data/raceData';
-import { pastRaces } from '../data/pastRacesData';
+import { RaceContext } from '../../context/RaceContext';
+import { flagshipRace } from '../../data/raceData';
+import { pastRaces } from '../../data/pastRacesData';
 import {
   Calendar, MapPin, Trophy, Clock, Mountain, Navigation,
-  ShieldAlert, CheckCircle2, ChevronRight, ArrowRight,
+  ShieldAlert, CheckCircle2, ChevronRight, ArrowRight, ArrowLeft,
   Timer, Sparkles, Flame, Users, Download,
   Search, Award, Layers, Compass, AlertCircle
 } from 'lucide-react';
@@ -95,6 +95,18 @@ export default function RaceDetail() {
         </div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Back Button */}
+          <div className="mb-6">
+            <button
+              type="button"
+              onClick={() => navigate(-1)}
+              className="inline-flex items-center gap-2 text-xs font-bold text-white/80 hover:text-white bg-black/30 hover:bg-black/50 backdrop-blur-md px-3.5 py-2 rounded-xl transition-all cursor-pointer active:scale-95 border border-white/10"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Kembali</span>
+            </button>
+          </div>
+
           {/* Top Badges & Series tag */}
           <div className="flex flex-wrap items-center gap-2 mb-4">
             <span className="px-3 py-1 rounded-full bg-[#DA7F8F] text-white text-[11px] font-black uppercase tracking-wider shadow-lg flex items-center gap-1.5">

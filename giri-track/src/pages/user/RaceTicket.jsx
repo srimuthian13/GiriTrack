@@ -1,6 +1,6 @@
 import { useContext, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { RaceContext } from '../context/RaceContext';
+import { RaceContext } from '../../context/RaceContext';
 import { CheckCircle2, Calendar, MapPin, Printer, ChevronLeft, Award, Shirt, HeartPulse } from 'lucide-react';
 
 export default function RaceTicket() {
@@ -58,13 +58,16 @@ export default function RaceTicket() {
         }
       `}</style>
 
-      <button 
-        onClick={() => navigate('/races')}
-        className="no-print flex items-center gap-2 text-[#6B7C8C] dark:text-[#A7BBC7] hover:text-[#2B3542] dark:hover:text-white transition-colors mb-6 text-sm font-medium cursor-pointer"
-      >
-        <ChevronLeft className="w-4 h-4" />
-        Kembali ke Katalog Lomba
-      </button>
+      <div className="mb-6 no-print">
+        <button 
+          type="button"
+          onClick={() => navigate(-1)}
+          className="inline-flex items-center gap-2 text-xs font-bold text-[#6B7C8C] dark:text-[#A7BBC7] hover:text-[#DA7F8F] dark:hover:text-[#DA7F8F] transition-all cursor-pointer active:scale-95"
+        >
+          <ChevronLeft className="w-4 h-4" />
+          <span>Kembali</span>
+        </button>
+      </div>
 
       <div 
         id="printable-e-bib"

@@ -4,7 +4,6 @@ import {
   Search,
   ChevronDown,
   Compass,
-  Calendar,
   Navigation,
   History,
   Settings,
@@ -18,7 +17,8 @@ import {
   Sun,
   Moon,
   Activity,
-  Ticket
+  Ticket,
+  Home as HomeIcon
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
@@ -310,20 +310,10 @@ export default function Navbar() {
                       )}
                     </div>
                     
+                    {/* User Display Name */}
                     <span className="text-xs font-bold text-[#2B3542] dark:text-[#FAF3F3] max-w-[90px] truncate">
                       {displayName}
                     </span>
-
-                    {/* Role Badge */}
-                    {isAdmin ? (
-                      <span className="px-1.5 py-0.2 rounded text-[9px] font-black tracking-wider uppercase bg-amber-400/20 text-amber-600 dark:text-amber-400 border border-amber-400/40">
-                        ADMIN
-                      </span>
-                    ) : (
-                      <span className="px-1.5 py-0.2 rounded text-[9px] font-black tracking-wider uppercase bg-emerald-400/20 text-emerald-600 dark:text-emerald-400 border border-emerald-400/40">
-                        PENDAKI
-                      </span>
-                    )}
 
                     <ChevronDown className="w-3.5 h-3.5 text-[#A7BBC7]" />
                   </button>
@@ -342,14 +332,16 @@ export default function Navbar() {
 
                       <div className="py-1">
                         {/* Global Profile Links */}
-                        <Link
-                          to="/my-tickets"
-                          onClick={() => setIsProfileOpen(false)}
-                          className="flex items-center gap-2.5 px-4 py-2 text-xs font-bold text-[#2B3542] dark:text-[#FAF3F3] hover:bg-[#FAF3F3] dark:hover:bg-[#252C36] transition"
-                        >
-                          <Ticket className="w-4 h-4 text-[#DA7F8F]" />
-                          <span>{t('nav.myTickets') || 'Tiket Lomba Saya'}</span>
-                        </Link>
+                        {!isAdmin && (
+                          <Link
+                            to="/my-tickets"
+                            onClick={() => setIsProfileOpen(false)}
+                            className="flex items-center gap-2.5 px-4 py-2 text-xs font-bold text-[#2B3542] dark:text-[#FAF3F3] hover:bg-[#FAF3F3] dark:hover:bg-[#252C36] transition"
+                          >
+                            <Ticket className="w-4 h-4 text-[#DA7F8F]" />
+                            <span>{t('nav.myTickets') || 'Tiket Lomba Saya'}</span>
+                          </Link>
+                        )}
                         <Link
                           to="/profile"
                           onClick={() => setIsProfileOpen(false)}
@@ -358,6 +350,17 @@ export default function Navbar() {
                           <UserIcon className="w-4 h-4 text-[#DA7F8F]" />
                           <span>{t('nav.profileSettings') || 'Pengaturan Profil'}</span>
                         </Link>
+
+                        {!isAdmin && (
+                          <Link
+                            to="/manage"
+                            onClick={() => setIsProfileOpen(false)}
+                            className="flex items-center gap-2.5 px-4 py-2 text-xs font-bold text-[#2B3542] dark:text-[#FAF3F3] hover:bg-[#FAF3F3] dark:hover:bg-[#252C36] transition"
+                          >
+                            <Settings className="w-4 h-4 text-[#DA7F8F]" />
+                            <span>Ajukan Jalur Baru</span>
+                          </Link>
+                        )}
 
                         {isAdmin && (
                           <div className="mt-1 pt-1 border-t border-[#E1E5EA] dark:border-[#2C3440]">
@@ -375,7 +378,7 @@ export default function Navbar() {
                               className="flex items-center gap-2.5 px-4 py-2 text-xs font-bold text-[#DA7F8F] hover:bg-[#DA7F8F]/10 transition"
                             >
                               <Activity className="w-4 h-4" />
-                              <span>Kelola Event</span>
+                              <span>Kelola & Tambah Lomba</span>
                             </Link>
                             <Link
                               to="/manage"
@@ -383,7 +386,7 @@ export default function Navbar() {
                               className="flex items-center gap-2.5 px-4 py-2 text-xs font-bold text-[#DA7F8F] hover:bg-[#DA7F8F]/10 transition"
                             >
                               <Settings className="w-4 h-4" />
-                              <span>Kelola Jalur</span>
+                              <span>Kelola & Verifikasi Jalur</span>
                             </Link>
                           </div>
                         )}
@@ -481,13 +484,6 @@ export default function Navbar() {
                       <p className="text-xs font-bold text-[#2B3542] dark:text-white leading-tight">
                         {displayName}
                       </p>
-                      <span className={`inline-block px-1.5 py-0.2 rounded text-[9px] font-black uppercase mt-0.5 ${
-                        isAdmin
-                          ? 'bg-amber-400/20 text-amber-600 dark:text-amber-400 border border-amber-400/40'
-                          : 'bg-emerald-400/20 text-emerald-600 dark:text-emerald-400 border border-emerald-400/40'
-                      }`}>
-                        {isAdmin ? 'ADMIN' : 'PENDAKI'}
-                      </span>
                     </div>
                   </div>
 
@@ -517,45 +513,78 @@ export default function Navbar() {
 
             {/* Mobile Navigation Links */}
             <div className="space-y-1">
-              <NavLink
-                to="/"
-                onClick={() => setMobileMenuOpen(false)}
-                className={({ isActive }) =>
-                  `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${
-                    isActive
-                      ? 'bg-[#DA7F8F] text-white'
-                      : 'text-[#2B3542] dark:text-[#FAF3F3] hover:bg-[#E1E5EA]/50 dark:hover:bg-[#252C36]'
-                  }`
-                }
-              >
-                <span>{t('nav.home') || 'Beranda'}</span>
-              </NavLink>
+              {!isAdmin && (
+                <NavLink
+                  to="/"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={({ isActive }) =>
+                    `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${
+                      isActive
+                        ? 'bg-[#DA7F8F] text-white'
+                        : 'text-[#2B3542] dark:text-[#FAF3F3] hover:bg-[#E1E5EA]/50 dark:hover:bg-[#252C36]'
+                    }`
+                  }
+                >
+                  <HomeIcon className="w-4 h-4 text-[#DA7F8F]" />
+                  <span>{t('nav.home') || 'Beranda'}</span>
+                </NavLink>
+              )}
 
-              {exploreItems.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <NavLink
-                    key={item.path}
-                    to={item.path}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={({ isActive }) =>
-                      `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${
-                        isActive
-                          ? 'bg-[#DA7F8F] text-white'
-                          : 'text-[#2B3542] dark:text-[#FAF3F3] hover:bg-[#E1E5EA]/50 dark:hover:bg-[#252C36]'
-                      }`
-                    }
-                  >
-                    <Icon className="w-4 h-4" />
-                    <span>{item.label}</span>
-                  </NavLink>
-                );
-              })}
-
-              {isLoggedIn && (
+              {isAdmin ? (
+                /* Admin Specific Mobile Drawer Links */
                 <>
+                  <div className="px-3.5 py-1.5 text-[10px] font-black uppercase tracking-wider text-[#DA7F8F]">
+                    Menu Administrator
+                  </div>
                   <NavLink
-                    to="/my-tickets"
+                    to="/admin"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={({ isActive }) =>
+                      `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${
+                        isActive
+                          ? 'bg-[#DA7F8F] text-white'
+                          : 'text-[#2B3542] dark:text-[#FAF3F3] hover:bg-[#DA7F8F]/10'
+                      }`
+                    }
+                  >
+                    <ShieldCheck className="w-4 h-4 text-[#DA7F8F]" />
+                    <span>Admin Dashboard</span>
+                  </NavLink>
+                  <NavLink
+                    to="/admin/races"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={({ isActive }) =>
+                      `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${
+                        isActive
+                          ? 'bg-[#DA7F8F] text-white'
+                          : 'text-[#2B3542] dark:text-[#FAF3F3] hover:bg-[#DA7F8F]/10'
+                      }`
+                    }
+                  >
+                    <Activity className="w-4 h-4 text-[#DA7F8F]" />
+                    <span>Kelola & Tambah Lomba</span>
+                  </NavLink>
+                  <NavLink
+                    to="/manage"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={({ isActive }) =>
+                      `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${
+                        isActive
+                          ? 'bg-[#DA7F8F] text-white'
+                          : 'text-[#2B3542] dark:text-[#FAF3F3] hover:bg-[#DA7F8F]/10'
+                      }`
+                    }
+                  >
+                    <Settings className="w-4 h-4 text-[#DA7F8F]" />
+                    <span>Kelola & Verifikasi Jalur</span>
+                  </NavLink>
+
+                  <div className="pt-2 border-t border-[#E1E5EA] dark:border-[#2C3440] my-1" />
+                  <div className="px-3.5 py-1.5 text-[10px] font-black uppercase tracking-wider text-[#6B7C8C] dark:text-[#A7BBC7]">
+                    Katalog & Publik
+                  </div>
+                  <NavLink
+                    to="/trails"
                     onClick={() => setMobileMenuOpen(false)}
                     className={({ isActive }) =>
                       `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${
@@ -565,8 +594,22 @@ export default function Navbar() {
                       }`
                     }
                   >
-                    <Ticket className="w-4 h-4 text-[#DA7F8F]" />
-                    <span>{t('nav.myTickets') || 'Tiket Lomba Saya'}</span>
+                    <Compass className="w-4 h-4 text-[#DA7F8F]" />
+                    <span>{t('nav.trails') || 'Katalog Jalur'}</span>
+                  </NavLink>
+                  <NavLink
+                    to="/races"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={({ isActive }) =>
+                      `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${
+                        isActive
+                          ? 'bg-[#DA7F8F] text-white'
+                          : 'text-[#2B3542] dark:text-[#FAF3F3] hover:bg-[#E1E5EA]/50 dark:hover:bg-[#252C36]'
+                      }`
+                    }
+                  >
+                    <Activity className="w-4 h-4 text-[#DA7F8F]" />
+                    <span>{t('nav.races') || 'Lomba Lari Gunung'}</span>
                   </NavLink>
                   <NavLink
                     to="/profile"
@@ -583,52 +626,76 @@ export default function Navbar() {
                     <span>{t('nav.profileSettings') || 'Pengaturan Profil'}</span>
                   </NavLink>
                 </>
-              )}
-
-              {isAdmin && (
+              ) : (
+                /* Regular User Mobile Drawer Links */
                 <>
-                  <NavLink
-                    to="/admin"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={({ isActive }) =>
-                      `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${
-                        isActive
-                          ? 'bg-[#DA7F8F] text-white'
-                          : 'text-[#DA7F8F] hover:bg-[#DA7F8F]/10'
-                      }`
-                    }
-                  >
-                    <ShieldCheck className="w-4 h-4" />
-                    <span>Admin Dashboard</span>
-                  </NavLink>
-                  <NavLink
-                    to="/admin/races"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={({ isActive }) =>
-                      `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${
-                        isActive
-                          ? 'bg-[#DA7F8F] text-white'
-                          : 'text-[#DA7F8F] hover:bg-[#DA7F8F]/10'
-                      }`
-                    }
-                  >
-                    <Activity className="w-4 h-4" />
-                    <span>Kelola Event</span>
-                  </NavLink>
-                  <NavLink
-                    to="/manage"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={({ isActive }) =>
-                      `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${
-                        isActive
-                          ? 'bg-[#DA7F8F] text-white'
-                          : 'text-[#DA7F8F] hover:bg-[#DA7F8F]/10'
-                      }`
-                    }
-                  >
-                    <Settings className="w-4 h-4" />
-                    <span>Kelola Jalur</span>
-                  </NavLink>
+                  {exploreItems.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <NavLink
+                        key={item.path}
+                        to={item.path}
+                        onClick={() => setMobileMenuOpen(false)}
+                        className={({ isActive }) =>
+                          `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${
+                            isActive
+                              ? 'bg-[#DA7F8F] text-white'
+                              : 'text-[#2B3542] dark:text-[#FAF3F3] hover:bg-[#E1E5EA]/50 dark:hover:bg-[#252C36]'
+                          }`
+                        }
+                      >
+                        <Icon className="w-4 h-4 text-[#DA7F8F]" />
+                        <span>{item.label}</span>
+                      </NavLink>
+                    );
+                  })}
+
+                  {isLoggedIn && (
+                    <>
+                      <NavLink
+                        to="/my-tickets"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className={({ isActive }) =>
+                          `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${
+                            isActive
+                              ? 'bg-[#DA7F8F] text-white'
+                              : 'text-[#2B3542] dark:text-[#FAF3F3] hover:bg-[#E1E5EA]/50 dark:hover:bg-[#252C36]'
+                          }`
+                        }
+                      >
+                        <Ticket className="w-4 h-4 text-[#DA7F8F]" />
+                        <span>{t('nav.myTickets') || 'Tiket Lomba Saya'}</span>
+                      </NavLink>
+                      <NavLink
+                        to="/profile"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className={({ isActive }) =>
+                          `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${
+                            isActive
+                              ? 'bg-[#DA7F8F] text-white'
+                              : 'text-[#2B3542] dark:text-[#FAF3F3] hover:bg-[#E1E5EA]/50 dark:hover:bg-[#252C36]'
+                          }`
+                        }
+                      >
+                        <UserIcon className="w-4 h-4 text-[#DA7F8F]" />
+                        <span>{t('nav.profileSettings') || 'Pengaturan Profil'}</span>
+                      </NavLink>
+                      <NavLink
+                        to="/manage"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className={({ isActive }) =>
+                          `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${
+                            isActive
+                              ? 'bg-[#DA7F8F] text-white'
+                              : 'text-[#2B3542] dark:text-[#FAF3F3] hover:bg-[#FAF3F3] dark:hover:bg-[#252C36]'
+                          }`
+                        }
+                      >
+                        <Settings className="w-4 h-4 text-[#DA7F8F]" />
+                        <span>Ajukan Jalur Baru</span>
+                      </NavLink>
+                    </>
+                  )}
                 </>
               )}
             </div>
@@ -639,7 +706,7 @@ export default function Navbar() {
               <button
                 type="button"
                 onClick={toggleLanguage}
-                className="px-3 py-1 rounded-full bg-[#E1E5EA]/70 dark:bg-[#252C36] border border-[#E1E5EA] dark:border-[#2C3440] text-xs font-mono font-bold uppercase"
+                className="px-3 py-1 rounded-full bg-[#E1E5EA]/70 dark:bg-[#252C36] border border-[#E1E5EA] dark:border-[#2C3440] text-xs font-mono font-bold uppercase cursor-pointer"
               >
                 {language}
               </button>
@@ -654,7 +721,262 @@ export default function Navbar() {
         isOpen={logoutModalOpen}
         onCancel={() => setLogoutModalOpen(false)}
         onConfirm={handleConfirmLogout}
+        title="Konfirmasi Keluar Akun"
+        subtitle="Sesi GiriTrack Anda"
+        message="Apakah Anda yakin ingin keluar dari akun GiriTrack Anda saat ini?"
+        confirmText="Keluar Akun"
       />
+
+      {/* ========================================================= */}
+      {/* MOBILE BOTTOM NAVIGATION BAR (KHUSUS LAYAR HP / MOBILE) */}
+      {/* ========================================================= */}
+      <nav
+        aria-label="Mobile Bottom Navigation"
+        className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-[#FAF3F3]/95 dark:bg-[#1C2129]/95 backdrop-blur-xl border-t border-[#E1E5EA] dark:border-[#2C3440] shadow-[0_-4px_20px_rgba(0,0,0,0.06)] dark:shadow-[0_-4px_25px_rgba(0,0,0,0.4)] transition-colors duration-200"
+      >
+        <div className="grid grid-cols-5 items-center py-1.5 px-1 max-w-lg mx-auto">
+          
+          {isAdmin ? (
+            /* ADMIN MOBILE BOTTOM NAV */
+            <>
+              {/* 1. Admin Dashboard */}
+              <NavLink
+                to="/admin"
+                className={({ isActive }) =>
+                  `flex flex-col items-center justify-center py-1 px-0.5 rounded-xl transition-all duration-200 active:scale-90 ${
+                    isActive
+                      ? 'text-[#DA7F8F] font-black'
+                      : 'text-[#57595B] dark:text-[#A7BBC7] hover:text-[#DA7F8F] dark:hover:text-[#DA7F8F]'
+                  }`
+                }
+              >
+                {({ isActive }) => (
+                  <>
+                    <div className={`p-1 rounded-full transition-colors ${isActive ? 'bg-[#DA7F8F]/15 text-[#DA7F8F]' : ''}`}>
+                      <ShieldCheck className={`w-5 h-5 transition-transform duration-200 ${isActive ? 'scale-110 stroke-[2.5]' : 'stroke-2'}`} />
+                    </div>
+                    <span className="text-[10px] tracking-tight mt-0.5 truncate text-center leading-tight">
+                      Dashboard
+                    </span>
+                  </>
+                )}
+              </NavLink>
+
+              {/* 2. Katalog Jalur */}
+              <NavLink
+                to="/trails"
+                className={({ isActive }) =>
+                  `flex flex-col items-center justify-center py-1 px-0.5 rounded-xl transition-all duration-200 active:scale-90 ${
+                    isActive
+                      ? 'text-[#DA7F8F] font-black'
+                      : 'text-[#57595B] dark:text-[#A7BBC7] hover:text-[#DA7F8F] dark:hover:text-[#DA7F8F]'
+                  }`
+                }
+              >
+                {({ isActive }) => (
+                  <>
+                    <div className={`p-1 rounded-full transition-colors ${isActive ? 'bg-[#DA7F8F]/15 text-[#DA7F8F]' : ''}`}>
+                      <Compass className={`w-5 h-5 transition-transform duration-200 ${isActive ? 'scale-110 stroke-[2.5]' : 'stroke-2'}`} />
+                    </div>
+                    <span className="text-[10px] tracking-tight mt-0.5 truncate text-center leading-tight">
+                      Katalog
+                    </span>
+                  </>
+                )}
+              </NavLink>
+
+              {/* 3. Kelola Jalur */}
+              <NavLink
+                to="/manage"
+                className={({ isActive }) =>
+                  `flex flex-col items-center justify-center py-1 px-0.5 rounded-xl transition-all duration-200 active:scale-90 ${
+                    isActive
+                      ? 'text-[#DA7F8F] font-black'
+                      : 'text-[#57595B] dark:text-[#A7BBC7] hover:text-[#DA7F8F] dark:hover:text-[#DA7F8F]'
+                  }`
+                }
+              >
+                {({ isActive }) => (
+                  <>
+                    <div className={`p-1 rounded-full transition-colors ${isActive ? 'bg-[#DA7F8F]/15 text-[#DA7F8F]' : ''}`}>
+                      <Settings className={`w-5 h-5 transition-transform duration-200 ${isActive ? 'scale-110 stroke-[2.5]' : 'stroke-2'}`} />
+                    </div>
+                    <span className="text-[10px] tracking-tight mt-0.5 truncate text-center leading-tight">
+                      Kelola Jalur
+                    </span>
+                  </>
+                )}
+              </NavLink>
+
+              {/* 4. Kelola Lomba */}
+              <NavLink
+                to="/admin/races"
+                className={({ isActive }) =>
+                  `flex flex-col items-center justify-center py-1 px-0.5 rounded-xl transition-all duration-200 active:scale-90 ${
+                    isActive
+                      ? 'text-[#DA7F8F] font-black'
+                      : 'text-[#57595B] dark:text-[#A7BBC7] hover:text-[#DA7F8F] dark:hover:text-[#DA7F8F]'
+                  }`
+                }
+              >
+                {({ isActive }) => (
+                  <>
+                    <div className={`p-1 rounded-full transition-colors ${isActive ? 'bg-[#DA7F8F]/15 text-[#DA7F8F]' : ''}`}>
+                      <Activity className={`w-5 h-5 transition-transform duration-200 ${isActive ? 'scale-110 stroke-[2.5]' : 'stroke-2'}`} />
+                    </div>
+                    <span className="text-[10px] tracking-tight mt-0.5 truncate text-center leading-tight">
+                      Kelola Lomba
+                    </span>
+                  </>
+                )}
+              </NavLink>
+
+              {/* 5. Profil Admin */}
+              <NavLink
+                to="/profile"
+                className={({ isActive }) =>
+                  `flex flex-col items-center justify-center py-1 px-0.5 rounded-xl transition-all duration-200 active:scale-90 ${
+                    isActive
+                      ? 'text-[#DA7F8F] font-black'
+                      : 'text-[#57595B] dark:text-[#A7BBC7] hover:text-[#DA7F8F] dark:hover:text-[#DA7F8F]'
+                  }`
+                }
+              >
+                {({ isActive }) => (
+                  <>
+                    <div className={`p-1 rounded-full transition-colors ${isActive ? 'bg-[#DA7F8F]/15 text-[#DA7F8F]' : ''}`}>
+                      <UserIcon className={`w-5 h-5 transition-transform duration-200 ${isActive ? 'scale-110 stroke-[2.5]' : 'stroke-2'}`} />
+                    </div>
+                    <span className="text-[10px] tracking-tight mt-0.5 truncate text-center leading-tight">
+                      Profil
+                    </span>
+                  </>
+                )}
+              </NavLink>
+            </>
+          ) : (
+            /* REGULAR USER MOBILE BOTTOM NAV */
+            <>
+              {/* 1. Beranda */}
+              <NavLink
+                to="/"
+                end
+                className={({ isActive }) =>
+                  `flex flex-col items-center justify-center py-1 px-0.5 rounded-xl transition-all duration-200 active:scale-90 ${
+                    isActive
+                      ? 'text-[#DA7F8F] font-black'
+                      : 'text-[#57595B] dark:text-[#A7BBC7] hover:text-[#DA7F8F] dark:hover:text-[#DA7F8F]'
+                  }`
+                }
+              >
+                {({ isActive }) => (
+                  <>
+                    <div className={`p-1 rounded-full transition-colors ${isActive ? 'bg-[#DA7F8F]/15 text-[#DA7F8F]' : ''}`}>
+                      <HomeIcon className={`w-5 h-5 transition-transform duration-200 ${isActive ? 'scale-110 stroke-[2.5]' : 'stroke-2'}`} />
+                    </div>
+                    <span className="text-[10px] tracking-tight mt-0.5 truncate text-center leading-tight">
+                      Beranda
+                    </span>
+                  </>
+                )}
+              </NavLink>
+
+              {/* 2. Cari Gunung dan Jalur */}
+              <NavLink
+                to="/trails"
+                className={({ isActive }) =>
+                  `flex flex-col items-center justify-center py-1 px-0.5 rounded-xl transition-all duration-200 active:scale-90 ${
+                    isActive
+                      ? 'text-[#DA7F8F] font-black'
+                      : 'text-[#57595B] dark:text-[#A7BBC7] hover:text-[#DA7F8F] dark:hover:text-[#DA7F8F]'
+                  }`
+                }
+              >
+                {({ isActive }) => (
+                  <>
+                    <div className={`p-1 rounded-full transition-colors ${isActive ? 'bg-[#DA7F8F]/15 text-[#DA7F8F]' : ''}`}>
+                      <Compass className={`w-5 h-5 transition-transform duration-200 ${isActive ? 'scale-110 stroke-[2.5]' : 'stroke-2'}`} />
+                    </div>
+                    <span className="text-[10px] tracking-tight mt-0.5 truncate text-center leading-tight">
+                      Cari Jalur
+                    </span>
+                  </>
+                )}
+              </NavLink>
+
+              {/* 3. Rekam Jejak Anda */}
+              <NavLink
+                to="/tracker"
+                className={({ isActive }) =>
+                  `flex flex-col items-center justify-center py-1 px-0.5 rounded-xl transition-all duration-200 active:scale-90 ${
+                    isActive
+                      ? 'text-[#DA7F8F] font-black'
+                      : 'text-[#57595B] dark:text-[#A7BBC7] hover:text-[#DA7F8F] dark:hover:text-[#DA7F8F]'
+                  }`
+                }
+              >
+                {({ isActive }) => (
+                  <>
+                    <div className={`p-1 rounded-full transition-colors ${isActive ? 'bg-[#DA7F8F]/15 text-[#DA7F8F]' : ''}`}>
+                      <Navigation className={`w-5 h-5 transition-transform duration-200 ${isActive ? 'scale-110 stroke-[2.5]' : 'stroke-2'}`} />
+                    </div>
+                    <span className="text-[10px] tracking-tight mt-0.5 truncate text-center leading-tight">
+                      Rekam Jejak
+                    </span>
+                  </>
+                )}
+              </NavLink>
+
+              {/* 4. Catatan Pendakian Saya */}
+              <NavLink
+                to="/history"
+                className={({ isActive }) =>
+                  `flex flex-col items-center justify-center py-1 px-0.5 rounded-xl transition-all duration-200 active:scale-90 ${
+                    isActive
+                      ? 'text-[#DA7F8F] font-black'
+                      : 'text-[#57595B] dark:text-[#A7BBC7] hover:text-[#DA7F8F] dark:hover:text-[#DA7F8F]'
+                  }`
+                }
+              >
+                {({ isActive }) => (
+                  <>
+                    <div className={`p-1 rounded-full transition-colors ${isActive ? 'bg-[#DA7F8F]/15 text-[#DA7F8F]' : ''}`}>
+                      <History className={`w-5 h-5 transition-transform duration-200 ${isActive ? 'scale-110 stroke-[2.5]' : 'stroke-2'}`} />
+                    </div>
+                    <span className="text-[10px] tracking-tight mt-0.5 truncate text-center leading-tight">
+                      Catatan Saya
+                    </span>
+                  </>
+                )}
+              </NavLink>
+
+              {/* 5. Profil */}
+              <NavLink
+                to={isLoggedIn ? '/profile' : '/login'}
+                className={({ isActive }) =>
+                  `flex flex-col items-center justify-center py-1 px-0.5 rounded-xl transition-all duration-200 active:scale-90 ${
+                    isActive
+                      ? 'text-[#DA7F8F] font-black'
+                      : 'text-[#57595B] dark:text-[#A7BBC7] hover:text-[#DA7F8F] dark:hover:text-[#DA7F8F]'
+                  }`
+                }
+              >
+                {({ isActive }) => (
+                  <>
+                    <div className={`p-1 rounded-full transition-colors ${isActive ? 'bg-[#DA7F8F]/15 text-[#DA7F8F]' : ''}`}>
+                      <UserIcon className={`w-5 h-5 transition-transform duration-200 ${isActive ? 'scale-110 stroke-[2.5]' : 'stroke-2'}`} />
+                    </div>
+                    <span className="text-[10px] tracking-tight mt-0.5 truncate text-center leading-tight">
+                      Profil
+                    </span>
+                  </>
+                )}
+              </NavLink>
+            </>
+          )}
+
+        </div>
+      </nav>
     </>
   );
 }

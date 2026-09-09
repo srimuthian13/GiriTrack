@@ -22,12 +22,13 @@ import {
   Check,
   Activity,
   Award,
-  Clock
+  Clock,
+  ArrowLeft
 } from 'lucide-react';
-import { useTrail } from '../context/TrailContext';
-import { useAuth } from '../context/AuthContext';
-import { useLanguage } from '../context/LanguageContext';
-import ModalConfirm from '../components/ModalConfirm';
+import { useTrail } from '../../context/TrailContext';
+import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../context/LanguageContext';
+import ModalConfirm from '../../components/ModalConfirm';
 
 export default function AdminDashboard() {
   const {
@@ -40,11 +41,10 @@ export default function AdminDashboard() {
     difficultyLevels,
     addDifficultyLevel,
     deleteDifficultyLevel,
-    users,
     deleteReview
   } = useTrail();
 
-  const { isAdmin, user, loginAsDemoAdmin } = useAuth();
+  const { isAdmin, user, usersDb = [], deleteUser, updateUserRole, loginAsDemoAdmin } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
 
@@ -64,8 +64,9 @@ export default function AdminDashboard() {
     onConfirm: null,
   });
 
-  // Search Filter for moderation
+  // Search Filter for moderation & users
   const [reviewSearch, setReviewSearch] = useState('');
+  const [userSearch, setUserSearch] = useState('');
 
   // 1. Check Admin Access
   if (!isAdmin) {
@@ -124,6 +125,12 @@ export default function AdminDashboard() {
     (r.trailName || '').toLowerCase().includes(reviewSearch.toLowerCase())
   );
 
+  const filteredUsers = usersDb.filter((u) =>
+    (u.name || '').toLowerCase().includes(userSearch.toLowerCase()) ||
+    (u.email || '').toLowerCase().includes(userSearch.toLowerCase()) ||
+    (u.role || '').toLowerCase().includes(userSearch.toLowerCase())
+  );
+
   // Handlers for Master Data
   const handleAddLocation = (e) => {
     e.preventDefault();
@@ -152,8 +159,20 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 space-y-8 pb-16 text-[#2B3542] dark:text-[#FAF3F3]">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 space-y-6 pb-16 text-[#2B3542] dark:text-[#FAF3F3]">
       
+      {/* Back Button */}
+      <div>
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          className="inline-flex items-center gap-2 text-xs font-bold text-[#6B7C8C] dark:text-[#A7BBC7] hover:text-[#DA7F8F] dark:hover:text-[#DA7F8F] transition-all cursor-pointer active:scale-95"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>{t('btn.back') || 'Kembali'}</span>
+        </button>
+      </div>
+
       {/* Header Dashboard */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#E1E5EA] dark:border-[#2C3440] pb-6">
         <div>
@@ -177,13 +196,20 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2 self-start md:self-auto">
+        <div className="flex flex-wrap items-center gap-2 self-start md:self-auto">
+          <Link
+            to="/trails"
+            className="px-3.5 py-2 rounded-xl border border-[#E1E5EA] dark:border-[#2C3440] text-[#2B3542] dark:text-[#FAF3F3] hover:bg-[#FAF3F3] dark:hover:bg-[#252C36] text-xs font-bold transition flex items-center gap-1.5 cursor-pointer active:scale-95"
+          >
+            <Compass className="w-4 h-4 text-[#DA7F8F]" />
+            <span>Katalog Jalur</span>
+          </Link>
           <Link
             to="/manage"
             className="px-4 py-2 rounded-xl bg-[#DA7F8F] text-white hover:bg-[#c96c7d] text-xs font-bold transition shadow-sm flex items-center gap-1.5 cursor-pointer active:scale-95"
           >
             <Plus className="w-4 h-4" />
-            <span>Tambah Jalur Baru</span>
+            <span>Kelola Jalur</span>
           </Link>
         </div>
       </div>
@@ -233,8 +259,8 @@ export default function AdminDashboard() {
             <Users className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-xs font-semibold text-[#6B7C8C] dark:text-[#A7BBC7]">Akun Pengguna</p>
-            <p className="text-2xl font-black text-[#2B3542] dark:text-[#FAF3F3]">{users.length}</p>
+            <p className="text-xs font-semibold text-[#6B7C8C] dark:text-[#A7BBC7]">Akun Terdaftar</p>
+            <p className="text-2xl font-black text-[#2B3542] dark:text-[#FAF3F3]">{usersDb.length}</p>
           </div>
         </div>
 
@@ -751,40 +777,136 @@ export default function AdminDashboard() {
             )}
           </div>
 
-          {/* Daftar Pengguna Komunitas */}
+          {/* Daftar Pengguna Terdaftar */}
           <div className="bg-white/90 dark:bg-[#1C2129] border border-[#E1E5EA] dark:border-[#2C3440] rounded-3xl p-6 shadow-sm space-y-4">
-            <div className="flex items-center justify-between border-b border-[#E1E5EA] dark:border-[#2C3440] pb-3">
-              <h2 className="text-base font-bold text-[#2B3542] dark:text-[#FAF3F3] flex items-center gap-2">
-                <Users className="w-4 h-4 text-[#DA7F8F]" />
-                <span>Daftar Akun Pengguna Terdaftar ({users.length})</span>
-              </h2>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#E1E5EA] dark:border-[#2C3440] pb-3">
+              <div>
+                <h2 className="text-base font-bold text-[#2B3542] dark:text-[#FAF3F3] flex items-center gap-2">
+                  <Users className="w-4 h-4 text-[#DA7F8F]" />
+                  <span>Daftar Akun Pengguna Terdaftar ({filteredUsers.length})</span>
+                </h2>
+                <p className="text-xs text-[#6B7C8C] dark:text-[#A7BBC7]">
+                  Seluruh akun yang mendaftar melalui formulir registrasi atau Google Auth
+                </p>
+              </div>
+
+              {/* Quick Search for users */}
+              <div className="relative w-full sm:w-64">
+                <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[#A7BBC7]" />
+                <input
+                  type="text"
+                  value={userSearch}
+                  onChange={(e) => setUserSearch(e.target.value)}
+                  placeholder="Cari nama / email pengguna..."
+                  className="w-full pl-8 pr-3 py-1.5 rounded-xl border border-[#E1E5EA] dark:border-[#2C3440] bg-[#FAF3F3] dark:bg-[#252C36] text-xs focus:outline-none"
+                />
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-              {users.map((u) => (
-                <div
-                  key={u.id}
-                  className="p-3.5 rounded-2xl bg-[#FAF3F3] dark:bg-[#252C36] border border-[#E1E5EA] dark:border-[#2C3440] flex items-center gap-3"
-                >
-                  <img
-                    src={u.avatar}
-                    alt={u.name}
-                    className="w-10 h-10 rounded-full object-cover shrink-0 border border-[#E1E5EA]"
-                  />
-                  <div className="min-w-0">
-                    <p className="text-xs font-bold truncate text-[#2B3542] dark:text-[#FAF3F3]">{u.name}</p>
-                    <p className="text-[10px] text-[#6B7C8C] dark:text-[#A7BBC7] truncate">{u.email}</p>
-                    <span className={`inline-block px-1.5 py-0.5 rounded text-[9px] font-bold uppercase mt-1 ${
-                      u.role === 'admin'
-                        ? 'bg-[#DA7F8F]/20 text-[#DA7F8F] border border-[#DA7F8F]/40'
-                        : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
-                    }`}>
-                      {u.role}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
+            {filteredUsers.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                {filteredUsers.map((u, idx) => {
+                  const isCurrentAdmin = u.email === user?.email;
+                  const isSuperAdminAccount = u.email === 'admin@giritrack.id' || u.email === 'admin@giritrack.com';
+
+                  return (
+                    <div
+                      key={u.email || idx}
+                      className="p-4 rounded-2xl bg-[#FAF3F3] dark:bg-[#252C36] border border-[#E1E5EA] dark:border-[#2C3440] flex flex-col justify-between space-y-3"
+                    >
+                      <div className="flex items-start gap-3">
+                        <img
+                          src={u.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(u.name || 'User')}`}
+                          alt={u.name}
+                          className="w-11 h-11 rounded-full object-cover shrink-0 border-2 border-white dark:border-[#1C2129] shadow-sm bg-white"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5">
+                            <p className="text-xs font-bold truncate text-[#2B3542] dark:text-[#FAF3F3]">
+                              {u.name}
+                            </p>
+                            {isCurrentAdmin && (
+                              <span className="text-[9px] font-bold text-rose-500 bg-rose-50 dark:bg-rose-950/50 px-1.5 py-0.2 rounded">
+                                Anda
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[11px] text-[#6B7C8C] dark:text-[#A7BBC7] truncate mt-0.5 font-mono">
+                            {u.email}
+                          </p>
+                          <div className="flex items-center gap-2 mt-1.5">
+                            <span className={`inline-block px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider ${
+                              u.role === 'admin'
+                                ? 'bg-[#DA7F8F] text-white shadow-sm'
+                                : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300/40'
+                            }`}>
+                              {u.role === 'admin' ? 'Admin' : 'Pendaki'}
+                            </span>
+                            {u.registeredAt && (
+                              <span className="text-[10px] text-[#6B7C8C] dark:text-[#A7BBC7]">
+                                {new Date(u.registeredAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Action Bar for User */}
+                      <div className="pt-2 border-t border-[#E1E5EA] dark:border-[#2C3440] flex items-center justify-between text-xs">
+                        <button
+                          type="button"
+                          disabled={isSuperAdminAccount}
+                          onClick={() => {
+                            const newRole = u.role === 'admin' ? 'user' : 'admin';
+                            setConfirmModal({
+                              isOpen: true,
+                              title: `Ubah Role Akun`,
+                              message: `Ubah hak akses "${u.name}" (${u.email}) menjadi ${newRole === 'admin' ? 'Admin' : 'Pendaki / User'}?`,
+                              onConfirm: () => {
+                                updateUserRole(u.email, newRole);
+                                setConfirmModal({ isOpen: false });
+                              }
+                            });
+                          }}
+                          className={`text-[11px] font-bold transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed ${
+                            u.role === 'admin'
+                              ? 'text-amber-600 dark:text-amber-400 hover:underline'
+                              : 'text-[#DA7F8F] hover:underline'
+                          }`}
+                        >
+                          {u.role === 'admin' ? 'Jadikan User Biasa' : 'Jadikan Admin'}
+                        </button>
+
+                        {!isSuperAdminAccount && !isCurrentAdmin && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setConfirmModal({
+                                isOpen: true,
+                                title: 'Hapus Akun Pengguna',
+                                message: `Apakah Anda yakin ingin menghapus akun "${u.name}" (${u.email}) secara permanen?`,
+                                onConfirm: () => {
+                                  deleteUser(u.email);
+                                  setConfirmModal({ isOpen: false });
+                                }
+                              });
+                            }}
+                            className="p-1.5 text-rose-600 hover:bg-rose-100 dark:hover:bg-rose-950/50 rounded-lg transition cursor-pointer"
+                            title="Hapus Akun"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-xs text-center py-6 text-[#6B7C8C] dark:text-[#A7BBC7]">
+                Tidak ada akun pengguna yang sesuai dengan pencarian.
+              </p>
+            )}
           </div>
 
         </div>

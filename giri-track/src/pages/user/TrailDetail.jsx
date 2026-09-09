@@ -29,13 +29,13 @@ import {
   Share2,
   X
 } from 'lucide-react';
-import { useTrail } from '../context/TrailContext';
-import { useLanguage } from '../context/LanguageContext';
-import { useAuth } from '../context/AuthContext';
-import { useToast } from '../context/ToastContext';
-import MapViewer from '../components/MapViewer';
-import ModalConfirm from '../components/ModalConfirm';
-import DetailSkeleton from '../components/skeleton/DetailSkeleton';
+import { useTrail } from '../../context/TrailContext';
+import { useLanguage } from '../../context/LanguageContext';
+import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
+import MapViewer from '../../components/MapViewer';
+import ModalConfirm from '../../components/ModalConfirm';
+import DetailSkeleton from '../../components/skeleton/DetailSkeleton';
 
 /**
  * Elevation Profile Component
@@ -429,17 +429,15 @@ export default function TrailDetail() {
           {!isAdmin && (
             <button
               onClick={handleFavoriteToggle}
-              className={`px-3.5 py-2 rounded-xl text-xs font-bold border transition-all duration-200 active:scale-95 flex items-center gap-1.5 cursor-pointer shadow-sm ${
+              className={`px-4 py-2 rounded-xl text-xs font-bold border transition-all duration-200 active:scale-95 flex items-center gap-2 cursor-pointer shadow-sm ${
                 favorited
-                  ? 'bg-[#DA7F8F]/15 text-[#DA7F8F] border-[#DA7F8F]/40'
+                  ? 'bg-[#DA7F8F] text-white border-[#DA7F8F] shadow-[#DA7F8F]/30'
                   : 'bg-white dark:bg-[#1C2129] text-[#2B3542] border-[#E1E5EA] dark:text-[#FAF3F3] dark:border-[#2C3440] hover:bg-[#FAF3F3]'
               }`}
+              title={favorited ? 'Hapus dari Favorit' : 'Sukai & Tambah ke Favorit'}
             >
-              <Heart className={`w-4 h-4 ${favorited ? 'fill-[#DA7F8F] text-[#DA7F8F]' : ''}`} />
-              <span>{favorited ? 'Jalur Disukai' : 'Suka Jalur Ini'}</span>
-              <span className="ml-1 px-1.5 py-0.5 rounded-full text-[10px] bg-black/10 dark:bg-white/10 font-mono">
-                {trail.likes_count || 0}
-              </span>
+              <Heart className={`w-4 h-4 ${favorited ? 'fill-white text-white' : 'text-[#DA7F8F]'}`} />
+              <span>{favorited ? 'Tersimpan di Favorit' : 'Tambah ke Favorit'}</span>
             </button>
           )}
 
@@ -507,10 +505,12 @@ export default function TrailDetail() {
               <span className="text-[10px] font-normal opacity-85">({reviewsList.length} ulasan)</span>
             </span>
 
-            <span className="px-3 py-1 text-xs font-bold rounded-full bg-black/60 text-white backdrop-blur-md flex items-center gap-1">
-              <Heart className={`w-3.5 h-3.5 ${favorited ? 'fill-[#DA7F8F] text-[#DA7F8F]' : ''}`} />
-              <span>{trail.likes_count || 0} Suka</span>
-            </span>
+            {favorited && (
+              <span className="px-3 py-1 text-xs font-bold rounded-full bg-[#DA7F8F] text-white backdrop-blur-md flex items-center gap-1.5 shadow-sm">
+                <Heart className="w-3.5 h-3.5 fill-white text-white" />
+                <span>Favorit</span>
+              </span>
+            )}
           </div>
 
           <h1 className="text-3xl sm:text-5xl font-black text-white tracking-tight">

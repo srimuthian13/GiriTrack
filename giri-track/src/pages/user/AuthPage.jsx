@@ -1,18 +1,20 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { 
-  UserCheck, KeyRound, Mail, ArrowRight, 
+  UserCheck, KeyRound, Mail, ArrowRight, ArrowLeft,
   Eye, EyeOff, AlertCircle, User, UserPlus, ChevronRight, X
 } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
-import { useLanguage } from '../context/LanguageContext';
-import logoAsset from '../assets/logo.png';
-import heroBromo from '../assets/hero-bromo.jpg';
+import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../context/LanguageContext';
+import { useToast } from '../../context/ToastContext';
+import logoAsset from '../../assets/logo.png';
+import heroBromo from '../../assets/hero-bromo.jpg';
 
 export default function AuthPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const { showToast } = useToast();
   const { 
     login, registerUser, 
     isLoggedIn, user 
@@ -82,14 +84,22 @@ export default function AuthPage() {
     e.preventDefault();
     setError('');
     if (!loginEmail.trim() || !loginPassword.trim()) {
-      setError(t('auth.errorRequired'));
+      const msg = t('auth.errorRequired') || 'Semua kolom wajib diisi!';
+      setError(msg);
+      showToast(msg, { type: 'error', title: 'Input Belum Lengkap' });
       return;
     }
     try {
-      login({ email: loginEmail, password: loginPassword });
+      const loggedIn = login({ email: loginEmail, password: loginPassword });
+      showToast(`Selamat datang kembali, ${loggedIn.name || 'Pengguna'}!`, { 
+        type: 'success', 
+        title: 'Berhasil Masuk' 
+      });
       handleRedirectAfterAuth();
     } catch (err) {
-      setError(err.message || 'Gagal masuk, periksa kredensial Anda.');
+      const errMsg = err.message || 'Gagal masuk, periksa kredensial Anda.';
+      setError(errMsg);
+      showToast(errMsg, { type: 'error', title: 'Gagal Masuk' });
     }
   };
 
@@ -97,11 +107,15 @@ export default function AuthPage() {
     e.preventDefault();
     setError('');
     if (!regName.trim() || !regEmail.trim() || !regPassword.trim() || !regConfirmPassword.trim()) {
-      setError('Semua kolom wajib diisi!');
+      const msg = 'Semua kolom wajib diisi!';
+      setError(msg);
+      showToast(msg, { type: 'error', title: 'Input Belum Lengkap' });
       return;
     }
     if (regPassword !== regConfirmPassword) {
-      setError('Konfirmasi kata sandi tidak cocok!');
+      const msg = 'Konfirmasi kata sandi tidak cocok!';
+      setError(msg);
+      showToast(msg, { type: 'error', title: 'Kata Sandi Tidak Cocok' });
       return;
     }
     try {
@@ -109,8 +123,14 @@ export default function AuthPage() {
       setRegName(''); setRegEmail(''); setRegPassword(''); setRegConfirmPassword('');
       toggleView(true);
       setError('');
+      showToast('Pendaftaran akun berhasil! Silakan masuk dengan email Anda.', { 
+        type: 'success', 
+        title: 'Akun Dibuat' 
+      });
     } catch (err) {
-      setError(err.message || 'Gagal mendaftar, silakan coba lagi.');
+      const errMsg = err.message || 'Gagal mendaftar, silakan coba lagi.';
+      setError(errMsg);
+      showToast(errMsg, { type: 'error', title: 'Gagal Mendaftar' });
     }
   };
 
@@ -121,7 +141,18 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-[85vh] flex flex-col relative w-full">
+    <div className="min-h-[85vh] flex flex-col relative w-full py-4">
+      <div className="max-w-4xl mx-auto w-full px-4 sm:px-6 mb-2">
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          className="inline-flex items-center gap-2 text-xs font-bold text-[#6B7C8C] dark:text-[#A7BBC7] hover:text-[#DA7F8F] dark:hover:text-[#DA7F8F] transition-all cursor-pointer active:scale-95"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>Kembali</span>
+        </button>
+      </div>
+
       <div className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-8 relative w-full">
         <div className="absolute top-0 left-1/4 w-72 h-72 bg-[#DA7F8F]/10 rounded-full blur-3xl pointer-events-none hidden md:block" />
         <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-[#A7BBC7]/10 rounded-full blur-3xl pointer-events-none hidden md:block" />

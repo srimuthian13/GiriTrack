@@ -15,9 +15,6 @@ import {
   Camera,
   Upload,
   Trash2,
-  Download,
-  FileCode,
-  Printer,
   CheckCircle,
   Maximize2,
   Image as ImageIcon,
@@ -28,6 +25,7 @@ import {
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useTrail } from '../context/TrailContext';
+import CameraCaptureModal from './CameraCaptureModal';
 import 'leaflet/dist/leaflet.css';
 
 // Leaflet DivIcons for Start (A), End (B), and Animated Hiker Marker
@@ -267,6 +265,7 @@ export default function HistoryMapModal({ isOpen, onClose, record }) {
   // Photo & Lightbox State
   const [selectedPhotoZoom, setSelectedPhotoZoom] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
   const fileInputRef = useRef(null);
 
   const coordinates = Array.isArray(record?.coordinates) && record.coordinates.length > 0
@@ -356,6 +355,38 @@ export default function HistoryMapModal({ isOpen, onClose, record }) {
     setReplayIndex(newIdx);
   };
 
+  const compressAndSavePhoto = (base64OrBlob) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const maxDimension = 900;
+      let width = img.width;
+      let height = img.height;
+
+      if (width > height && width > maxDimension) {
+        height = Math.round((height * maxDimension) / width);
+        width = maxDimension;
+      } else if (height > maxDimension) {
+        width = Math.round((width * maxDimension) / height);
+        height = maxDimension;
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, width, height);
+
+      const compressedBase64 = canvas.toDataURL('image/jpeg', 0.75);
+      addHistoryPhoto(record.id, compressedBase64);
+      setIsUploading(false);
+    };
+    img.src = base64OrBlob;
+  };
+
+  const handleCameraCapture = (capturedBase64) => {
+    compressAndSavePhoto(capturedBase64);
+  };
+
   const handlePhotoUpload = (e) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
@@ -365,31 +396,7 @@ export default function HistoryMapModal({ isOpen, onClose, record }) {
     files.forEach((file) => {
       const reader = new FileReader();
       reader.onload = (event) => {
-        const img = new Image();
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          const maxDimension = 900;
-          let width = img.width;
-          let height = img.height;
-
-          if (width > height && width > maxDimension) {
-            height = Math.round((height * maxDimension) / width);
-            width = maxDimension;
-          } else if (height > maxDimension) {
-            width = Math.round((width * maxDimension) / height);
-            height = maxDimension;
-          }
-
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0, width, height);
-
-          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.75);
-          addHistoryPhoto(record.id, compressedBase64);
-          setIsUploading(false);
-        };
-        img.src = event.target.result;
+        compressAndSavePhoto(event.target.result);
       };
       reader.readAsDataURL(file);
     });
@@ -397,73 +404,6 @@ export default function HistoryMapModal({ isOpen, onClose, record }) {
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
-  };
-
-  const handleDownloadGPX = () => {
-    const trackPointsXml = coordinates
-      .map(([lat, lon]) => `      <trkpt lat="${lat}" lon="${lon}"></trkpt>`)
-      .join('\n');
-
-    const gpxContent = `<?xml version="1.0" encoding="UTF-8"?>
-<gpx version="1.1" creator="GiriTrack - Komunitas Pendaki Indonesia" xmlns="http://www.topografix.com/GPX/1/1">
-  <metadata>
-    <name>${record.trail_name || 'Riwayat Pendakian GiriTrack'}</name>
-    <time>${record.date}</time>
-    <desc>Jarak: ${record.distance_km} km | Durasi: ${formatSecondsToDuration(record.duration_seconds)} | Kecepatan: ${record.avg_speed_kmh} km/j</desc>
-  </metadata>
-  <trk>
-    <name>${record.trail_name || 'Rute Pendakian'}</name>
-    <trkseg>
-${trackPointsXml}
-    </trkseg>
-  </trk>
-</gpx>`;
-
-    const blob = new Blob([gpxContent], { type: 'application/gpx+xml;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    const safeName = (record.trail_name || 'giritrack-route').replace(/[^a-zA-Z0-9_-]/g, '_');
-    link.href = url;
-    link.download = `${safeName}-${new Date(record.date).toISOString().slice(0, 10)}.gpx`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  };
-
-  const handleDownloadJSON = () => {
-    const exportData = {
-      app: 'GiriTrack',
-      version: '1.0',
-      export_date: new Date().toISOString(),
-      record: {
-        id: record.id,
-        trail_name: record.trail_name,
-        date: record.date,
-        distance_km: record.distance_km,
-        duration_seconds: record.duration_seconds,
-        avg_speed_kmh: record.avg_speed_kmh,
-        estimated_calories: estimatedCalories,
-        total_points: coordinates.length,
-        coordinates: coordinates,
-      },
-    };
-
-    const jsonStr = JSON.stringify(exportData, null, 2);
-    const blob = new Blob([jsonStr], { type: 'application/json;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    const safeName = (record.trail_name || 'giritrack-data').replace(/[^a-zA-Z0-9_-]/g, '_');
-    link.href = url;
-    link.download = `${safeName}-${new Date(record.date).toISOString().slice(0, 10)}.json`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  };
-
-  const handlePrintCertificate = () => {
-    window.print();
   };
 
   const progressPercent = Math.round(((replayIndex + 1) / totalPoints) * 100);
@@ -813,7 +753,28 @@ ${trackPointsXml}
                   </h4>
                 </div>
 
-                <div className="no-print">
+                <div className="flex items-center gap-2 no-print">
+                  {/* Camera Live Modal Button */}
+                  <button
+                    type="button"
+                    onClick={() => setIsCameraOpen(true)}
+                    className="px-2.5 py-1.5 rounded-full bg-[#FAF3F3] dark:bg-[#252C36] hover:bg-[#E1E5EA] text-[#2B3542] dark:text-[#FAF3F3] font-bold text-xs flex items-center gap-1.5 cursor-pointer transition active:scale-95 border border-[#E1E5EA] dark:border-[#2C3440]"
+                    title="Buka Kamera untuk Mengambil Foto Langsung"
+                  >
+                    <Camera className="w-3.5 h-3.5 text-[#DA7F8F]" />
+                    <span>Kamera</span>
+                  </button>
+
+                  {/* Upload Gallery Button */}
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="px-2.5 py-1.5 rounded-full bg-[#FAF3F3] dark:bg-[#252C36] hover:bg-[#E1E5EA] text-[#2B3542] dark:text-[#FAF3F3] font-bold text-xs flex items-center gap-1.5 cursor-pointer transition active:scale-95 border border-[#E1E5EA] dark:border-[#2C3440]"
+                    title="Upload Foto dari Galeri / File"
+                  >
+                    <Upload className="w-3.5 h-3.5 text-[#DA7F8F]" />
+                    <span>{isUploading ? 'Memproses...' : 'Upload Foto'}</span>
+                  </button>
                   <input
                     type="file"
                     ref={fileInputRef}
@@ -821,15 +782,7 @@ ${trackPointsXml}
                     accept="image/*"
                     multiple
                     className="hidden"
-                    id="history-photo-input"
                   />
-                  <label
-                    htmlFor="history-photo-input"
-                    className="px-3 py-1.5 rounded-full bg-[#FAF3F3] dark:bg-[#252C36] hover:bg-[#E1E5EA] text-[#2B3542] dark:text-[#FAF3F3] font-bold text-xs flex items-center gap-1.5 cursor-pointer transition active:scale-95 border border-[#E1E5EA] dark:border-[#2C3440]"
-                  >
-                    <Upload className="w-3.5 h-3.5 text-[#DA7F8F]" />
-                    <span>{isUploading ? 'Memproses...' : 'Tambah Foto'}</span>
-                  </label>
                 </div>
               </div>
 
@@ -877,47 +830,12 @@ ${trackPointsXml}
               )}
             </div>
 
-            {/* Fitur Ekspor & Download Riwayat & Footer Actions */}
-            <div className="no-print pt-3 border-t border-[#E1E5EA] dark:border-[#2C3440] flex flex-wrap items-center justify-between gap-2.5 mt-auto">
-              
-              {/* Export Buttons */}
-              <div className="flex flex-wrap items-center gap-1.5">
-                <button
-                  type="button"
-                  onClick={handleDownloadGPX}
-                  className="px-2.5 py-1.5 rounded-xl bg-[#FAF3F3] hover:bg-[#E1E5EA] dark:bg-[#252C36] border border-[#E1E5EA] dark:border-[#2C3440] text-[#2B3542] dark:text-[#FAF3F3] text-xs font-bold flex items-center gap-1.5 transition active:scale-95 cursor-pointer shadow-sm"
-                  title="Unduh file track GPS format .gpx"
-                >
-                  <Download className="w-3.5 h-3.5 text-[#DA7F8F]" />
-                  <span>GPX</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleDownloadJSON}
-                  className="px-2.5 py-1.5 rounded-xl bg-[#FAF3F3] hover:bg-[#E1E5EA] dark:bg-[#252C36] border border-[#E1E5EA] dark:border-[#2C3440] text-[#2B3542] dark:text-[#FAF3F3] text-xs font-bold flex items-center gap-1.5 transition active:scale-95 cursor-pointer shadow-sm"
-                  title="Unduh format data raw .json"
-                >
-                  <FileCode className="w-3.5 h-3.5 text-[#DA7F8F]" />
-                  <span>JSON</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handlePrintCertificate}
-                  className="px-2.5 py-1.5 rounded-xl bg-[#FAF3F3] hover:bg-[#E1E5EA] dark:bg-[#252C36] border border-[#E1E5EA] dark:border-[#2C3440] text-[#2B3542] dark:text-[#FAF3F3] text-xs font-bold flex items-center gap-1.5 transition active:scale-95 cursor-pointer shadow-sm"
-                  title="Cetak kartu sertifikat / PDF rekap pendakian"
-                >
-                  <Printer className="w-3.5 h-3.5 text-[#DA7F8F]" />
-                  <span>Cetak PDF</span>
-                </button>
-              </div>
-
-              {/* Close Action */}
+            {/* Footer Actions */}
+            <div className="no-print pt-3 border-t border-[#E1E5EA] dark:border-[#2C3440] flex items-center justify-end mt-auto">
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-1.5 rounded-xl bg-[#DA7F8F] text-white hover:bg-[#c96c7d] font-bold text-xs cursor-pointer transition shadow-md active:scale-95"
+                className="px-6 py-2 rounded-xl bg-[#DA7F8F] text-white hover:bg-[#c96c7d] font-bold text-xs cursor-pointer transition shadow-md active:scale-95"
               >
                 {t('btn.close') || 'Tutup'}
               </button>
@@ -951,6 +869,13 @@ ${trackPointsXml}
           </div>
         </div>
       )}
+
+      {/* Live In-App Camera Modal */}
+      <CameraCaptureModal
+        isOpen={isCameraOpen}
+        onClose={() => setIsCameraOpen(false)}
+        onCapture={handleCameraCapture}
+      />
 
     </div>
   );

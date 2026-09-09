@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
-import { X, MapPin, Clock, Camera, FileText, Image as ImageIcon, CheckCircle2, ChevronRight, Navigation, Zap } from 'lucide-react';
+import { X, MapPin, Clock, Camera, Upload, FileText, Image as ImageIcon, CheckCircle2, ChevronRight, Navigation, Zap } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import CameraCaptureModal from './CameraCaptureModal';
 
 export default function SaveActivityModal({ 
   isOpen, 
@@ -15,6 +16,7 @@ export default function SaveActivityModal({
   const [title, setTitle] = useState(defaultTitle || `Jelajah Bebas - ${new Date().toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' })}`);
   const [notes, setNotes] = useState('');
   const [photos, setPhotos] = useState([]);
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
   const fileInputRef = useRef(null);
 
   if (!isOpen) return null;
@@ -29,17 +31,42 @@ export default function SaveActivityModal({
   };
 
   const handlePhotoUpload = (e) => {
-    const files = Array.from(e.target.files);
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
     
     files.forEach(file => {
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setPhotos(prev => [...prev, reader.result]);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const maxDimension = 900;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height && width > maxDimension) {
+            height = Math.round((height * maxDimension) / width);
+            width = maxDimension;
+          } else if (height > maxDimension) {
+            width = Math.round((width * maxDimension) / height);
+            height = maxDimension;
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+
+          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.75);
+          setPhotos(prev => [...prev, compressedBase64]);
+        };
+        img.src = event.target.result;
       };
-      if (file) {
-        reader.readAsDataURL(file);
-      }
+      reader.readAsDataURL(file);
     });
+
+    if (fileInputRef.current) fileInputRef.current.value = '';
+    if (cameraInputRef.current) cameraInputRef.current.value = '';
   };
 
   const removePhoto = (index) => {
@@ -144,14 +171,27 @@ export default function SaveActivityModal({
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-[#2B3542] dark:text-[#FAF3F3]">Foto Dokumentasi</label>
             <div className="flex gap-3 overflow-x-auto pb-2 custom-scrollbar">
+              {/* Camera Snap Button */}
               <button 
+                type="button"
+                onClick={() => setIsCameraOpen(true)}
+                className="shrink-0 w-24 h-24 rounded-xl border-2 border-dashed border-[#E1E5EA] dark:border-[#2C3440] flex flex-col items-center justify-center gap-1 text-[#6B7C8C] dark:text-[#A7BBC7] hover:border-[#DA7F8F] hover:text-[#DA7F8F] hover:bg-[#DA7F8F]/5 transition-all cursor-pointer"
+                title="Buka Kamera Langsung"
+              >
+                <Camera className="w-5 h-5 text-[#DA7F8F]" />
+                <span className="text-[10px] font-bold">Kamera</span>
+              </button>
+
+              {/* Upload Gallery Button */}
+              <button 
+                type="button"
                 onClick={() => fileInputRef.current?.click()}
                 className="shrink-0 w-24 h-24 rounded-xl border-2 border-dashed border-[#E1E5EA] dark:border-[#2C3440] flex flex-col items-center justify-center gap-1 text-[#6B7C8C] dark:text-[#A7BBC7] hover:border-[#DA7F8F] hover:text-[#DA7F8F] hover:bg-[#DA7F8F]/5 transition-all cursor-pointer"
+                title="Pilih Foto dari Galeri"
               >
-                <Camera className="w-6 h-6" />
-                <span className="text-[10px] font-bold">Tambah Foto</span>
+                <Upload className="w-5 h-5 text-[#DA7F8F]" />
+                <span className="text-[10px] font-bold">Upload Foto</span>
               </button>
-              
               <input 
                 type="file" 
                 ref={fileInputRef} 
@@ -196,19 +236,28 @@ export default function SaveActivityModal({
         <div className="p-5 border-t border-[#E1E5EA] dark:border-[#2C3440] flex flex-col sm:flex-row gap-3">
           <button
             onClick={handleSaveDefaults}
-            className="flex-1 py-3 px-4 rounded-xl font-bold text-[#6B7C8C] dark:text-[#A7BBC7] bg-[#FAF3F3] dark:bg-[#252C36] hover:bg-[#E1E5EA] dark:hover:bg-[#2C3440] transition-colors text-sm"
+            className="flex-1 py-3 px-4 rounded-xl font-bold text-[#6B7C8C] dark:text-[#A7BBC7] bg-[#FAF3F3] dark:bg-[#252C36] hover:bg-[#E1E5EA] dark:hover:bg-[#2C3440] transition-colors text-sm cursor-pointer"
           >
             Simpan Tanpa Ubah
           </button>
           <button
             onClick={handleSaveCustom}
-            className="flex-1 py-3 px-4 rounded-xl font-bold text-white bg-[#DA7F8F] hover:bg-[#c96c7d] transition-colors flex items-center justify-center gap-2 text-sm shadow-md"
+            className="flex-1 py-3 px-4 rounded-xl font-bold text-white bg-[#DA7F8F] hover:bg-[#c96c7d] transition-colors flex items-center justify-center gap-2 text-sm shadow-md cursor-pointer"
           >
             <span>Simpan Aktivitas</span>
             <ChevronRight className="w-4 h-4" />
           </button>
         </div>
       </div>
+
+      {/* Live In-App Camera Modal */}
+      <CameraCaptureModal
+        isOpen={isCameraOpen}
+        onClose={() => setIsCameraOpen(false)}
+        onCapture={(capturedBase64) => {
+          setPhotos(prev => [...prev, capturedBase64]);
+        }}
+      />
     </div>
   );
 }

@@ -1,17 +1,19 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Compass, Navigation, Users, Calendar, ArrowRight, Mountain, Trophy, ChevronLeft, ChevronRight } from 'lucide-react';
-import { useTrail } from '../context/TrailContext';
-import { useLanguage } from '../context/LanguageContext';
-import TrailCard from '../components/TrailCard';
-import PastRaceCard from '../components/PastRaceCard';
-import UpcomingRaceSection from '../components/UpcomingRaceSection';
-import { pastRaces } from '../data/pastRacesData';
-import heroBromo from '../assets/hero-bromo.jpg';
+import { useTrail } from '../../context/TrailContext';
+import { useRace } from '../../context/RaceContext';
+import { useLanguage } from '../../context/LanguageContext';
+import TrailCard from '../../components/TrailCard';
+import PastRaceCard from '../../components/PastRaceCard';
+import UpcomingRaceSection from '../../components/UpcomingRaceSection';
+import { pastRaces } from '../../data/pastRacesData';
+import heroBromo from '../../assets/hero-bromo.jpg';
 
 
 export default function Home() {
   const { trails } = useTrail();
+  const { races } = useRace();
   const { t } = useLanguage();
   const navigate = useNavigate();
 
@@ -213,7 +215,7 @@ export default function Home() {
               <Calendar className="w-4 h-4" />
             </div>
             <div>
-              <p className="text-base md:text-lg font-bold text-white leading-none">3+</p>
+              <p className="text-base md:text-lg font-bold text-white leading-none">{races?.length || 3}+</p>
               <p className="text-[10px] text-stone-300 mt-1 uppercase tracking-wide leading-tight">{t('home.stats.races')}</p>
             </div>
           </div>
@@ -264,14 +266,15 @@ export default function Home() {
           </Link>
         </div>
 
+        {/* Desktop Interactive Scroll-Stacked View (lg and up) */}
         <div 
           ref={sectionRef}
-          className="flex flex-col lg:flex-row justify-center items-center lg:items-stretch py-8 min-h-[400px]"
+          className="hidden lg:flex justify-center items-stretch py-6 min-h-[385px]"
         >
           {pastRaces.map((race, index) => {
             const isStacked = scrollProgress > 0.4;
-            const baseGap = 24; 
-            const maxOverlap = -160; 
+            const baseGap = 20; 
+            const maxOverlap = -140; 
             const currentOffset = index === 0 ? 0 : baseGap - (scrollProgress * (baseGap - maxOverlap));
 
             return (
@@ -285,8 +288,8 @@ export default function Home() {
                     : 'scale(1)',
                 }}
                 className={`
-                  relative w-full sm:w-[300px] shrink-0
-                  transition-all duration-500 ease-out h-[400px]
+                  relative w-[290px] shrink-0
+                  transition-all duration-500 ease-out h-[385px]
                   ${isStacked ? 'hover:-translate-y-6 hover:scale-105 hover:z-50 hover:shadow-2xl cursor-pointer' : ''}
                 `}
               >
@@ -297,6 +300,21 @@ export default function Home() {
               </div>
             );
           })}
+        </div>
+
+        {/* Mobile / Tablet Smooth Horizontal Swipe Track (Below lg) */}
+        <div className="flex lg:hidden items-stretch gap-4 overflow-x-auto no-scrollbar scroll-smooth py-3 px-1 snap-x snap-mandatory">
+          {pastRaces.map((race, index) => (
+            <div
+              key={race.id}
+              className="w-[82vw] sm:w-[290px] shrink-0 snap-start h-[385px] flex flex-col transition-transform duration-300 active:scale-98"
+            >
+              <PastRaceCard
+                race={race}
+                index={index}
+              />
+            </div>
+          ))}
         </div>
       </section>
 

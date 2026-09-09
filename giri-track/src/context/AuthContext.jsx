@@ -9,9 +9,9 @@ const STORAGE_KEY = 'giritrack_auth';
 const USERS_STORAGE_KEY = 'giritrack_users';
 
 const initialUsers = [
-  { email: 'admin@giritrack.id', password: 'admin123', name: 'Admin GiriTrack', role: 'admin' },
-  { email: 'admin@giritrack.com', password: 'admin123', name: 'Admin GiriTrack', role: 'admin' },
-  { email: 'pendaki@giritrack.id', password: 'user123', name: 'Raka Pratama', role: 'user' }
+  { email: 'admin@giritrack.id', password: 'admin123', name: 'Admin GiriTrack', role: 'admin', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80', registeredAt: '2026-01-10T08:00:00.000Z' },
+  { email: 'admin@giritrack.com', password: 'admin123', name: 'Admin GiriTrack', role: 'admin', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80', registeredAt: '2026-01-10T08:00:00.000Z' },
+  { email: 'pendaki@giritrack.id', password: 'user123', name: 'Raka Pratama', role: 'user', avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80', registeredAt: '2026-02-15T10:30:00.000Z' }
 ];
 
 export const AuthProvider = ({ children }) => {
@@ -57,7 +57,7 @@ export const AuthProvider = ({ children }) => {
         // Ensure admin accounts always exist
         let updated = [...parsed];
         initialUsers.forEach(iu => {
-          if (!updated.some(u => u.email === iu.email)) {
+          if (!updated.some(u => u.email.toLowerCase() === iu.email.toLowerCase())) {
             updated.push(iu);
           }
         });
@@ -72,21 +72,40 @@ export const AuthProvider = ({ children }) => {
   });
 
   const registerUser = ({ name, email, password }) => {
-    const emailExists = usersDb.some((u) => u.email === email);
+    const trimmedEmail = email.trim().toLowerCase();
+    const emailExists = usersDb.some((u) => u.email.toLowerCase() === trimmedEmail);
     if (emailExists) {
       throw new Error('Email sudah terdaftar!');
     }
 
     const newUser = {
-      name,
-      email,
+      name: name.trim(),
+      email: trimmedEmail,
       password,
-      role: 'user'
+      role: 'user',
+      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name.trim())}`,
+      registeredAt: new Date().toISOString()
     };
 
     const updatedUsers = [...usersDb, newUser];
     setUsersDb(updatedUsers);
     localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(updatedUsers));
+    return true;
+  };
+
+  const deleteUser = (emailToDelete) => {
+    const updated = usersDb.filter(u => u.email.toLowerCase() !== emailToDelete.toLowerCase());
+    setUsersDb(updated);
+    localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(updated));
+    return true;
+  };
+
+  const updateUserRole = (targetEmail, newRole) => {
+    const updated = usersDb.map(u => 
+      u.email.toLowerCase() === targetEmail.toLowerCase() ? { ...u, role: newRole } : u
+    );
+    setUsersDb(updated);
+    localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(updated));
     return true;
   };
 
@@ -241,11 +260,14 @@ export const AuthProvider = ({ children }) => {
         setCurrentRole,
         isAdmin,
         isUser,
+        usersDb,
         loadingGoogle,
         login,
         loginWithGoogle,
         registerUser,
         register,
+        deleteUser,
+        updateUserRole,
         requireAuth,
         logout,
         loginAsDemoAdmin,

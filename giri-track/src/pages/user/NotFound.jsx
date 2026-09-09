@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Compass, Home } from 'lucide-react';
-import logoAsset from '../assets/logo.png';
+import logoAsset from '../../assets/logo.png';
 
 export default function NotFound() {
   return (

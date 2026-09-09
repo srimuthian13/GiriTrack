@@ -1,10 +1,10 @@
 import { useState, useContext, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { RaceContext } from '../context/RaceContext';
-import { useAuth } from '../context/AuthContext';
-import { useLanguage } from '../context/LanguageContext';
+import { RaceContext } from '../../context/RaceContext';
+import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../context/LanguageContext';
 import { AlertTriangle, Info, ArrowLeft, CheckCircle2 } from 'lucide-react';
-import RacePaymentModal from '../components/RacePaymentModal';
+import RacePaymentModal from '../../components/RacePaymentModal';
 
 export default function RaceRegister() {
   const { id } = useParams();
@@ -84,13 +84,16 @@ export default function RaceRegister() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
-      <button 
-        onClick={() => navigate('/races')}
-        className="flex items-center gap-2 text-[#6B7C8C] dark:text-[#A7BBC7] hover:text-[#2B3542] dark:hover:text-white transition-colors mb-6 text-sm font-medium"
-      >
-        <ArrowLeft className="w-4 h-4" />
-        {t('registration.backToCatalog')}
-      </button>
+      <div className="mb-6">
+        <button 
+          type="button"
+          onClick={() => navigate(-1)}
+          className="inline-flex items-center gap-2 text-xs font-bold text-[#6B7C8C] dark:text-[#A7BBC7] hover:text-[#DA7F8F] dark:hover:text-[#DA7F8F] transition-all cursor-pointer active:scale-95"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>{t('btn.back') || t('registration.backToCatalog') || 'Kembali'}</span>
+        </button>
+      </div>
 
       <div className="bg-white dark:bg-[#1C2129] rounded-3xl shadow-md border border-[#E1E5EA] dark:border-[#2C3440] overflow-hidden">
         <div className="bg-[#452829] p-6 sm:p-8 text-white">
