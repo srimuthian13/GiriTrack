@@ -37,5 +37,18 @@ export const pastRaces = [
     longestDistance: '30 KM',
     courseRecord: '04j 05m',
     status: 'COMPLETED'
+  },
+  {
+    id: 'past-lawu-2024',
+    name: 'Lawu Mountain Race 2024',
+    location: 'Cemoro Sewu, Karanganyar',
+    date: '20 Oktober 2024',
+    image: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=800&q=80',
+    finishersCount: 310,
+    rating: 4.8,
+    reviewQuote: '"Cuaca sangat dingin tapi pemandangan sabana di Hargo Dalem menebus segalanya. Epic!"',
+    longestDistance: '42 KM',
+    courseRecord: '05j 45m',
+    status: 'COMPLETED'
   }
 ];

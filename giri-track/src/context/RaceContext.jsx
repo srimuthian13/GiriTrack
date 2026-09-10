@@ -1,6 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useState, useEffect, useContext } from 'react';
-import { initialRaces } from '../data/initialData';
 import { races as importedRaces, flagshipRace } from '../data/raceData';
 
 export const RaceContext = createContext();

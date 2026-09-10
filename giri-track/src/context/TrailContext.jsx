@@ -226,12 +226,14 @@ export const TrailProvider = ({ children }) => {
     if (!trailId) return null;
 
     const ratingNum = Math.max(1, Math.min(5, Number(reviewData.rating) || 5));
+    const resolvedName = (reviewData.userName || reviewData.reviewer || reviewData.user || user?.name || user?.email || 'Pendaki').trim();
     const newReview = {
       id: `rev-${Date.now()}`,
-      userId: reviewData.userId || `user-guest-${Date.now().toString().slice(-4)}`,
-      userName: (reviewData.userName || reviewData.user || 'Pendaki Giri').trim(),
+      userId: reviewData.userId || user?.email || user?.id || `user-guest-${Date.now().toString().slice(-4)}`,
+      userName: resolvedName,
       userAvatar:
         reviewData.userAvatar ||
+        user?.avatar ||
         'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=200&auto=format&fit=crop',
       rating: ratingNum,
       comment: (reviewData.comment || reviewData.text || '').trim(),

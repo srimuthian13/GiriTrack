@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState, useCallback } from 'react';
-import { CheckCircle2, Heart, Star, Sparkles, X, AlertCircle, Info } from 'lucide-react';
+import { CheckCircle2, Heart, Star, X, AlertCircle, Info } from 'lucide-react';
 
 const ToastContext = createContext();
 
@@ -23,7 +23,17 @@ export const ToastProvider = ({ children }) => {
       title: options.title || '',
     };
 
-    setToasts((prev) => [...prev, newToast]);
+    setToasts((prev) => {
+      // 1. Prevent duplicate messages
+      // 2. If this is an error toast, remove any existing error toast so only 1 error is displayed
+      const filtered = prev.filter((t) => {
+        if (t.message === message) return false;
+        if (type === 'error' && t.type === 'error') return false;
+        return true;
+      });
+      // Limit to at most 2 notifications to prevent screen clutter
+      return [...filtered.slice(-1), newToast];
+    });
 
     setTimeout(() => {
       removeToast(id);
@@ -36,8 +46,8 @@ export const ToastProvider = ({ children }) => {
     <ToastContext.Provider value={{ showToast }}>
       {children}
       
-      {/* Floating Animated Toast Container (Top Right) */}
-      <div className="fixed top-20 right-4 sm:right-6 z-50 flex flex-col gap-2.5 max-w-sm w-full pointer-events-none">
+      {/* Floating Animated Toast Container (Responsive: center-x on mobile, top-right on sm+) */}
+      <div className="fixed top-16 sm:top-20 inset-x-4 max-w-sm mx-auto sm:mx-0 sm:inset-x-auto sm:right-6 z-[9999] flex flex-col gap-2.5 pointer-events-none">
         {toasts.map((toast) => {
           let icon = <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />;
           let bgStyle = 'bg-white/95 dark:bg-[#1C2129]/95 border-emerald-500/40 text-[#2B3542] dark:text-[#FAF3F3] shadow-xl';
@@ -59,22 +69,23 @@ export const ToastProvider = ({ children }) => {
           return (
             <div
               key={toast.id}
-              className={`pointer-events-auto flex items-center justify-between gap-3 p-3.5 sm:p-4 rounded-2xl border backdrop-blur-md transition-all duration-300 transform translate-y-0 opacity-100 animate-in fade-in slide-in-from-top-4 ${bgStyle}`}
+              className={`pointer-events-auto flex items-start justify-between gap-3 p-3.5 sm:p-4 rounded-2xl border backdrop-blur-md transition-all duration-300 transform translate-y-0 opacity-100 animate-in fade-in slide-in-from-top-4 ${bgStyle}`}
             >
-              <div className="flex items-center gap-3">
-                {icon}
-                <div>
+              <div className="flex items-start gap-3 min-w-0 flex-1">
+                <div className="mt-0.5 shrink-0">{icon}</div>
+                <div className="min-w-0 flex-1">
                   {toast.title && (
-                    <p className="text-xs font-black tracking-tight">{toast.title}</p>
+                    <p className="text-xs font-black tracking-tight truncate mb-0.5">{toast.title}</p>
                   )}
-                  <p className="text-xs font-semibold leading-snug">{toast.message}</p>
+                  <p className="text-xs font-semibold leading-snug break-words">{toast.message}</p>
                 </div>
               </div>
 
               <button
                 type="button"
                 onClick={() => removeToast(toast.id)}
-                className="p-1 rounded-full text-slate-400 hover:text-slate-700 dark:hover:text-white cursor-pointer transition shrink-0"
+                className="p-1 rounded-full text-slate-400 hover:text-slate-700 dark:hover:text-white cursor-pointer transition shrink-0 -mr-1"
+                aria-label="Tutup Notifikasi"
               >
                 <X className="w-4 h-4" />
               </button>

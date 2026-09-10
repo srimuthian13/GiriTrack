@@ -4,10 +4,11 @@ export default function Logo({
   className = "h-9 w-auto",
   showText = true,
   textClassName = "text-xl",
+  to = "/"
 }) {
   return (
     <Link
-      to="/"
+      to={to}
       className="inline-flex items-center gap-2.5 select-none transition-opacity duration-200 hover:opacity-90 group"
       aria-label="GiriTrack Beranda"
     >

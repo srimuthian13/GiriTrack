@@ -21,16 +21,7 @@ export default function Trails() {
 
   // State Filters & Sorting (initialize with URL search param if present)
   const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
-
-  // Synchronize when URL search param changes
-  useEffect(() => {
-    const urlQuery = searchParams.get('search');
-    if (urlQuery !== null) {
-      setSearchTerm(urlQuery);
-      setCurrentPage(1);
-    }
-  }, [searchParams]);
-
+  const [prevSearchParam, setPrevSearchParam] = useState(searchParams.get('search'));
   const [difficultyFilter, setDifficultyFilter] = useState('ALL');
   const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
   const [sortBy, setSortBy] = useState('DEFAULT');
@@ -39,9 +30,22 @@ export default function Trails() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
 
+  // Synchronize when URL search param changes without effect cascade
+  const urlQuery = searchParams.get('search');
+  if (urlQuery !== prevSearchParam) {
+    setPrevSearchParam(urlQuery);
+    setSearchTerm(urlQuery || '');
+    setCurrentPage(1);
+  }
+
   // State Modal Delete
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedTrailIdToDelete, setSelectedTrailIdToDelete] = useState(null);
+
+  // Scroll to top on mount
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, []);
 
   // Simulated Loading Effect on Mount or Filter Change
   useEffect(() => {
@@ -209,13 +213,14 @@ export default function Trails() {
       </div>
 
       {/* Filter & Search Bar */}
-      <div className="bg-white/90 dark:bg-[#1C2129] rounded-2xl sm:rounded-3xl p-3.5 sm:p-4 shadow-sm border border-[#E1E5EA] dark:border-[#2C3440] space-y-3 transition-colors duration-300 ease-in-out">
+      <div id="cari-gunung-dan-jalur" className="bg-white/90 dark:bg-[#1C2129] rounded-2xl sm:rounded-3xl p-3.5 sm:p-4 shadow-sm border border-[#E1E5EA] dark:border-[#2C3440] space-y-3 transition-colors duration-300 ease-in-out">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
           
           {/* Search Input */}
           <div className="md:col-span-5 relative">
             <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#A7BBC7]" />
             <input
+              id="search-gunung-jalur-input"
               type="text"
               value={searchTerm}
               onChange={(e) => {

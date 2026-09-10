@@ -1,14 +1,23 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../context/LanguageContext';
 import { User, Mail, Phone, Droplet, Lock, Camera, CheckCircle2, ShieldAlert, ArrowLeft, Upload } from 'lucide-react';
 import CameraCaptureModal from '../../components/CameraCaptureModal';
 
 export default function Profile() {
   const navigate = useNavigate();
   const { currentUser, updateUserProfile } = useAuth();
+  const { t } = useLanguage();
   const [isCameraOpen, setIsCameraOpen] = useState(false);
-  
+
+  // Scroll to top on mount
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, []);
+
+  const isLoggedIn = currentUser?.isLoggedIn || !!currentUser?.email;
+
   const [formData, setFormData] = useState({
     name: currentUser?.name || '',
     email: currentUser?.email || '',
@@ -21,6 +30,41 @@ export default function Profile() {
 
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+
+  if (!isLoggedIn) {
+    return (
+      <div className="max-w-md mx-auto my-16 px-4 animate-in fade-in zoom-in duration-300">
+        <div className="bg-white/90 dark:bg-[#1C2129] rounded-3xl p-6 sm:p-8 border border-[#E1E5EA] dark:border-[#2C3440] shadow-xl text-center space-y-5 text-[#2B3542] dark:text-[#FAF3F3]">
+          <div className="w-16 h-16 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-500 flex items-center justify-center mx-auto shadow-inner">
+            <Lock className="w-8 h-8" />
+          </div>
+          <div>
+            <h2 className="text-xl sm:text-2xl font-black">{t('authGate.title') || 'Akses Akun Pribadi Diperlukan'}</h2>
+            <p className="text-xs text-[#6B7C8C] dark:text-[#A7BBC7] mt-1.5 leading-relaxed">
+              Silakan masuk ke akun GiriTrack Anda untuk melihat dan mengelola data profil, kontak darurat, dan foto akun.
+            </p>
+          </div>
+          <div className="space-y-2.5 pt-2">
+            <button
+              onClick={() => {
+                localStorage.setItem('giritrack_intended_path', '/profile');
+                navigate('/login');
+              }}
+              className="w-full py-3 rounded-2xl bg-[#DA7F8F] text-white hover:bg-[#c96c7d] font-bold text-xs shadow-md transition-all duration-200 active:scale-95 cursor-pointer flex items-center justify-center gap-2"
+            >
+              <span>{t('authGate.loginBtn') || 'Masuk Akun Sekarang'}</span>
+            </button>
+            <button
+              onClick={() => navigate('/')}
+              className="w-full py-2.5 rounded-2xl border border-[#E1E5EA] dark:border-[#2C3440] text-[#2B3542] dark:text-[#FAF3F3] hover:bg-[#FAF3F3] dark:hover:bg-[#252C36] font-semibold text-xs transition cursor-pointer"
+            >
+              {t('authGate.backHome') || 'Kembali ke Beranda'}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -71,16 +115,16 @@ export default function Profile() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10">
+    <div className="max-w-3xl mx-auto px-4 sm:px-6 space-y-6 pb-16 text-[#2B3542] dark:text-[#FAF3F3]">
       {/* Back Button */}
-      <div className="mb-6">
+      <div>
         <button
           type="button"
           onClick={() => navigate(-1)}
           className="inline-flex items-center gap-2 text-xs font-bold text-[#6B7C8C] dark:text-[#A7BBC7] hover:text-[#DA7F8F] dark:hover:text-[#DA7F8F] transition-all cursor-pointer active:scale-95"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>Kembali</span>
+          <span>{t('btn.back') || 'Kembali'}</span>
         </button>
       </div>
 

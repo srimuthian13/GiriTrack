@@ -10,14 +10,11 @@ import UpcomingRaceSection from '../../components/UpcomingRaceSection';
 import { pastRaces } from '../../data/pastRacesData';
 import heroBromo from '../../assets/hero-bromo.jpg';
 
-
 export default function Home() {
   const { trails } = useTrail();
   const { races } = useRace();
   const { t } = useLanguage();
   const navigate = useNavigate();
-
-
 
   // Background Hero Slides derived from mountain photos
   const heroSlides = [
@@ -77,7 +74,7 @@ export default function Home() {
       const rect = sectionRef.current.getBoundingClientRect();
       const windowHeight = window.innerHeight;
 
-      // Titik tengah dari section (Jalur Pendakian Populer)
+      // Titik tengah dari section
       const sectionCenter = rect.top + (rect.height / 2);
       // Titik tengah dari layar (viewport)
       const viewportCenter = windowHeight / 2;
@@ -91,13 +88,10 @@ export default function Home() {
       const maxDistance = windowHeight * 0.6; 
 
       if (distance <= safeZone) {
-        // Jika section ada persis di tengah-tengah layar (zona aman), kartu tidak menumpuk sama sekali
         setScrollProgress(0);
       } else if (distance >= maxDistance) {
-        // Jika section terlalu jauh di atas atau di bawah layar, tumpuk maksimal
         setScrollProgress(1);
       } else {
-        // Semakin menjauh dari zona aman, semakin menumpuk
         const progress = (distance - safeZone) / (maxDistance - safeZone);
         setScrollProgress(progress);
       }
@@ -198,51 +192,124 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Bottom Content (Stats Cards) */}
-        <div className="relative z-10 grid grid-cols-2 md:grid-cols-4 gap-3 w-full max-w-5xl mx-auto pb-2">
-          <div className="bg-stone-950/40 backdrop-blur-md border border-white/10 rounded-xl p-2.5 flex items-center gap-2.5 transition-transform hover:-translate-y-1">
-            <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-rose-400 shrink-0">
-              <Compass className="w-4 h-4" />
-            </div>
-            <div>
-              <p className="text-base md:text-lg font-bold text-white leading-none">{trails.length}+</p>
-              <p className="text-[10px] text-stone-300 mt-1 uppercase tracking-wide leading-tight">{t('home.stats.trails')}</p>
-            </div>
-          </div>
+        <style>
+          {`
+            @keyframes marquee {
+              0% { transform: translateX(0); }
+              100% { transform: translateX(-50%); }
+            }
+            .animate-marquee {
+              animation: marquee 15s linear infinite;
+            }
+            .animate-marquee:hover {
+              animation-play-state: paused;
+            }
+          `}
+        </style>
 
-          <div className="bg-stone-950/40 backdrop-blur-md border border-white/10 rounded-xl p-2.5 flex items-center gap-2.5 transition-transform hover:-translate-y-1">
-            <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-amber-400 shrink-0">
-              <Calendar className="w-4 h-4" />
-            </div>
-            <div>
-              <p className="text-base md:text-lg font-bold text-white leading-none">{races?.length || 3}+</p>
-              <p className="text-[10px] text-stone-300 mt-1 uppercase tracking-wide leading-tight">{t('home.stats.races')}</p>
-            </div>
-          </div>
+        {/* Bottom Content (Stats Cards Marquee) */}
+        <div className="relative z-10 w-full max-w-5xl mx-auto pb-2 overflow-hidden px-2">
+          {/* Fading Edges for Marquee */}
+          <div className="absolute inset-y-0 left-0 w-8 md:w-16 bg-gradient-to-r from-stone-950/90 to-transparent z-20 pointer-events-none" />
+          <div className="absolute inset-y-0 right-0 w-8 md:w-16 bg-gradient-to-l from-stone-950/90 to-transparent z-20 pointer-events-none" />
 
-          <div className="bg-stone-950/40 backdrop-blur-md border border-white/10 rounded-xl p-2.5 flex items-center gap-2.5 transition-transform hover:-translate-y-1">
-            <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-emerald-400 shrink-0">
-              <Users className="w-4 h-4" />
-            </div>
-            <div>
-              <p className="text-base md:text-lg font-bold text-white leading-none">1,250+</p>
-              <p className="text-[10px] text-stone-300 mt-1 uppercase tracking-wide leading-tight">{t('home.stats.community')}</p>
-            </div>
-          </div>
-
-          <div className="bg-stone-950/40 backdrop-blur-md border border-white/10 rounded-xl p-2.5 flex items-center gap-2.5 transition-transform hover:-translate-y-1">
-            <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-blue-400 shrink-0">
-              <Trophy className="w-4 h-4" />
-            </div>
-            <div>
-              <p className="text-base md:text-lg font-bold text-white leading-none">100%</p>
-              <p className="text-[10px] text-stone-300 mt-1 uppercase tracking-wide leading-tight">{t('home.stats.local')}</p>
-            </div>
+          <div className="flex w-max animate-marquee gap-2 sm:gap-3">
+            {/* Array of duplicated stats to make seamless loop */}
+            {(() => {
+              const statsData = [
+                {
+                  icon: <Compass className="w-4 h-4" />,
+                  color: 'text-rose-400',
+                  value: trails?.length || 15,
+                  suffix: '+',
+                  label: t('home.stats.trails')
+                },
+                {
+                  icon: <Calendar className="w-4 h-4" />,
+                  color: 'text-amber-400',
+                  value: races?.length || 5,
+                  suffix: '+',
+                  label: t('home.stats.races')
+                },
+                {
+                  icon: <Users className="w-4 h-4" />,
+                  color: 'text-emerald-400',
+                  value: '1,250',
+                  suffix: '+',
+                  label: t('home.stats.community')
+                },
+                {
+                  icon: <Trophy className="w-4 h-4" />,
+                  color: 'text-blue-400',
+                  value: '100',
+                  suffix: '%',
+                  label: t('home.stats.local')
+                }
+              ];
+              
+              return [...statsData, ...statsData].map((stat, idx) => (
+                <div 
+                  key={idx}
+                  className="bg-stone-950/40 backdrop-blur-md border border-white/10 rounded-xl p-2 sm:p-2.5 flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-1.5 sm:gap-2 text-center sm:text-left transition-colors hover:bg-stone-900/60 w-[45vw] sm:w-[220px] md:w-[230px] shrink-0 cursor-default"
+                >
+                  <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-lg bg-white/10 flex items-center justify-center ${stat.color} shrink-0`}>
+                    {stat.icon}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm sm:text-base md:text-lg font-bold text-white leading-none">
+                      {stat.value}{stat.suffix}
+                    </p>
+                    <p className="text-[9px] sm:text-[10px] text-stone-300 mt-0.5 sm:mt-1 uppercase tracking-wide leading-tight truncate">
+                      {stat.label}
+                    </p>
+                  </div>
+                </div>
+              ));
+            })()}
           </div>
         </div>
       </section>
 
-      {/* 3. Past Events Recap Section */}
+      {/* 2. Popular Trails Section */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+          <div>
+            <div className="inline-block px-2.5 py-1 mb-2 text-[10px] font-bold tracking-widest text-emerald-500 bg-emerald-500/10 rounded-full border border-emerald-500/20">
+              EXPLORE
+            </div>
+            <h2 className="text-2xl font-bold text-[#2B3542] dark:text-[#FAF3F3] flex items-center gap-2">
+              <Compass className="w-6 h-6 text-emerald-500" />
+              <span>Jalur Pendakian Populer</span>
+            </h2>
+            <p className="text-xs text-[#6B7C8C] dark:text-[#A7BBC7] mt-1 max-w-xl">
+              Pilihan rute gunung terbaik dari komunitas GiriTrack untuk petualangan Anda berikutnya.
+            </p>
+          </div>
+          <Link
+            to="/trails"
+            className="text-xs font-bold text-emerald-500 hover:underline flex items-center gap-1 cursor-pointer shrink-0"
+          >
+            <span>Lihat Semua Jalur</span>
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
+
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {trails.slice(0, 4).map((trail, index) => (
+            <TrailCard
+              key={trail.id}
+              trail={trail}
+              index={index}
+              onDetail={() => handleTrailDetail(trail)}
+            />
+          ))}
+        </div>
+      </section>
+
+      {/* 3. Upcoming Race Series Section */}
+      <UpcomingRaceSection />
+
+      {/* 4. Past Events Recap Section */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div>
@@ -303,11 +370,11 @@ export default function Home() {
         </div>
 
         {/* Mobile / Tablet Smooth Horizontal Swipe Track (Below lg) */}
-        <div className="flex lg:hidden items-stretch gap-4 overflow-x-auto no-scrollbar scroll-smooth py-3 px-1 snap-x snap-mandatory">
+        <div className="flex lg:hidden items-stretch gap-4 overflow-x-auto no-scrollbar scroll-smooth py-3 px-1 snap-x snap-mandatory pb-4">
           {pastRaces.map((race, index) => (
             <div
               key={race.id}
-              className="w-[82vw] sm:w-[290px] shrink-0 snap-start h-[385px] flex flex-col transition-transform duration-300 active:scale-98"
+              className="w-[82vw] sm:w-[290px] shrink-0 snap-start h-[440px] sm:h-[400px] flex flex-col transition-transform duration-300 active:scale-98"
             >
               <PastRaceCard
                 race={race}
@@ -317,11 +384,6 @@ export default function Home() {
           ))}
         </div>
       </section>
-
-      {/* 4. Upcoming Race Series Section */}
-      <UpcomingRaceSection />
-
-
 
     </div>
   );

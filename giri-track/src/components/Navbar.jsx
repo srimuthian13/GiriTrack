@@ -23,13 +23,15 @@ import {
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { useToast } from '../context/ToastContext';
 import ModalConfirm from './ModalConfirm';
 import Logo from './Logo';
 
 export default function Navbar() {
   const { language, toggleLanguage, t } = useLanguage();
-  const { isAdmin, user, isLoggedIn, logout } = useAuth();
+  const { isAdmin, user, isLoggedIn, logout, openAuthModal } = useAuth();
   const { isDarkMode, toggleTheme } = useTheme();
+  const { showToast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -38,12 +40,26 @@ export default function Navbar() {
   
   // Dropdown States
   const [isExploreOpen, setIsExploreOpen] = useState(false);
+  const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [logoutModalOpen, setLogoutModalOpen] = useState(false);
 
   const exploreDropdownRef = useRef(null);
+  const adminDropdownRef = useRef(null);
   const profileDropdownRef = useRef(null);
+
+  const handleGuestClick = (e) => {
+    if (!isLoggedIn) {
+      if (e) e.preventDefault();
+      openAuthModal();
+      setIsExploreOpen(false);
+      setIsAdminOpen(false);
+      setMobileMenuOpen(false);
+      return false;
+    }
+    return true;
+  };
 
   // Close dropdowns on outside click
   useEffect(() => {
@@ -53,6 +69,12 @@ export default function Navbar() {
         !exploreDropdownRef.current.contains(event.target)
       ) {
         setIsExploreOpen(false);
+      }
+      if (
+        adminDropdownRef.current &&
+        !adminDropdownRef.current.contains(event.target)
+      ) {
+        setIsAdminOpen(false);
       }
       if (
         profileDropdownRef.current &&
@@ -69,6 +91,7 @@ export default function Navbar() {
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsExploreOpen(false);
+    setIsAdminOpen(false);
     setIsProfileOpen(false);
     setMobileMenuOpen(false);
   }, [location.pathname]);
@@ -76,6 +99,15 @@ export default function Navbar() {
   // Handle Global Search Submit
   const handleSearchSubmit = (e) => {
     e.preventDefault();
+    if (!isLoggedIn) {
+      showToast('Silakan login atau registrasi terlebih dahulu untuk mencari jalur!', {
+        type: 'error',
+        title: 'Akses Terbatas'
+      });
+      openAuthModal();
+      setMobileMenuOpen(false);
+      return;
+    }
     if (searchQuery.trim()) {
       navigate(`/trails?search=${encodeURIComponent(searchQuery.trim())}`);
       setMobileMenuOpen(false);
@@ -94,7 +126,7 @@ export default function Navbar() {
     setLogoutModalOpen(false);
     setIsProfileOpen(false);
     setMobileMenuOpen(false);
-    navigate('/login');
+    navigate('/');
   };
 
   // Sub-items for "Jelajah" Dropdown
@@ -155,6 +187,7 @@ export default function Navbar() {
                 className="h-8 sm:h-9 w-auto"
                 showText={true}
                 textClassName="text-lg sm:text-xl font-black tracking-tight"
+                to={isAdmin ? "/admin" : "/"}
               />
             </div>
 
@@ -190,72 +223,181 @@ export default function Navbar() {
             {/* ========================================================= */}
             <div className="hidden md:flex items-center gap-2 lg:gap-3">
               
-              {/* Nav Link: Beranda */}
-              <NavLink
-                to="/"
-                className={({ isActive }) =>
-                  `px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${
-                    isActive
-                      ? 'text-[#DA7F8F] bg-[#DA7F8F]/10 dark:bg-[#DA7F8F]/15'
-                      : 'text-[#2B3542] dark:text-[#FAF3F3] hover:text-[#DA7F8F] dark:hover:text-[#DA7F8F]'
-                  }`
-                }
-              >
-                {t('nav.home') || 'Beranda'}
-              </NavLink>
-
-              {/* Nav Link: Jelajah Dropdown */}
-              <div className="relative" ref={exploreDropdownRef}>
-                <button
-                  type="button"
-                  onClick={() => setIsExploreOpen(!isExploreOpen)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer ${
-                    isExploreActive || isExploreOpen
-                      ? 'text-[#DA7F8F] bg-[#DA7F8F]/10 dark:bg-[#DA7F8F]/15'
-                      : 'text-[#2B3542] dark:text-[#FAF3F3] hover:text-[#DA7F8F] dark:hover:text-[#DA7F8F]'
-                  }`}
-                >
-                  <span>{t('nav.explore') || 'Jelajah'}</span>
-                  <ChevronDown
-                    className={`w-3.5 h-3.5 transition-transform duration-200 ${
-                      isExploreOpen ? 'rotate-180 text-[#DA7F8F]' : ''
+              {/* Nav Link: Admin Dropdown or User Navigation */}
+              {isAdmin ? (
+                <div className="relative" ref={adminDropdownRef}>
+                  <button
+                    type="button"
+                    onClick={() => setIsAdminOpen(!isAdminOpen)}
+                    className={`px-3.5 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer border ${
+                      isAdminOpen || location.pathname.startsWith('/admin') || location.pathname === '/manage'
+                        ? 'text-[#DA7F8F] bg-[#DA7F8F]/10 dark:bg-[#DA7F8F]/15 border-[#DA7F8F]/40 shadow-sm'
+                        : 'text-[#2B3542] dark:text-[#FAF3F3] hover:text-[#DA7F8F] border-[#E1E5EA] dark:border-[#2C3440] bg-[#E1E5EA]/40 dark:bg-[#252C36]/50'
                     }`}
-                  />
-                </button>
+                  >
+                    <ShieldCheck className="w-3.5 h-3.5 text-[#DA7F8F]" />
+                    <span>Menu Administrator</span>
+                    <ChevronDown
+                      className={`w-3.5 h-3.5 transition-transform duration-200 ${
+                        isAdminOpen ? 'rotate-180 text-[#DA7F8F]' : ''
+                      }`}
+                    />
+                  </button>
 
-                {/* Dropdown Menu Popup */}
-                {isExploreOpen && (
-                  <div className="absolute right-0 mt-2 w-64 rounded-2xl bg-white dark:bg-[#1C2129] border border-[#E1E5EA] dark:border-[#2C3440] shadow-xl py-2 z-50 animate-in fade-in slide-in-from-top-2">
-                    <div className="px-3.5 py-1.5 text-[10px] font-bold uppercase tracking-wider text-[#A7BBC7]">
-                      Fitur Jelajah
+                  {/* Admin Dropdown Menu */}
+                  {isAdminOpen && (
+                    <div className="absolute right-0 mt-2 w-64 rounded-2xl bg-white dark:bg-[#1C2129] border border-[#E1E5EA] dark:border-[#2C3440] shadow-xl py-2 z-50 animate-in fade-in slide-in-from-top-2">
+                      <div className="px-3.5 py-1.5 text-[10px] font-bold uppercase tracking-wider text-[#A7BBC7] flex items-center gap-1.5 border-b border-[#E1E5EA] dark:border-[#2C3440] mb-1 pb-2">
+                        <ShieldCheck className="w-3.5 h-3.5 text-[#DA7F8F]" />
+                        <span>Pengelolaan Sistem</span>
+                      </div>
+
+                      <Link
+                        to="/admin"
+                        onClick={() => setIsAdminOpen(false)}
+                        className={`flex items-center gap-3 px-3.5 py-2.5 text-xs transition-colors ${
+                          location.pathname === '/admin'
+                            ? 'bg-[#DA7F8F]/10 text-[#DA7F8F] font-bold'
+                            : 'text-[#2B3542] dark:text-[#FAF3F3] hover:bg-[#FAF3F3] dark:hover:bg-[#252C36]'
+                        }`}
+                      >
+                        <HomeIcon className="w-4 h-4 text-[#DA7F8F] shrink-0" />
+                        <div>
+                          <p className="font-bold">Dashboard Admin</p>
+                          <p className="text-[10px] text-[#A7BBC7] font-normal">Panel statistik & ringkasan</p>
+                        </div>
+                      </Link>
+
+                      <Link
+                        to="/admin/races"
+                        onClick={() => setIsAdminOpen(false)}
+                        className={`flex items-center gap-3 px-3.5 py-2.5 text-xs transition-colors ${
+                          location.pathname === '/admin/races'
+                            ? 'bg-[#DA7F8F]/10 text-[#DA7F8F] font-bold'
+                            : 'text-[#2B3542] dark:text-[#FAF3F3] hover:bg-[#FAF3F3] dark:hover:bg-[#252C36]'
+                        }`}
+                      >
+                        <Activity className="w-4 h-4 text-[#DA7F8F] shrink-0" />
+                        <div>
+                          <p className="font-bold">Kelola Lomba</p>
+                          <p className="text-[10px] text-[#A7BBC7] font-normal">Event lari & catat finish</p>
+                        </div>
+                      </Link>
+
+                      <Link
+                        to="/manage"
+                        onClick={() => setIsAdminOpen(false)}
+                        className={`flex items-center gap-3 px-3.5 py-2.5 text-xs transition-colors ${
+                          location.pathname === '/manage'
+                            ? 'bg-[#DA7F8F]/10 text-[#DA7F8F] font-bold'
+                            : 'text-[#2B3542] dark:text-[#FAF3F3] hover:bg-[#FAF3F3] dark:hover:bg-[#252C36]'
+                        }`}
+                      >
+                        <Settings className="w-4 h-4 text-[#DA7F8F] shrink-0" />
+                        <div>
+                          <p className="font-bold">Kelola Jalur</p>
+                          <p className="text-[10px] text-[#A7BBC7] font-normal">Verifikasi & edit data rute</p>
+                        </div>
+                      </Link>
+
+                      <div className="border-t border-[#E1E5EA] dark:border-[#2C3440] my-1" />
+
+                      <Link
+                        to="/trails"
+                        onClick={() => setIsAdminOpen(false)}
+                        className={`flex items-center gap-3 px-3.5 py-2.5 text-xs transition-colors ${
+                          location.pathname === '/trails'
+                            ? 'bg-[#DA7F8F]/10 text-[#DA7F8F] font-bold'
+                            : 'text-[#2B3542] dark:text-[#FAF3F3] hover:bg-[#FAF3F3] dark:hover:bg-[#252C36]'
+                        }`}
+                      >
+                        <Compass className="w-4 h-4 text-[#DA7F8F] shrink-0" />
+                        <div>
+                          <p className="font-bold">Katalog Publik</p>
+                          <p className="text-[10px] text-[#A7BBC7] font-normal">Tampilan jalur versi pengguna</p>
+                        </div>
+                      </Link>
                     </div>
-                    {exploreItems.map((item) => {
-                      const Icon = item.icon;
-                      const isActive = location.pathname === item.path;
-                      return (
-                        <Link
-                          key={item.path}
-                          to={item.path}
-                          onClick={() => setIsExploreOpen(false)}
-                          className={`flex items-start gap-3 px-3.5 py-2.5 text-xs transition-colors ${
-                            isActive
-                              ? 'bg-[#DA7F8F]/10 text-[#DA7F8F]'
-                              : 'text-[#2B3542] dark:text-[#FAF3F3] hover:bg-[#FAF3F3] dark:hover:bg-[#252C36]'
-                          }`}
-                        >
-                          <Icon className="w-4 h-4 mt-0.5 text-[#DA7F8F] shrink-0" />
-                          <div>
-                            <p className="font-bold">{item.label}</p>
-                            <p className="text-[10px] text-[#A7BBC7] font-normal leading-tight">
-                              {item.desc}
-                            </p>
-                          </div>
-                        </Link>
-                      );
-                    })}
+                  )}
+                </div>
+              ) : (
+                <>
+                  <NavLink
+                    to="/"
+                    className={({ isActive }) =>
+                      `px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${
+                        isActive
+                          ? 'text-[#DA7F8F] bg-[#DA7F8F]/10 dark:bg-[#DA7F8F]/15'
+                          : 'text-[#2B3542] dark:text-[#FAF3F3] hover:text-[#DA7F8F] dark:hover:text-[#DA7F8F]'
+                      }`
+                    }
+                  >
+                    {t('nav.home') || 'Beranda'}
+                  </NavLink>
+
+                  {/* Nav Link: Jelajah Dropdown (Khusus User) */}
+                  <div className="relative" ref={exploreDropdownRef}>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        if (!isLoggedIn) {
+                          handleGuestClick(e, '/trails');
+                          return;
+                        }
+                        setIsExploreOpen(!isExploreOpen);
+                      }}
+                      className={`px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer ${
+                        isExploreActive || isExploreOpen
+                          ? 'text-[#DA7F8F] bg-[#DA7F8F]/10 dark:bg-[#DA7F8F]/15'
+                          : 'text-[#2B3542] dark:text-[#FAF3F3] hover:text-[#DA7F8F] dark:hover:text-[#DA7F8F]'
+                      }`}
+                    >
+                      <span>{t('nav.explore') || 'Jelajah'}</span>
+                      <ChevronDown
+                        className={`w-3.5 h-3.5 transition-transform duration-200 ${
+                          isExploreOpen ? 'rotate-180 text-[#DA7F8F]' : ''
+                        }`}
+                      />
+                    </button>
+
+                    {/* Dropdown Menu Popup */}
+                    {isExploreOpen && (
+                      <div className="absolute right-0 mt-2 w-64 rounded-2xl bg-white dark:bg-[#1C2129] border border-[#E1E5EA] dark:border-[#2C3440] shadow-xl py-2 z-50 animate-in fade-in slide-in-from-top-2">
+                        <div className="px-3.5 py-1.5 text-[10px] font-bold uppercase tracking-wider text-[#A7BBC7]">
+                          Fitur Jelajah
+                        </div>
+                        {exploreItems.map((item) => {
+                          const Icon = item.icon;
+                          const isActive = location.pathname === item.path;
+                          return (
+                            <Link
+                              key={item.path}
+                              to={item.path}
+                              onClick={(e) => {
+                                if (!handleGuestClick(e, item.path)) return;
+                                setIsExploreOpen(false);
+                              }}
+                              className={`flex items-start gap-3 px-3.5 py-2.5 text-xs transition-colors ${
+                                isActive
+                                  ? 'bg-[#DA7F8F]/10 text-[#DA7F8F]'
+                                  : 'text-[#2B3542] dark:text-[#FAF3F3] hover:bg-[#FAF3F3] dark:hover:bg-[#252C36]'
+                              }`}
+                            >
+                              <Icon className="w-4 h-4 mt-0.5 text-[#DA7F8F] shrink-0" />
+                              <div>
+                                <p className="font-bold">{item.label}</p>
+                                <p className="text-[10px] text-[#A7BBC7] font-normal leading-tight">
+                                  {item.desc}
+                                </p>
+                              </div>
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
+                </>
+              )}
 
               {/* Vertical Divider */}
               <div className="h-4 w-px bg-[#E1E5EA] dark:bg-[#2C3440] mx-0.5" />
@@ -344,7 +486,10 @@ export default function Navbar() {
                         )}
                         <Link
                           to="/profile"
-                          onClick={() => setIsProfileOpen(false)}
+                          onClick={() => {
+                            setIsProfileOpen(false);
+                            window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+                          }}
                           className="flex items-center gap-2.5 px-4 py-2 text-xs font-bold text-[#2B3542] dark:text-[#FAF3F3] hover:bg-[#FAF3F3] dark:hover:bg-[#252C36] transition"
                         >
                           <UserIcon className="w-4 h-4 text-[#DA7F8F]" />
@@ -409,13 +554,14 @@ export default function Navbar() {
                   )}
                 </div>
               ) : (
-                <NavLink
-                  to="/login"
+                <button
+                  type="button"
+                  onClick={openAuthModal}
                   className="px-4 py-1.5 rounded-full bg-[#DA7F8F] hover:bg-[#c96c7d] text-white text-xs font-bold transition shadow-sm flex items-center gap-1.5 active:scale-95 cursor-pointer"
                 >
                   <LogIn className="w-3.5 h-3.5" />
                   <span>{t('auth.loginTitle') || 'Masuk'}</span>
-                </NavLink>
+                </button>
               )}
 
             </div>
@@ -500,14 +646,17 @@ export default function Navbar() {
                   </button>
                 </div>
               ) : (
-                <NavLink
-                  to="/login"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="w-full py-2.5 rounded-full bg-[#DA7F8F] hover:bg-[#c96c7d] text-white text-xs font-bold flex items-center justify-center gap-2 shadow-sm"
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    openAuthModal();
+                  }}
+                  className="w-full py-2.5 rounded-full bg-[#DA7F8F] hover:bg-[#c96c7d] text-white text-xs font-bold flex items-center justify-center gap-2 shadow-sm cursor-pointer"
                 >
                   <LogIn className="w-4 h-4" />
                   <span>{t('auth.loginTitle') || 'Masuk / Login'}</span>
-                </NavLink>
+                </button>
               )}
             </div>
 
@@ -635,7 +784,10 @@ export default function Navbar() {
                       <NavLink
                         key={item.path}
                         to={item.path}
-                        onClick={() => setMobileMenuOpen(false)}
+                        onClick={(e) => {
+                          if (!handleGuestClick(e, item.path)) return;
+                          setMobileMenuOpen(false);
+                        }}
                         className={({ isActive }) =>
                           `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${
                             isActive
@@ -861,6 +1013,7 @@ export default function Navbar() {
               <NavLink
                 to="/"
                 end
+                onClick={() => window.scrollTo({ top: 0, left: 0, behavior: 'instant' })}
                 className={({ isActive }) =>
                   `flex flex-col items-center justify-center py-1 px-0.5 rounded-xl transition-all duration-200 active:scale-90 ${
                     isActive
@@ -884,6 +1037,14 @@ export default function Navbar() {
               {/* 2. Cari Gunung dan Jalur */}
               <NavLink
                 to="/trails"
+                onClick={(e) => {
+                  if (!isLoggedIn) {
+                    e.preventDefault();
+                    openAuthModal();
+                  } else {
+                    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+                  }
+                }}
                 className={({ isActive }) =>
                   `flex flex-col items-center justify-center py-1 px-0.5 rounded-xl transition-all duration-200 active:scale-90 ${
                     isActive
@@ -907,6 +1068,14 @@ export default function Navbar() {
               {/* 3. Rekam Jejak Anda */}
               <NavLink
                 to="/tracker"
+                onClick={(e) => {
+                  if (!isLoggedIn) {
+                    e.preventDefault();
+                    openAuthModal();
+                  } else {
+                    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+                  }
+                }}
                 className={({ isActive }) =>
                   `flex flex-col items-center justify-center py-1 px-0.5 rounded-xl transition-all duration-200 active:scale-90 ${
                     isActive
@@ -930,6 +1099,14 @@ export default function Navbar() {
               {/* 4. Catatan Pendakian Saya */}
               <NavLink
                 to="/history"
+                onClick={(e) => {
+                  if (!isLoggedIn) {
+                    e.preventDefault();
+                    openAuthModal();
+                  } else {
+                    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+                  }
+                }}
                 className={({ isActive }) =>
                   `flex flex-col items-center justify-center py-1 px-0.5 rounded-xl transition-all duration-200 active:scale-90 ${
                     isActive
@@ -952,7 +1129,15 @@ export default function Navbar() {
 
               {/* 5. Profil */}
               <NavLink
-                to={isLoggedIn ? '/profile' : '/login'}
+                to="/profile"
+                onClick={(e) => {
+                  if (!isLoggedIn) {
+                    e.preventDefault();
+                    openAuthModal();
+                  } else {
+                    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+                  }
+                }}
                 className={({ isActive }) =>
                   `flex flex-col items-center justify-center py-1 px-0.5 rounded-xl transition-all duration-200 active:scale-90 ${
                     isActive

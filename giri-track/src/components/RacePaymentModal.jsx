@@ -9,10 +9,13 @@ export default function RacePaymentModal({ isOpen, onClose, onConfirm, amount })
 
   useEffect(() => {
     if (!isOpen) {
-      setIsProcessing(false);
-      setIsSuccess(false);
-      setTimeLeft(15 * 60);
-      setPaymentMethod('qris');
+      const timer = setTimeout(() => {
+        setIsProcessing(false);
+        setIsSuccess(false);
+        setTimeLeft(15 * 60);
+        setPaymentMethod('qris');
+      }, 0);
+      return () => clearTimeout(timer);
     }
   }, [isOpen]);
 

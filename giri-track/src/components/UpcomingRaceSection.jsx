@@ -1,13 +1,15 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { MapPin, Calendar, Mountain, Flag, ArrowRight, Activity, Trophy, ChevronLeft, ChevronRight, Target, Users, Compass, Sparkles } from 'lucide-react';
+import { MapPin, Calendar, Flag, ArrowRight, Activity, Trophy, ChevronLeft, ChevronRight, Target, Users, Sparkles } from 'lucide-react';
 import { useRace } from '../context/RaceContext';
+import { useAuth } from '../context/AuthContext';
 
 // GiriTrack Signature Earth Tones
 const EARTH_TONES = ['#452829', '#233729', '#1E2836', '#3A231C'];
 
 export default function UpcomingRaceSection() {
   const { races } = useRace();
+  const { isLoggedIn, openAuthModal } = useAuth();
   const navigate = useNavigate();
   const scrollContainerRef = useRef(null);
 
@@ -16,32 +18,25 @@ export default function UpcomingRaceSection() {
 
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
-  const [activeIndex, setActiveIndex] = useState(0);
-
-  // Check scroll positions for enabling/disabling arrows
-  const checkScroll = () => {
-    if (!scrollContainerRef.current) return;
-    const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
-    setCanScrollLeft(scrollLeft > 10);
-    setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 10);
-
-    // Estimate active index based on card width
-    const cardWidth = 290;
-    const index = Math.round(scrollLeft / (cardWidth + 20));
-    setActiveIndex(Math.max(0, Math.min(index, displayRaces.length)));
-  };
 
   useEffect(() => {
     const el = scrollContainerRef.current;
-    if (el) {
-      checkScroll();
-      el.addEventListener('scroll', checkScroll, { passive: true });
-      window.addEventListener('resize', checkScroll);
-      return () => {
-        el.removeEventListener('scroll', checkScroll);
-        window.removeEventListener('resize', checkScroll);
-      };
-    }
+    if (!el) return;
+
+    // Check scroll positions for enabling/disabling arrows
+    const checkScroll = () => {
+      const { scrollLeft, scrollWidth, clientWidth } = el;
+      setCanScrollLeft(scrollLeft > 10);
+      setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 10);
+    };
+
+    checkScroll();
+    el.addEventListener('scroll', checkScroll, { passive: true });
+    window.addEventListener('resize', checkScroll);
+    return () => {
+      el.removeEventListener('scroll', checkScroll);
+      window.removeEventListener('resize', checkScroll);
+    };
   }, [displayRaces.length]);
 
   const handleScroll = (direction) => {
@@ -91,6 +86,14 @@ export default function UpcomingRaceSection() {
         <div className="flex items-center gap-3 shrink-0">
           <Link
             to="/races"
+            onClick={(e) => {
+              if (!isLoggedIn) {
+                e.preventDefault();
+                openAuthModal();
+              } else {
+                window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+              }
+            }}
             className="text-xs font-bold text-[#DA7F8F] hover:text-[#c96c7d] hover:underline flex items-center gap-1 transition-colors mr-1"
           >
             <span>Buka Katalog Lengkap</span>
@@ -152,8 +155,15 @@ export default function UpcomingRaceSection() {
           return (
             <div
               key={race.id || index}
-              onClick={() => navigate(`/races/${race.id}`)}
-              className="group relative flex flex-col w-[82vw] sm:w-[290px] h-[385px] shrink-0 rounded-2xl sm:rounded-3xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1.5 border border-[#E1E5EA]/60 dark:border-[#2C3440]/80 cursor-pointer select-none snap-start"
+              onClick={() => {
+                if (!isLoggedIn) {
+                  openAuthModal();
+                } else {
+                  window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+                  navigate(`/races/${race.id}`);
+                }
+              }}
+              className="group relative flex flex-col w-[82vw] sm:w-[290px] h-[440px] sm:h-[400px] lg:h-[385px] shrink-0 rounded-2xl sm:rounded-3xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1.5 border border-[#E1E5EA]/60 dark:border-[#2C3440]/80 cursor-pointer select-none snap-start"
             >
               {/* TOP: Image Banner with Badges (h-36 sm:h-38) */}
               <div className="relative h-36 sm:h-38 w-full overflow-hidden bg-stone-900 shrink-0">
@@ -287,8 +297,16 @@ export default function UpcomingRaceSection() {
 
         {/* 3. Final "Explore Catalog" Card at the End of the Track */}
         <div
-          onClick={() => navigate('/races')}
-          className="group relative flex flex-col justify-between w-[82vw] sm:w-[290px] h-[385px] shrink-0 rounded-2xl sm:rounded-3xl overflow-hidden p-5 sm:p-6 bg-gradient-to-br from-[#452829] via-[#3A231C] to-[#1E2836] text-white border border-[#E1E5EA]/50 dark:border-[#2C3440] shadow-md hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1.5 cursor-pointer select-none snap-start"
+          onClick={(e) => {
+            if (!isLoggedIn) {
+              e.preventDefault();
+              openAuthModal();
+            } else {
+              window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+              navigate('/races');
+            }
+          }}
+          className="group relative flex flex-col justify-between w-[82vw] sm:w-[290px] h-[440px] sm:h-[400px] lg:h-[385px] shrink-0 rounded-2xl sm:rounded-3xl overflow-hidden p-5 sm:p-6 bg-gradient-to-br from-[#452829] via-[#3A231C] to-[#1E2836] text-white border border-[#E1E5EA]/50 dark:border-[#2C3440] shadow-md hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1.5 cursor-pointer select-none snap-start"
         >
           <div className="relative z-10 space-y-2.5">
             <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-[#DA7F8F] shadow-inner group-hover:scale-110 transition-transform duration-300">

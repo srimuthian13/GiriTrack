@@ -1,13 +1,15 @@
 import { useState, useEffect, useContext, useMemo } from 'react';
 import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { RaceContext } from '../../context/RaceContext';
+import { useLanguage } from '../../context/LanguageContext';
+import { useAuth } from '../../context/AuthContext';
 import { flagshipRace } from '../../data/raceData';
 import { pastRaces } from '../../data/pastRacesData';
 import {
   Calendar, MapPin, Trophy, Clock, Mountain, Navigation,
   ShieldAlert, CheckCircle2, ChevronRight, ArrowRight, ArrowLeft,
   Timer, Sparkles, Flame, Users, Download,
-  Search, Award, Layers, Compass, AlertCircle
+  Search, Layers, Compass, AlertCircle, Edit
 } from 'lucide-react';
 import { MapContainer, TileLayer, Polyline, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
@@ -25,6 +27,8 @@ export default function RaceDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { getRaceById, liveLeaderboard } = useContext(RaceContext);
+  const { t } = useLanguage();
+  const { isAdmin } = useAuth();
   const [searchParams] = useSearchParams();
 
   let race = getRaceById(id);
@@ -37,6 +41,11 @@ export default function RaceDetail() {
   const [activeTab, setActiveTab] = useState(isCompleted ? 'leaderboard' : 'course'); // 'course' | 'categories' | 'schedule' | 'leaderboard' | 'gallery' | 'finishers'
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Scroll to top on mount or race id change
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, [id]);
 
   // Dynamic Countdown Timer to Race Date
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
@@ -71,7 +80,7 @@ export default function RaceDetail() {
       const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) || item.bib.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesCategory && matchesSearch;
     });
-  }, [liveLeaderboard, race.leaderboard, selectedCategoryFilter, searchQuery]);
+  }, [liveLeaderboard, race, selectedCategoryFilter, searchQuery]);
 
   const mapCenter = race.routeCoordinates?.[0] || [-7.5954, 111.1578];
 
@@ -81,7 +90,7 @@ export default function RaceDetail() {
       {/* ========================================================================= */}
       {/* 1. HERO SECTION MEGAH (UTMB / GOLDEN TRAIL SERIES DRAMATIC STYLE)         */}
       {/* ========================================================================= */}
-      <section className="relative overflow-hidden bg-[#2D1C1D] text-white py-16 md:py-24 border-b border-[#452829]">
+      <section className="relative overflow-hidden bg-[#2D1C1D] text-white pt-1 pb-16 md:pb-24 border-b border-[#452829]">
         {/* Background Image with Deep Earthy Overlay */}
         <div className="absolute inset-0 z-0">
           <img
@@ -103,7 +112,7 @@ export default function RaceDetail() {
               className="inline-flex items-center gap-2 text-xs font-bold text-white/80 hover:text-white bg-black/30 hover:bg-black/50 backdrop-blur-md px-3.5 py-2 rounded-xl transition-all cursor-pointer active:scale-95 border border-white/10"
             >
               <ArrowLeft className="w-4 h-4" />
-              <span>Kembali</span>
+              <span>{t('btn.back') || 'Kembali'}</span>
             </button>
           </div>
 
@@ -140,69 +149,81 @@ export default function RaceDetail() {
           </div>
 
           {/* Countdown Timer & CTA Row */}
-          <div className="mt-10 flex flex-col lg:flex-row lg:items-center justify-between gap-8 pt-8 border-t border-white/15">
+          <div className="mt-8 sm:mt-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6 sm:gap-8 pt-6 sm:pt-8 border-t border-white/15">
             {!isCompleted ? (
               <>
                 {/* Live Countdown Grid */}
-                <div>
-                  <p className="text-xs uppercase tracking-widest text-[#E8D1C5] font-bold mb-2 flex items-center gap-1.5">
+                <div className="w-full sm:w-auto">
+                  <p className="text-xs uppercase tracking-widest text-[#E8D1C5] font-bold mb-2.5 flex items-center gap-1.5">
                     <Timer className="w-3.5 h-3.5 text-[#DA7F8F]" />
-                    <span>Hitung Mundur Race Day</span>
+                    <span>{t('raceDetail.countdownLabel') || 'HITUNG MUNDUR RACE DAY'}</span>
                   </p>
-                  <div className="flex items-center gap-3 font-mono">
-                    <div className="bg-[#1C2129]/90 border border-white/20 px-3 py-2 rounded-xl text-center min-w-[64px] shadow-lg">
-                      <span className="text-2xl sm:text-3xl font-black text-white">{String(timeLeft.days).padStart(2, '0')}</span>
-                      <span className="block text-[9px] uppercase tracking-wider text-[#A7BBC7]">HARI</span>
+                  <div className="flex items-center gap-1.5 sm:gap-3 font-mono justify-between sm:justify-start max-w-sm sm:max-w-none">
+                    <div className="bg-[#1C2129]/90 border border-white/20 px-2 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-center min-w-[50px] sm:min-w-[64px] shadow-lg flex-1 sm:flex-initial">
+                      <span className="text-xl sm:text-3xl font-black text-white">{String(timeLeft.days).padStart(2, '0')}</span>
+                      <span className="block text-[8px] sm:text-[9px] uppercase tracking-wider text-[#A7BBC7]">{t('raceDetail.days') || 'HARI'}</span>
                     </div>
-                    <span className="text-xl font-bold text-white/50">:</span>
-                    <div className="bg-[#1C2129]/90 border border-white/20 px-3 py-2 rounded-xl text-center min-w-[64px] shadow-lg">
-                      <span className="text-2xl sm:text-3xl font-black text-white">{String(timeLeft.hours).padStart(2, '0')}</span>
-                      <span className="block text-[9px] uppercase tracking-wider text-[#A7BBC7]">JAM</span>
+                    <span className="text-base sm:text-xl font-bold text-white/50">:</span>
+                    <div className="bg-[#1C2129]/90 border border-white/20 px-2 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-center min-w-[50px] sm:min-w-[64px] shadow-lg flex-1 sm:flex-initial">
+                      <span className="text-xl sm:text-3xl font-black text-white">{String(timeLeft.hours).padStart(2, '0')}</span>
+                      <span className="block text-[8px] sm:text-[9px] uppercase tracking-wider text-[#A7BBC7]">{t('raceDetail.hours') || 'JAM'}</span>
                     </div>
-                    <span className="text-xl font-bold text-white/50">:</span>
-                    <div className="bg-[#1C2129]/90 border border-white/20 px-3 py-2 rounded-xl text-center min-w-[64px] shadow-lg">
-                      <span className="text-2xl sm:text-3xl font-black text-white">{String(timeLeft.minutes).padStart(2, '0')}</span>
-                      <span className="block text-[9px] uppercase tracking-wider text-[#A7BBC7]">MENIT</span>
+                    <span className="text-base sm:text-xl font-bold text-white/50">:</span>
+                    <div className="bg-[#1C2129]/90 border border-white/20 px-2 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-center min-w-[50px] sm:min-w-[64px] shadow-lg flex-1 sm:flex-initial">
+                      <span className="text-xl sm:text-3xl font-black text-white">{String(timeLeft.minutes).padStart(2, '0')}</span>
+                      <span className="block text-[8px] sm:text-[9px] uppercase tracking-wider text-[#A7BBC7]">{t('raceDetail.minutes') || 'MENIT'}</span>
                     </div>
-                    <span className="text-xl font-bold text-white/50">:</span>
-                    <div className="bg-[#1C2129]/90 border border-white/20 px-3 py-2 rounded-xl text-center min-w-[64px] shadow-lg">
-                      <span className="text-2xl sm:text-3xl font-black text-[#DA7F8F]">{String(timeLeft.seconds).padStart(2, '0')}</span>
-                      <span className="block text-[9px] uppercase tracking-wider text-[#A7BBC7]">DETIK</span>
+                    <span className="text-base sm:text-xl font-bold text-white/50">:</span>
+                    <div className="bg-[#1C2129]/90 border border-white/20 px-2 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-center min-w-[50px] sm:min-w-[64px] shadow-lg flex-1 sm:flex-initial">
+                      <span className="text-xl sm:text-3xl font-black text-[#DA7F8F]">{String(timeLeft.seconds).padStart(2, '0')}</span>
+                      <span className="block text-[8px] sm:text-[9px] uppercase tracking-wider text-[#A7BBC7]">{t('raceDetail.seconds') || 'DETIK'}</span>
                     </div>
                   </div>
                 </div>
 
                 {/* CTAs */}
-                <div className="flex flex-wrap items-center gap-4">
-                  <button
-                    onClick={() => {
-                      setActiveTab('categories');
-                      setTimeout(() => {
-                        document.getElementById('race-categories-section')?.scrollIntoView({ behavior: 'smooth' });
-                      }, 100);
-                    }}
-                    className="px-8 py-4 rounded-2xl bg-gradient-to-r from-[#DA7F8F] to-[#c96c7d] hover:from-[#c96c7d] hover:to-[#DA7F8F] text-white font-black text-sm uppercase tracking-wider shadow-2xl shadow-[#DA7F8F]/40 hover:scale-105 active:scale-95 transition-all duration-200 flex items-center gap-2 cursor-pointer"
-                  >
-                    <span>DAFTAR SEKARANG</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </button>
-                  
-                  <Link
-                    to={`/races/${race.id}/register`}
-                    className="px-6 py-4 rounded-2xl bg-white/10 hover:bg-white/20 text-white font-bold text-sm tracking-wide border border-white/30 backdrop-blur-md transition-all active:scale-95"
-                  >
-                    Formulir Pendaftaran Langsung
-                  </Link>
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 w-full lg:w-auto">
+                  {isAdmin ? (
+                    <Link
+                      to={`/admin/races?editRaceId=${race.id}`}
+                      className="w-full sm:w-auto px-6 sm:px-8 py-3.5 sm:py-4 rounded-2xl bg-gradient-to-r from-[#DA7F8F] to-[#c96c7d] hover:from-[#c96c7d] hover:to-[#DA7F8F] text-white font-black text-xs sm:text-sm uppercase tracking-wider shadow-2xl shadow-[#DA7F8F]/40 hover:scale-105 active:scale-95 transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      <Edit className="w-4 h-4" />
+                      <span>{t('raceDetail.adminEditRace') || 'Edit Informasi Lomba Ini'}</span>
+                    </Link>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => {
+                          setActiveTab('categories');
+                          setTimeout(() => {
+                            document.getElementById('race-categories-section')?.scrollIntoView({ behavior: 'smooth' });
+                          }, 100);
+                        }}
+                        className="w-full sm:w-auto px-6 sm:px-8 py-3.5 sm:py-4 rounded-2xl bg-gradient-to-r from-[#DA7F8F] to-[#c96c7d] hover:from-[#c96c7d] hover:to-[#DA7F8F] text-white font-black text-xs sm:text-sm uppercase tracking-wider shadow-2xl shadow-[#DA7F8F]/40 hover:scale-105 active:scale-95 transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer"
+                      >
+                        <span>{t('raceDetail.btnRegisterNow') || 'DAFTAR SEKARANG'}</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </button>
+                      
+                      <Link
+                        to={`/races/${race.id}/register`}
+                        className="w-full sm:w-auto text-center px-5 sm:px-6 py-3.5 sm:py-4 rounded-2xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs sm:text-sm tracking-wide border border-white/30 backdrop-blur-md transition-all active:scale-95"
+                      >
+                        {t('raceDetail.registerDirect') || 'Formulir Pendaftaran Langsung'}
+                      </Link>
+                    </>
+                  )}
                 </div>
               </>
             ) : (
-              <div className="w-full flex justify-between items-center bg-black/40 backdrop-blur-md px-6 py-5 rounded-2xl border border-white/15">
+              <div className="w-full flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-black/40 backdrop-blur-md px-6 py-5 rounded-2xl border border-white/15">
                 <div>
-                  <h3 className="text-xl font-black text-white flex items-center gap-2">
-                    <CheckCircle2 className="w-6 h-6 text-emerald-500" />
-                    <span>LOMBA TELAH SELESAI</span>
+                  <h3 className="text-lg sm:text-xl font-black text-white flex items-center gap-2">
+                    <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-500 shrink-0" />
+                    <span>{t('raceDetail.raceFinished') || 'LOMBA TELAH SELESAI'}</span>
                   </h3>
-                  <p className="text-sm text-[#A7BBC7] mt-1">Terima kasih kepada seluruh pelari, volunteer, dan sponsor.</p>
+                  <p className="text-xs sm:text-sm text-[#A7BBC7] mt-1">{t('raceDetail.raceFinishedSubtitle') || 'Terima kasih kepada seluruh pelari, volunteer, dan sponsor.'}</p>
                 </div>
                 <button
                   onClick={() => {
@@ -587,19 +608,29 @@ export default function RaceDetail() {
 
                     {/* Action Button */}
                     <div className="p-6 sm:p-8 pt-0">
-                      <button
-                        type="button"
-                        disabled={isSoldOut}
-                        onClick={() => navigate(`/races/${race.id}/register?category=${cat.id}`)}
-                        className={`w-full py-3.5 px-6 rounded-2xl font-black text-xs sm:text-sm uppercase tracking-wider flex items-center justify-center gap-2 transition-all duration-200 cursor-pointer ${
-                          isSoldOut
-                            ? 'bg-gray-200 dark:bg-[#2C3440] text-gray-400 cursor-not-allowed'
-                            : 'bg-[#DA7F8F] hover:bg-[#c96c7d] text-white shadow-lg shadow-[#DA7F8F]/30 hover:scale-102 active:scale-98'
-                        }`}
-                      >
-                        <span>{isSoldOut ? 'SLOT HABIS (SOLD OUT)' : `DAFTAR KATEGORI ${cat.name.split(' ')[0]}`}</span>
-                        {!isSoldOut && <ArrowRight className="w-4 h-4" />}
-                      </button>
+                      {isAdmin ? (
+                        <Link
+                          to={`/admin/races?editRaceId=${race.id}`}
+                          className="w-full py-3.5 px-6 rounded-2xl font-black text-xs sm:text-sm uppercase tracking-wider flex items-center justify-center gap-2 transition-all duration-200 bg-[#E1E5EA] dark:bg-[#2C3440] text-[#2B3542] dark:text-white hover:bg-[#A7BBC7]/40 cursor-pointer"
+                        >
+                          <Edit className="w-4 h-4 text-[#DA7F8F]" />
+                          <span>{t('raceDetail.adminManageCategory') || 'Edit Kategori & Kuota Lomba'}</span>
+                        </Link>
+                      ) : (
+                        <button
+                          type="button"
+                          disabled={isSoldOut}
+                          onClick={() => navigate(`/races/${race.id}/register?category=${cat.id}`)}
+                          className={`w-full py-3.5 px-6 rounded-2xl font-black text-xs sm:text-sm uppercase tracking-wider flex items-center justify-center gap-2 transition-all duration-200 cursor-pointer ${
+                            isSoldOut
+                              ? 'bg-gray-200 dark:bg-[#2C3440] text-gray-400 cursor-not-allowed'
+                              : 'bg-[#DA7F8F] hover:bg-[#c96c7d] text-white shadow-lg shadow-[#DA7F8F]/30 hover:scale-102 active:scale-98'
+                          }`}
+                        >
+                          <span>{isSoldOut ? (t('raceDetail.soldOut') || 'SLOT HABIS (SOLD OUT)') : `${t('raceDetail.registerCategory') || 'DAFTAR KATEGORI'} ${cat.name.split(' ')[0]}`}</span>
+                          {!isSoldOut && <ArrowRight className="w-4 h-4" />}
+                        </button>
+                      )}
                     </div>
                   </div>
                 );

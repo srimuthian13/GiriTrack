@@ -3,7 +3,6 @@ import { useNavigate, Link } from 'react-router-dom';
 import {
   ShieldCheck,
   CheckCircle,
-  XCircle,
   Plus,
   Trash2,
   MapPin,
@@ -17,7 +16,6 @@ import {
   Layers,
   MessageSquare,
   AlertTriangle,
-  Sparkles,
   Search,
   Check,
   Activity,
@@ -626,7 +624,7 @@ export default function AdminDashboard() {
 
             {/* Add Difficulty Form */}
             <form onSubmit={handleAddDifficulty} className="space-y-2.5">
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <input
                   type="text"
                   value={newDiffLabel}
@@ -634,31 +632,33 @@ export default function AdminDashboard() {
                   placeholder="Nama tingkat kesulitan (cth: Ekstra Terjal)..."
                   className="flex-1 px-3.5 py-2 rounded-xl border border-[#E1E5EA] dark:border-[#2C3440] bg-white dark:bg-[#1C2129] text-xs text-[#2B3542] dark:text-[#FAF3F3] focus:outline-none focus:ring-2 focus:ring-[#DA7F8F]/40"
                 />
-                <select
-                  value={newDiffBadgeColor}
-                  onChange={(e) => setNewDiffBadgeColor(e.target.value)}
-                  className="px-3 py-2 rounded-xl border border-[#E1E5EA] dark:border-[#2C3440] bg-white dark:bg-[#1C2129] text-xs text-[#2B3542] dark:text-[#FAF3F3] focus:outline-none focus:ring-2 focus:ring-[#DA7F8F]/40"
-                >
-                  <option value="emerald">Hijau (Mudah)</option>
-                  <option value="amber">Kuning (Sedang)</option>
-                  <option value="orange">Oranye (Sulit)</option>
-                  <option value="rose">Merah (Ekstrem)</option>
-                </select>
-                <button
-                  type="submit"
-                  className="px-4 py-2 rounded-xl bg-[#DA7F8F] text-white hover:bg-[#c96c7d] text-xs font-bold transition shrink-0 cursor-pointer"
-                >
-                  Tambah
-                </button>
+                <div className="flex items-center gap-2">
+                  <select
+                    value={newDiffBadgeColor}
+                    onChange={(e) => setNewDiffBadgeColor(e.target.value)}
+                    className="flex-1 sm:flex-none px-3 py-2 rounded-xl border border-[#E1E5EA] dark:border-[#2C3440] bg-white dark:bg-[#1C2129] text-xs text-[#2B3542] dark:text-[#FAF3F3] focus:outline-none focus:ring-2 focus:ring-[#DA7F8F]/40"
+                  >
+                    <option value="emerald">Hijau (Mudah)</option>
+                    <option value="amber">Kuning (Sedang)</option>
+                    <option value="orange">Oranye (Sulit)</option>
+                    <option value="rose">Merah (Ekstrem)</option>
+                  </select>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 rounded-xl bg-[#DA7F8F] text-white hover:bg-[#c96c7d] text-xs font-bold transition shrink-0 cursor-pointer"
+                  >
+                    Tambah
+                  </button>
+                </div>
               </div>
             </form>
 
-            {/* List of Difficulties */}
-            <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
+            {/* List of Difficulties - Tampil ke Bawah (Semua Terlihat) */}
+            <div className="space-y-2">
               {difficultyLevels.map((diff) => (
                 <div
                   key={diff.id}
-                  className="p-3 rounded-2xl bg-[#FAF3F3] dark:bg-[#252C36] border border-[#E1E5EA] dark:border-[#2C3440] flex items-center justify-between text-xs"
+                  className="p-3 rounded-2xl bg-[#FAF3F3] dark:bg-[#252C36] border border-[#E1E5EA] dark:border-[#2C3440] flex items-center justify-between text-xs hover:border-[#DA7F8F]/40 transition shadow-sm"
                 >
                   <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${diff.colorBadge}`}>
                     {diff.label}
@@ -667,7 +667,7 @@ export default function AdminDashboard() {
                   <button
                     type="button"
                     onClick={() => deleteDifficultyLevel(diff.id)}
-                    className="p-1 text-rose-600 hover:bg-rose-100 rounded-lg transition cursor-pointer"
+                    className="p-1.5 text-rose-600 hover:bg-rose-100 dark:hover:bg-rose-950/40 rounded-lg transition cursor-pointer"
                     title="Hapus Kategori Kesulitan"
                   >
                     <Trash2 className="w-3.5 h-3.5" />

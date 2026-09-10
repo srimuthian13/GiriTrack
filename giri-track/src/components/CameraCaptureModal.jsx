@@ -132,7 +132,7 @@ export default function CameraCaptureModal({ isOpen, onClose, onCapture }) {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 8 * 1024 * 1024) {
-        alert('Ukuran foto maksimal 8 MB.');
+        setErrorMsg('Ukuran foto maksimal 8 MB.');
         return;
       }
       const reader = new FileReader();

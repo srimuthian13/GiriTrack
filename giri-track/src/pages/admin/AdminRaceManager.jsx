@@ -1,20 +1,24 @@
-import { useContext, useState } from 'react';
+import { useContext, useState, useEffect } from 'react';
 import { RaceContext } from '../../context/RaceContext';
 import { useAuth } from '../../context/AuthContext';
-import { Navigate, Link, useNavigate } from 'react-router-dom';
+import { useLanguage } from '../../context/LanguageContext';
+import { Navigate, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { 
-  Users, Activity, Target, Search, Download, ShieldAlert, PhoneCall, 
+  Users, Activity, Search, Download, ShieldAlert, PhoneCall, 
   Plus, Trash2, ExternalLink, Calendar, MapPin, CheckCircle2, X, Trophy, Clock,
-  Upload, ImageIcon, ArrowLeft
+  Upload, ImageIcon, ArrowLeft, ArrowDown, ArrowUp, Edit
 } from 'lucide-react';
 
 export default function AdminRaceManager() {
   const navigate = useNavigate();
-  const { races, registrations, addRace, deleteRace, updateLeaderboardTime } = useContext(RaceContext);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { races, registrations, addRace, updateRace, deleteRace, updateLeaderboardTime } = useContext(RaceContext);
   const { user, isAdmin } = useAuth();
+  const { t } = useLanguage();
   
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [editingRace, setEditingRace] = useState(null);
   const [editingRunner, setEditingRunner] = useState(null);
   const [raceToDelete, setRaceToDelete] = useState(null);
   const [toastMessage, setToastMessage] = useState(null);
@@ -39,7 +43,7 @@ export default function AdminRaceManager() {
     if (!file) return;
 
     if (file.size > 5 * 1024 * 1024) {
-      alert('Ukuran foto maksimal 5 MB.');
+      showToast('Ukuran foto maksimal 5 MB.');
       return;
     }
 
@@ -54,10 +58,6 @@ export default function AdminRaceManager() {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3500);
   };
-
-  if (!user || !isAdmin) {
-    return <Navigate to="/login" replace />;
-  }
 
   const filteredRegistrations = registrations.filter(reg => 
     reg.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -138,27 +138,8 @@ export default function AdminRaceManager() {
     setFormData({ ...formData, categories: updated });
   };
 
-  const handleCreateRace = (e) => {
-    e.preventDefault();
-    if (!formData.title || !formData.date || !formData.location) {
-      alert('Mohon lengkapi judul, tanggal, dan lokasi lomba.');
-      return;
-    }
-
-    const created = addRace({
-      title: formData.title,
-      tagline: formData.tagline || 'Lomba Trail Running Bergengsi GiriTrack',
-      date: formData.date,
-      location: formData.location,
-      banner: formData.banner,
-      categories: formData.categories,
-      description: formData.description
-    });
-
-    setIsAddModalOpen(false);
-    showToast(`Lomba "${created.title}" berhasil ditambahkan ke katalog!`);
-    
-    // Reset form
+  const handleOpenAddModal = () => {
+    setEditingRace(null);
     setFormData({
       title: '',
       tagline: '',
@@ -172,6 +153,97 @@ export default function AdminRaceManager() {
         { id: 'cat-3', name: '50K Ultra Summit', distance: '50 km', elevationGain: '+3100 m', cot: '12 Jam', price: 550000, quota: 50, slotsTaken: 0, flagOff: '04:00 WIB' }
       ]
     });
+    setIsAddModalOpen(true);
+  };
+
+  const handleOpenEditModal = (race) => {
+    setEditingRace(race);
+    setFormData({
+      title: race.title || '',
+      tagline: race.tagline || '',
+      date: race.date ? race.date.split('T')[0] : '',
+      location: race.location || '',
+      banner: race.banner || race.heroBanner || '',
+      description: race.description || '',
+      categories: race.categories && race.categories.length > 0 ? race.categories : [
+        { id: 'cat-1', name: '10K Trail Discovery', distance: '10 km', elevationGain: '+450 m', cot: '3 Jam', price: 200000, quota: 150, slotsTaken: 0, flagOff: '06:30 WIB' }
+      ]
+    });
+    setIsAddModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsAddModalOpen(false);
+    setEditingRace(null);
+    if (searchParams.get('editRaceId')) {
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.delete('editRaceId');
+      setSearchParams(nextParams, { replace: true });
+    }
+  };
+
+  useEffect(() => {
+    const editId = searchParams.get('editRaceId');
+    if (editId && races.length > 0) {
+      const target = races.find(r => r.id === editId);
+      if (target) {
+        const timer = setTimeout(() => {
+          setEditingRace(target);
+          setFormData({
+            title: target.title || '',
+            tagline: target.tagline || '',
+            date: target.date ? target.date.split('T')[0] : '',
+            location: target.location || '',
+            banner: target.banner || target.heroBanner || '',
+            description: target.description || '',
+            categories: target.categories && target.categories.length > 0 ? target.categories : [
+              { id: 'cat-1', name: '10K Trail Discovery', distance: '10 km', elevationGain: '+450 m', cot: '3 Jam', price: 200000, quota: 150, slotsTaken: 0, flagOff: '06:30 WIB' }
+            ]
+          });
+          setIsAddModalOpen(true);
+        }, 0);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [searchParams, races]);
+
+  if (!user || !isAdmin) {
+    return <Navigate to="/login" replace />;
+  }
+
+  const handleSaveRace = (e) => {
+    e.preventDefault();
+    if (!formData.title || !formData.date || !formData.location) {
+      showToast('Mohon lengkapi judul, tanggal, dan lokasi lomba.');
+      return;
+    }
+
+    if (editingRace) {
+      updateRace(editingRace.id, {
+        title: formData.title.trim(),
+        tagline: formData.tagline || 'Lomba Trail Running Bergengsi GiriTrack',
+        date: formData.date,
+        location: formData.location.trim(),
+        banner: formData.banner,
+        heroBanner: formData.banner,
+        categories: formData.categories,
+        description: formData.description
+      });
+      showToast(`Lomba "${formData.title}" berhasil diperbarui!`);
+    } else {
+      const created = addRace({
+        title: formData.title,
+        tagline: formData.tagline || 'Lomba Trail Running Bergengsi GiriTrack',
+        date: formData.date,
+        location: formData.location,
+        banner: formData.banner,
+        categories: formData.categories,
+        description: formData.description
+      });
+      showToast(`Lomba "${created.title}" berhasil ditambahkan ke katalog!`);
+    }
+
+    handleCloseModal();
   };
 
   const handleDeleteRace = () => {
@@ -201,16 +273,16 @@ export default function AdminRaceManager() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 space-y-6 pb-16 text-[#2B3542] dark:text-[#FAF3F3]">
       {/* Back Button */}
-      <div className="mb-6">
+      <div>
         <button
           type="button"
           onClick={() => navigate(-1)}
           className="inline-flex items-center gap-2 text-xs font-bold text-[#6B7C8C] dark:text-[#A7BBC7] hover:text-[#DA7F8F] dark:hover:text-[#DA7F8F] transition-all cursor-pointer active:scale-95"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>Kembali</span>
+          <span>{t('btn.back') || 'Kembali'}</span>
         </button>
       </div>
 
@@ -223,24 +295,42 @@ export default function AdminRaceManager() {
       )}
 
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#E1E5EA] dark:border-[#2C3440] pb-6">
         <div>
-          <h1 className="text-3xl font-black text-[#2B3542] dark:text-[#FAF3F3] mb-2 drop-shadow-sm flex items-center gap-3">
-            <ShieldAlert className="w-8 h-8 text-[#DA7F8F]" />
-            Admin Race Manager
+          <h1 className="text-2xl sm:text-3xl font-black text-[#2B3542] dark:text-[#FAF3F3] mb-1.5 drop-shadow-sm flex items-center gap-3">
+            <ShieldAlert className="w-7 sm:w-8 h-7 sm:h-8 text-[#DA7F8F]" />
+            <span>Admin Race Manager</span>
           </h1>
-          <p className="text-[#6B7C8C] dark:text-[#A7BBC7] max-w-2xl text-sm sm:text-base">
+          <p className="text-[#6B7C8C] dark:text-[#A7BBC7] max-w-2xl text-xs sm:text-sm">
             Kelola dan tambah event trail running baru, pantau kuota peserta, dan cetak waktu finish pendaftar.
           </p>
         </div>
 
-        <button
-          onClick={() => setIsAddModalOpen(true)}
-          className="flex items-center justify-center gap-2 px-5 py-3 bg-[#DA7F8F] hover:bg-[#c96c7d] text-white rounded-2xl font-bold shadow-lg shadow-[#DA7F8F]/25 hover:shadow-xl transition-all duration-200 cursor-pointer self-start sm:self-auto shrink-0"
-        >
-          <Plus className="w-5 h-5" />
-          <span>Tambah Lomba Baru</span>
-        </button>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 shrink-0">
+          {/* Mobile Quick Shortcut Button to Registrants */}
+          <button
+            type="button"
+            onClick={() => {
+              const el = document.getElementById('data-pendaftar-section');
+              if (el) {
+                el.scrollIntoView({ behavior: 'smooth' });
+              }
+            }}
+            className="flex lg:hidden items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-[#452829] hover:bg-[#321c1d] text-white text-xs font-bold shadow-md transition-all active:scale-95 cursor-pointer"
+          >
+            <Users className="w-4 h-4 text-[#DA7F8F]" />
+            <span>Data Pendaftar ({registrations.length})</span>
+            <ArrowDown className="w-3.5 h-3.5" />
+          </button>
+
+          <button
+            onClick={handleOpenAddModal}
+            className="flex items-center justify-center gap-2 px-5 py-2.5 bg-[#DA7F8F] hover:bg-[#c96c7d] text-white rounded-2xl font-bold shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer text-xs"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Tambah Lomba Baru</span>
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -265,6 +355,14 @@ export default function AdminRaceManager() {
                     <h3 className="font-bold text-[#2B3542] dark:text-[#FAF3F3] line-clamp-1">{race.title}</h3>
                     
                     <div className="flex items-center gap-1.5 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => handleOpenEditModal(race)}
+                        className="p-1.5 text-gray-400 hover:text-[#DA7F8F] rounded-lg hover:bg-[#DA7F8F]/10 transition cursor-pointer"
+                        title="Edit Informasi & Kategori Lomba"
+                      >
+                        <Edit className="w-4 h-4 text-[#DA7F8F]" />
+                      </button>
                       <Link
                         to={`/races/${race.id}`}
                         target="_blank"
@@ -325,14 +423,26 @@ export default function AdminRaceManager() {
         </div>
 
         {/* Right Column: Registrations List */}
-        <div className="lg:col-span-2">
+        <div id="data-pendaftar-section" className="lg:col-span-2 scroll-mt-24">
           <div className="bg-white dark:bg-[#1C2129] rounded-2xl border border-[#E1E5EA] dark:border-[#2C3440] shadow-sm overflow-hidden flex flex-col h-full">
             
             <div className="p-5 border-b border-[#E1E5EA] dark:border-[#2C3440] flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
-              <h2 className="text-xl font-bold text-[#2B3542] dark:text-[#FAF3F3] flex items-center gap-2">
-                <Users className="w-5 h-5 text-[#DA7F8F]" />
-                Data Pendaftar ({registrations.length})
-              </h2>
+              <div className="flex items-center justify-between w-full sm:w-auto gap-3">
+                <h2 className="text-xl font-bold text-[#2B3542] dark:text-[#FAF3F3] flex items-center gap-2">
+                  <Users className="w-5 h-5 text-[#DA7F8F]" />
+                  <span>Data Pendaftar ({registrations.length})</span>
+                </h2>
+
+                {/* Mobile Button Back to Top / Event List */}
+                <button
+                  type="button"
+                  onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                  className="flex sm:hidden items-center gap-1 text-[11px] font-bold text-[#DA7F8F] bg-[#DA7F8F]/10 px-2.5 py-1.5 rounded-xl transition cursor-pointer"
+                >
+                  <ArrowUp className="w-3.5 h-3.5" />
+                  <span>Ke Atas</span>
+                </button>
+              </div>
               
               <div className="flex gap-2 w-full sm:w-auto">
                 <div className="relative flex-1 sm:w-64">
@@ -437,28 +547,30 @@ export default function AdminRaceManager() {
         </div>
       </div>
 
-      {/* MODAL FULL LAYAR: TAMBAH LOMBA TRAIL RUNNING BARU */}
+      {/* MODAL FULL LAYAR: TAMBAH / EDIT LOMBA TRAIL RUNNING */}
       {isAddModalOpen && (
         <div className="fixed inset-0 z-50 bg-[#FAF3F3] dark:bg-[#14171C] flex flex-col overflow-hidden animate-in fade-in duration-200">
           {/* Sticky Top Header */}
           <div className="sticky top-0 z-20 bg-white/95 dark:bg-[#1C2129]/95 backdrop-blur-md px-6 sm:px-10 py-4 border-b border-[#E1E5EA] dark:border-[#2C3440] flex items-center justify-between shadow-sm">
             <div className="flex items-center gap-3.5">
               <div className="w-11 h-11 rounded-2xl bg-[#DA7F8F]/15 flex items-center justify-center text-[#DA7F8F] border border-[#DA7F8F]/30">
-                <Plus className="w-6 h-6" />
+                {editingRace ? <Edit className="w-6 h-6" /> : <Plus className="w-6 h-6" />}
               </div>
               <div>
                 <h2 className="text-xl sm:text-2xl font-black text-[#2B3542] dark:text-white tracking-tight">
-                  Tambah Lomba Trail Running Baru
+                  {editingRace ? `Edit Lomba: ${editingRace.title}` : 'Tambah Lomba Trail Running Baru'}
                 </h2>
                 <p className="text-xs sm:text-sm text-[#6B7C8C] dark:text-[#A7BBC7]">
-                  Isi formulir lengkap untuk menerbitkan event lari lintas alam resmi ke katalog GiriTrack
+                  {editingRace 
+                    ? 'Perbarui rincian informasi lomba, tanggal, lokasi, atau kuota & biaya kategori.' 
+                    : 'Isi formulir lengkap untuk menerbitkan event lari lintas alam resmi ke katalog GiriTrack.'}
                 </p>
               </div>
             </div>
 
             <button
               type="button"
-              onClick={() => setIsAddModalOpen(false)}
+              onClick={handleCloseModal}
               className="p-2.5 rounded-2xl text-gray-400 hover:text-gray-700 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-[#252C36] transition cursor-pointer border border-transparent hover:border-gray-200 dark:hover:border-gray-700"
               title="Tutup Formulir"
             >
@@ -468,7 +580,7 @@ export default function AdminRaceManager() {
 
           {/* Form Content Area (Scrollable 2-Column Grid) */}
           <div className="flex-1 overflow-y-auto px-6 sm:px-10 py-8">
-            <form id="create-race-form" onSubmit={handleCreateRace} className="max-w-7xl mx-auto">
+            <form id="create-race-form" onSubmit={handleSaveRace} className="max-w-7xl mx-auto">
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
                 
                 {/* KOLOM KIRI (5 Cols): Informasi Utama & Gambar Banner */}
@@ -818,7 +930,7 @@ export default function AdminRaceManager() {
             <div className="flex items-center gap-3 w-full sm:w-auto">
               <button
                 type="button"
-                onClick={() => setIsAddModalOpen(false)}
+                onClick={handleCloseModal}
                 className="flex-1 sm:flex-initial px-6 py-3 rounded-2xl border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-bold text-xs sm:text-sm hover:bg-gray-100 dark:hover:bg-[#252C36] transition cursor-pointer"
               >
                 Batal
@@ -828,8 +940,8 @@ export default function AdminRaceManager() {
                 form="create-race-form"
                 className="flex-1 sm:flex-initial px-8 py-3 rounded-2xl bg-[#DA7F8F] hover:bg-[#c96c7d] text-white font-bold text-xs sm:text-sm shadow-lg shadow-[#DA7F8F]/25 hover:shadow-xl transition-all duration-200 cursor-pointer flex items-center justify-center gap-2"
               >
-                <Plus className="w-4 h-4" />
-                <span>Terbitkan Lomba Sekarang</span>
+                {editingRace ? <CheckCircle2 className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+                <span>{editingRace ? 'Simpan' : 'Terbitkan Lomba Sekarang'}</span>
               </button>
             </div>
           </div>

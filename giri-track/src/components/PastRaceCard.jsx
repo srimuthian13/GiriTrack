@@ -1,11 +1,13 @@
 import { MapPin, Star, Users, Map, Trophy, ArrowRight, Quote } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useToast } from '../context/ToastContext';
+
+import { useAuth } from '../context/AuthContext';
 
 const EARTH_TONES = ['#452829', '#233729', '#1E2836', '#3A231C'];
 
 export default function PastRaceCard({ race, index }) {
-  const { showToast } = useToast();
+  const navigate = useNavigate();
+  const { isLoggedIn, openAuthModal } = useAuth();
 
   if (!race) return null;
 
@@ -26,10 +28,13 @@ export default function PastRaceCard({ race, index }) {
     : Math.abs(String(id || '').split('').reduce((acc, char) => acc + char.charCodeAt(0), 0));
   const cardBgColor = EARTH_TONES[colorIndex % EARTH_TONES.length];
 
-  const navigate = useNavigate();
-
   const handleCardClick = () => {
-    navigate(`/races/${id}?status=completed`);
+    if (!isLoggedIn) {
+      openAuthModal();
+    } else {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      navigate(`/races/${id}?status=completed`);
+    }
   };
 
   return (

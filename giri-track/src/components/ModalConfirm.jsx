@@ -47,17 +47,17 @@ export default function ModalConfirm({
         </p>
 
         {/* Actions */}
-        <div className="flex items-center justify-end gap-2.5 pt-2">
+        <div className="flex flex-col-reverse sm:flex-row sm:items-center justify-end gap-2.5 pt-2">
           <button
             onClick={onCancel}
-            className="px-4 py-2.5 rounded-xl border border-[#E1E5EA] dark:border-[#2C3440] text-[#2B3542] dark:text-[#FAF3F3] hover:bg-[#FAF3F3] dark:hover:bg-[#252C36] transition duration-200 text-xs font-bold cursor-pointer active:scale-95"
+            className="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-[#E1E5EA] dark:border-[#2C3440] text-[#2B3542] dark:text-[#FAF3F3] hover:bg-[#FAF3F3] dark:hover:bg-[#252C36] transition duration-200 text-xs font-bold cursor-pointer active:scale-95 text-center"
           >
             {t('btn.cancel')}
           </button>
           
           <button
             onClick={onConfirm}
-            className="px-4 py-2.5 rounded-xl bg-rose-600 text-white hover:bg-rose-700 font-bold text-xs transition duration-200 cursor-pointer shadow-md active:scale-95"
+            className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-rose-600 text-white hover:bg-rose-700 font-bold text-xs transition duration-200 cursor-pointer shadow-md active:scale-95 text-center"
           >
             {confirmText || t('btn.confirmDelete')}
           </button>

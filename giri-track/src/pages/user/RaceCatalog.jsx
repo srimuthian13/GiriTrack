@@ -1,8 +1,8 @@
-import React, { useState, useMemo, useContext } from 'react';
+import { useState, useEffect, useMemo, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { RaceContext } from '../../context/RaceContext';
 import { useAuth } from '../../context/AuthContext';
-import { MapPin, Calendar, Users, Target, ArrowRight, Activity, Filter, RotateCcw, AlertCircle, X, ChevronDown, Plus, ArrowLeft } from 'lucide-react';
+import { MapPin, Calendar, Users, Target, ArrowRight, Activity, Filter, RotateCcw, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Plus, ArrowLeft, Edit } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 
 const EARTH_TONES = ['#452829', '#233729', '#1E2836', '#3A231C'];
@@ -46,10 +46,30 @@ export default function RaceCatalog() {
   const navigate = useNavigate();
   const { t, language } = useLanguage();
 
+  // Scroll to top on mount
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, []);
+
   // State filter
   const [selectedMonth, setSelectedMonth] = useState('all');
   const [selectedProvince, setSelectedProvince] = useState('all');
-  const [showNoResultModal, setShowNoResultModal] = useState(true);
+
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 1024 : false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 1024);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const itemsPerPage = isMobile ? 1 : 3;
+
+  // No useEffect needed for resetting pagination, we handle it in onChange events
 
   // Daftar provinsi unik yang digabungkan dari races dan daftar provinsi utama
   const provinces = useMemo(() => {
@@ -84,56 +104,57 @@ export default function RaceCatalog() {
     });
   }, [races, selectedProvince, selectedMonth]);
 
+  // Pagination Logic
+  const totalPages = Math.ceil(filteredRaces.length / itemsPerPage);
+  const currentRaces = filteredRaces.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
   const isFiltered = selectedMonth !== 'all' || selectedProvince !== 'all';
 
   const handleResetFilter = () => {
     setSelectedMonth('all');
     setSelectedProvince('all');
+    setCurrentPage(1);
   };
 
-  const getSelectedMonthName = () => {
-    if (selectedMonth === 'all') return language === 'id' ? 'Semua Bulan' : 'All Months';
-    const found = ALL_MONTHS.find(m => m.value === selectedMonth);
-    return found ? (language === 'id' ? found.idLabel : found.enLabel) : selectedMonth;
-  };
+
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-4">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-0 pb-6 sm:pb-8 text-[#2B3542] dark:text-[#FAF3F3]">
       {/* Back Button */}
-      <div>
+      <div className="mb-1">
         <button
           type="button"
           onClick={() => navigate(-1)}
-          className="inline-flex items-center gap-2 text-xs font-bold text-[#6B7C8C] dark:text-[#A7BBC7] hover:text-[#DA7F8F] dark:hover:text-[#DA7F8F] transition-all cursor-pointer active:scale-95"
+          className="inline-flex items-center gap-1.5 text-[11px] font-bold text-[#6B7C8C] dark:text-[#A7BBC7] hover:text-[#DA7F8F] dark:hover:text-[#DA7F8F] transition-all cursor-pointer active:scale-95"
         >
-          <ArrowLeft className="w-4 h-4" />
+          <ArrowLeft className="w-3.5 h-3.5" />
           <span>{t('btn.back') || 'Kembali'}</span>
         </button>
       </div>
 
       {/* Header Sejajar dengan Kontrol Filter Dropdown */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-6 border-b border-stone-200 dark:border-stone-800/80">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2 pb-2 mb-3 border-b border-stone-200 dark:border-stone-800/80">
         <div>
-          <h1 className="text-3xl sm:text-4xl font-black text-[#2B3542] dark:text-[#FAF3F3] mb-2 drop-shadow-sm tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-black text-[#2B3542] dark:text-[#FAF3F3] mb-1 drop-shadow-sm tracking-tight">
             {t('races.catalogTitle') || 'GiriTrack Races'}
           </h1>
-          <p className="text-[#6B7C8C] dark:text-[#A7BBC7] max-w-xl text-sm sm:text-base">
+          <p className="text-[#6B7C8C] dark:text-[#A7BBC7] max-w-xl text-xs sm:text-sm">
             {t('races.catalogSubtitle') || 'Tantang batas kemampuanmu di event lari lintas alam resmi kami.'}
           </p>
         </div>
 
         {/* Dropdown Filter Bulan dan Wilayah Sejajar dengan React Icons */}
-        <div className="flex flex-wrap items-center gap-3 bg-stone-900/70 backdrop-blur-md p-2.5 sm:p-3 rounded-2xl border border-stone-800 shadow-md">
+        <div className="flex flex-wrap items-center gap-2 bg-stone-900/70 backdrop-blur-md p-2 rounded-2xl border border-stone-800 shadow-md">
           {/* Filter Bulan (12 Bulan Lengkap dengan React Icon Calendar) */}
           <div className="relative flex items-center">
-            <Calendar className="w-4 h-4 text-rose-400 absolute left-3 pointer-events-none z-10" />
+            <Calendar className="w-3.5 h-3.5 text-rose-400 absolute left-2.5 pointer-events-none z-10" />
             <select
               value={selectedMonth}
               onChange={(e) => {
                 setSelectedMonth(e.target.value);
-                setShowNoResultModal(true);
+                setCurrentPage(1);
               }}
-              className="bg-stone-800 hover:bg-stone-750 border border-stone-700 text-stone-200 rounded-xl pl-9 pr-8 py-2 text-sm focus:outline-none focus:border-rose-500 transition-colors cursor-pointer appearance-none font-medium"
+              className="bg-stone-800 hover:bg-stone-750 border border-stone-700 text-stone-200 rounded-xl pl-8 pr-7 py-1.5 text-xs focus:outline-none focus:border-rose-500 transition-colors cursor-pointer appearance-none font-medium"
             >
               <option value="all">
                 {language === 'id' ? 'Semua Bulan' : 'All Months'}
@@ -144,19 +165,19 @@ export default function RaceCatalog() {
                 </option>
               ))}
             </select>
-            <ChevronDown className="w-4 h-4 text-stone-400 absolute right-2.5 pointer-events-none" />
+            <ChevronDown className="w-3.5 h-3.5 text-stone-400 absolute right-2 pointer-events-none" />
           </div>
 
           {/* Filter Provinsi / Wilayah dengan React Icon MapPin */}
           <div className="relative flex items-center">
-            <MapPin className="w-4 h-4 text-rose-400 absolute left-3 pointer-events-none z-10" />
+            <MapPin className="w-3.5 h-3.5 text-rose-400 absolute left-2.5 pointer-events-none z-10" />
             <select
               value={selectedProvince}
               onChange={(e) => {
                 setSelectedProvince(e.target.value);
-                setShowNoResultModal(true);
+                setCurrentPage(1);
               }}
-              className="bg-stone-800 hover:bg-stone-750 border border-stone-700 text-stone-200 rounded-xl pl-9 pr-8 py-2 text-sm focus:outline-none focus:border-rose-500 transition-colors cursor-pointer appearance-none font-medium"
+              className="bg-stone-800 hover:bg-stone-750 border border-stone-700 text-stone-200 rounded-xl pl-8 pr-7 py-1.5 text-xs focus:outline-none focus:border-rose-500 transition-colors cursor-pointer appearance-none font-medium"
             >
               <option value="all">
                 {language === 'id' ? 'Semua Wilayah' : 'All Regions'}
@@ -167,7 +188,7 @@ export default function RaceCatalog() {
                 </option>
               ))}
             </select>
-            <ChevronDown className="w-4 h-4 text-stone-400 absolute right-2.5 pointer-events-none" />
+            <ChevronDown className="w-3.5 h-3.5 text-stone-400 absolute right-2 pointer-events-none" />
           </div>
 
           {/* Tombol Reset Filter jika ada filter aktif */}
@@ -175,10 +196,10 @@ export default function RaceCatalog() {
             <button
               onClick={handleResetFilter}
               type="button"
-              className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl bg-stone-800 hover:bg-stone-700 text-rose-400 hover:text-rose-300 border border-stone-700 hover:border-rose-500/50 transition-all duration-200 active:scale-95 cursor-pointer shadow-sm"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-semibold rounded-xl bg-stone-800 hover:bg-stone-700 text-rose-400 hover:text-rose-300 border border-stone-700 hover:border-rose-500/50 transition-all duration-200 active:scale-95 cursor-pointer shadow-sm"
               title="Reset Filter"
             >
-              <RotateCcw className="w-3.5 h-3.5" />
+              <RotateCcw className="w-3 h-3" />
               <span>Reset</span>
             </button>
           )}
@@ -188,194 +209,295 @@ export default function RaceCatalog() {
             <button
               onClick={() => navigate('/admin/races')}
               type="button"
-              className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-xl bg-[#DA7F8F] hover:bg-[#c96c7d] text-white shadow-sm transition-all duration-200 active:scale-95 cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold rounded-xl bg-[#DA7F8F] hover:bg-[#c96c7d] text-white shadow-sm transition-all duration-200 active:scale-95 cursor-pointer"
               title="Tambah Lomba Trail Running Baru"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-3.5 h-3.5" />
               <span>Tambah Lomba</span>
             </button>
           )}
         </div>
       </div>
 
-      {/* POP-UP / TOAST NOTIFIKASI KECIL DI ATAS LAYAR KETIKA TIDAK ADA HASIL */}
-      {filteredRaces.length === 0 && showNoResultModal && (
-        <div className="fixed top-20 sm:top-24 left-1/2 -translate-x-1/2 z-50 w-[92%] sm:w-auto min-w-[320px] max-w-lg transition-all duration-300 ease-out">
-          <div className="bg-stone-900/95 backdrop-blur-md border border-rose-500/30 text-white rounded-2xl p-3 sm:px-4 sm:py-3 shadow-2xl shadow-black/70 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3 flex-1 min-w-0">
-              <div className="w-8 h-8 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-400 flex items-center justify-center shrink-0">
-                <AlertCircle className="w-4 h-4" />
-              </div>
-              <div className="truncate text-left">
-                <p className="text-xs font-bold text-rose-300">
-                  {language === 'id' ? 'Tidak Ada Event' : 'No Events Found'}
-                </p>
-                <p className="text-[11px] text-stone-300 truncate">
-                  {selectedProvince === 'all' ? (language === 'id' ? 'Semua Wilayah' : 'All Regions') : selectedProvince} • {getSelectedMonthName()}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 shrink-0">
-              <button
-                onClick={handleResetFilter}
-                type="button"
-                className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-rose-600 hover:bg-rose-500 text-white transition-all active:scale-95 cursor-pointer flex items-center gap-1 shadow-sm"
-              >
-                <RotateCcw className="w-3 h-3" />
-                <span>Reset</span>
-              </button>
-              <button
-                onClick={() => setShowNoResultModal(false)}
-                type="button"
-                className="text-stone-400 hover:text-white p-1 rounded-lg hover:bg-stone-800 transition-colors"
-                title="Tutup"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Grid Kartu Lomba ATAU Tampilan Box Kosong */}
-      {filteredRaces.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 px-4 bg-stone-900/40 dark:bg-stone-900/60 rounded-3xl border border-dashed border-stone-750 text-center max-w-xl mx-auto my-6">
-          <div className="w-14 h-14 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center mb-4 text-rose-400">
-            <Filter className="w-7 h-7" />
+      <div className="flex flex-col lg:flex-row gap-4 flex-1 justify-center items-start w-full">
+        {filteredRaces.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-10 px-4 bg-stone-900/40 dark:bg-stone-900/60 rounded-3xl border border-dashed border-stone-750 text-center max-w-sm mx-auto my-2 flex-1 w-full">
+            <div className="w-12 h-12 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center mb-3 text-rose-400">
+              <Filter className="w-6 h-6" />
+            </div>
+            <h3 className="text-base font-bold text-white mb-1.5">
+              {language === 'id' ? 'Event Tidak Ditemukan' : 'No Events Found'}
+            </h3>
+            <p className="text-stone-400 text-xs max-w-xs mb-4 leading-relaxed">
+              {language === 'id' 
+                ? 'Tidak ada event lomba pada filter wilayah atau bulan yang Anda pilih saat ini.'
+                : 'No race events match the selected region or month filters.'}
+            </p>
+            <button
+              onClick={handleResetFilter}
+              type="button"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shadow-lg shadow-rose-600/30 hover:shadow-rose-600/50 transition-all duration-200 active:scale-95 cursor-pointer"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>{language === 'id' ? 'Reset Filter' : 'Reset Filter'}</span>
+            </button>
           </div>
-          <h3 className="text-lg font-bold text-white mb-2">
-            {language === 'id' ? 'Event Tidak Ditemukan' : 'No Events Found'}
-          </h3>
-          <p className="text-stone-400 text-sm max-w-md mb-6 leading-relaxed">
-            {language === 'id' 
-              ? 'Tidak ada event lomba pada filter wilayah atau bulan yang Anda pilih saat ini.'
-              : 'No race events match the selected region or month filters.'}
-          </p>
-          <button
-            onClick={handleResetFilter}
-            type="button"
-            className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-rose-600 hover:bg-rose-500 text-white font-bold text-sm shadow-lg shadow-rose-600/30 hover:shadow-rose-600/50 transition-all duration-200 active:scale-95 cursor-pointer"
-          >
-            <RotateCcw className="w-4 h-4" />
-            <span>{language === 'id' ? 'Reset Filter' : 'Reset Filter'}</span>
-          </button>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-          {filteredRaces.map((race, index) => {
-            const colorIndex = Math.abs(index);
-            const cardBgColor = EARTH_TONES[colorIndex % EARTH_TONES.length];
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 flex-1 w-full max-w-sm sm:max-w-none mx-auto">
+            {currentRaces.map((race, index) => {
+              const colorIndex = Math.abs(index);
+              const cardBgColor = EARTH_TONES[colorIndex % EARTH_TONES.length];
 
-            // Calculate total quota and slots taken
-            const totalQuota = race.categories.reduce((acc, cat) => acc + cat.quota, 0);
-            const totalSlotsTaken = race.categories.reduce((acc, cat) => acc + cat.slotsTaken, 0);
-            const isSoldOut = totalSlotsTaken >= totalQuota;
+              // Calculate total quota and slots taken
+              const totalQuota = race.categories.reduce((acc, cat) => acc + cat.quota, 0);
+              const totalSlotsTaken = race.categories.reduce((acc, cat) => acc + cat.slotsTaken, 0);
+              const isSoldOut = totalSlotsTaken >= totalQuota;
 
-            return (
-              <div
-                key={race.id}
-                onClick={() => navigate(`/races/${race.id}`)}
-                className="group relative flex flex-col rounded-2xl sm:rounded-3xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1.5 border border-[#E1E5EA]/60 dark:border-[#2C3440]/80 cursor-pointer select-none"
-              >
-                {/* ATAS: Foto (h-36 sm:h-38) */}
-                <div className="relative h-36 sm:h-38 w-full overflow-hidden bg-stone-900 shrink-0">
-                  <img
-                    src={race.banner}
-                    alt={race.title}
-                    className="h-36 sm:h-38 object-cover w-full group-hover:scale-105 transition-transform duration-700 ease-out"
-                    loading="lazy"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-black/20" />
-                  
-                  {/* Date Badge */}
-                  <div className="absolute top-2.5 right-2.5 px-2.5 py-0.5 rounded-full bg-black/40 backdrop-blur-md border border-white/25 text-white shadow-md flex items-center gap-1 z-20">
-                    <Calendar className="w-2.5 h-2.5 text-[#E8D1C5]" />
-                    <span className="text-[10px] font-bold">
-                      {new Date(race.date).toLocaleDateString(language === 'id' ? 'id-ID' : 'en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric'
-                      })}
-                    </span>
-                  </div>
-
-                  <div className="absolute bottom-2 left-3 right-3 flex items-center gap-1 text-[10px] sm:text-[11px] font-medium text-white/90 drop-shadow-md z-10">
-                    <MapPin className="w-3 h-3 text-[#DA7F8F] shrink-0" />
-                    <span className="truncate">{race.location}</span>
-                  </div>
-                </div>
-
-                {/* BAWAH: Info */}
+              return (
                 <div
-                  style={{ backgroundColor: cardBgColor }}
-                  className="p-3.5 sm:p-4 flex-1 flex flex-col justify-between text-white relative transition-colors duration-300"
+                  key={race.id}
+                  onClick={() => navigate(`/races/${race.id}`)}
+                  className="group relative flex flex-col rounded-2xl sm:rounded-3xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1.5 border border-[#E1E5EA]/60 dark:border-[#2C3440]/80 cursor-pointer select-none"
                 >
-                  <div className="absolute inset-0 bg-gradient-to-b from-white/10 via-transparent to-black/15 pointer-events-none" />
-
-                  <div className="relative z-10 flex-1 flex flex-col">
-                    <div className="flex items-center gap-1 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-white/70">
-                      <Activity className="w-3 h-3 text-[#E8D1C5]" />
-                      <span>{t('races.cardBadge') || 'Trail Race Event'}</span>
+                  {/* ATAS: Foto (h-36 sm:h-38) */}
+                  <div className="relative h-36 sm:h-38 w-full overflow-hidden bg-stone-900 shrink-0">
+                    <img
+                      src={race.banner}
+                      alt={race.title}
+                      className="h-36 sm:h-38 object-cover w-full group-hover:scale-105 transition-transform duration-700 ease-out"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-black/20" />
+                    
+                    {/* Date Badge */}
+                    <div className="absolute top-2.5 right-2.5 px-2.5 py-0.5 rounded-full bg-black/40 backdrop-blur-md border border-white/25 text-white shadow-md flex items-center gap-1 z-20">
+                      <Calendar className="w-2.5 h-2.5 text-[#E8D1C5]" />
+                      <span className="text-[10px] font-bold">
+                        {new Date(race.date).toLocaleDateString(language === 'id' ? 'id-ID' : 'en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric'
+                        })}
+                      </span>
                     </div>
 
-                    <h3 className="font-bold text-white text-sm sm:text-base line-clamp-1 mt-0.5 leading-snug drop-shadow-sm group-hover:text-[#FAF3F3] transition-colors">
-                      {race.title}
-                    </h3>
+                    <div className="absolute bottom-2 left-3 right-3 flex items-center gap-1 text-[10px] sm:text-[11px] font-medium text-white/90 drop-shadow-md z-10">
+                      <MapPin className="w-3 h-3 text-[#DA7F8F] shrink-0" />
+                      <span className="truncate">{race.location}</span>
+                    </div>
+                  </div>
 
-                    <div className="flex flex-wrap gap-1 mt-1.5">
-                      {race.categories.slice(0, 3).map(cat => (
-                        <span key={cat.id} className="px-1.5 py-0.5 rounded-md bg-white/10 border border-white/20 text-[9px] font-semibold">
-                          {cat.name}
+                  {/* BAWAH: Info */}
+                  <div
+                    style={{ backgroundColor: cardBgColor }}
+                    className="p-3.5 sm:p-4 flex-1 flex flex-col justify-between text-white relative transition-colors duration-300"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-b from-white/10 via-transparent to-black/15 pointer-events-none" />
+
+                    <div className="relative z-10 flex-1 flex flex-col">
+                      <div className="flex items-center gap-1 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-white/70">
+                        <Activity className="w-3 h-3 text-[#E8D1C5]" />
+                        <span>{t('races.cardBadge') || 'Trail Race Event'}</span>
+                      </div>
+
+                      <h3 className="font-bold text-white text-sm sm:text-base line-clamp-1 mt-0.5 leading-snug drop-shadow-sm group-hover:text-[#FAF3F3] transition-colors">
+                        {race.title}
+                      </h3>
+
+                      <div className="flex flex-wrap gap-1 mt-1.5">
+                        {race.categories.slice(0, 3).map(cat => (
+                          <span key={cat.id} className="px-1.5 py-0.5 rounded-md bg-white/10 border border-white/20 text-[9px] font-semibold">
+                            {cat.name}
+                          </span>
+                        ))}
+                        {race.categories.length > 3 && (
+                          <span className="px-1 py-0.5 rounded-md bg-white/10 text-[9px] font-semibold text-white/70">
+                            +{race.categories.length - 3}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="relative z-10 grid grid-cols-2 gap-1 py-1.5 px-2 my-2 rounded-xl bg-black/25 backdrop-blur-sm border border-white/15 text-center text-white">
+                      <div className="flex flex-col items-center justify-center">
+                        <div className="flex items-center justify-center gap-0.5 text-white/70 text-[9px] mb-0.5">
+                          <Target className="w-2.5 h-2.5 text-[#E8D1C5]" />
+                          <span>{t('races.categoryLabel') || 'Kategori'}</span>
+                        </div>
+                        <span className="text-xs font-black text-white">
+                          {race.categories.length} <span className="text-[9px] font-normal text-white/80">{t('races.categoryLabel') || 'Kategori'}</span>
                         </span>
-                      ))}
-                      {race.categories.length > 3 && (
-                        <span className="px-1 py-0.5 rounded-md bg-white/10 text-[9px] font-semibold text-white/70">
-                          +{race.categories.length - 3}
+                      </div>
+
+                      <div className="flex flex-col items-center justify-center border-l border-white/15">
+                        <div className="flex items-center justify-center gap-0.5 text-white/70 text-[9px] mb-0.5">
+                          <Users className="w-2.5 h-2.5 text-[#E8D1C5]" />
+                          <span>{t('races.slotLabel') || 'Slot'}</span>
+                        </div>
+                        <span className="text-xs font-black text-white">
+                          {totalQuota - totalSlotsTaken} <span className="text-[9px] font-normal text-white/80">{t('races.slotRemaining') || 'Sisa'}</span>
                         </span>
+                      </div>
+                    </div>
+
+                    <div className="relative z-10 flex items-center pt-0.5 mt-auto">
+                      {isAdmin ? (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/admin/races?editRaceId=${race.id}`);
+                          }}
+                          className="w-full py-1.5 sm:py-2 px-3 rounded-full bg-[#DA7F8F] hover:bg-[#c96c7d] text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all duration-300 active:scale-95 cursor-pointer shadow-md"
+                        >
+                          <Edit className="w-3.5 h-3.5" />
+                          <span>Edit Event Lomba</span>
+                        </button>
+                      ) : (
+                        <button
+                          disabled={isSoldOut}
+                          type="button"
+                          className={`w-full py-1.5 sm:py-2 px-3 rounded-full border ${isSoldOut ? 'border-white/30 text-white/50 bg-black/20 cursor-not-allowed' : 'border-white/70 text-white bg-transparent hover:bg-white hover:text-stone-900 hover:border-white hover:shadow-md'} font-bold text-xs flex items-center justify-center gap-1.5 transition-all duration-300 active:scale-95 cursor-pointer`}
+                        >
+                          <span>{isSoldOut ? (t('registration.soldOut') || 'Sold Out') : (language === 'id' ? 'Daftar Sekarang' : 'Register Now')}</span>
+                          {!isSoldOut && <ArrowRight className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-1" />}
+                        </button>
                       )}
                     </div>
+
                   </div>
-
-                  <div className="relative z-10 grid grid-cols-2 gap-1 py-1.5 px-2 my-2 rounded-xl bg-black/25 backdrop-blur-sm border border-white/15 text-center text-white">
-                    <div className="flex flex-col items-center justify-center">
-                      <div className="flex items-center justify-center gap-0.5 text-white/70 text-[9px] mb-0.5">
-                        <Target className="w-2.5 h-2.5 text-[#E8D1C5]" />
-                        <span>{t('races.categoryLabel') || 'Kategori'}</span>
-                      </div>
-                      <span className="text-xs font-black text-white">
-                        {race.categories.length} <span className="text-[9px] font-normal text-white/80">{t('races.categoryLabel') || 'Kategori'}</span>
-                      </span>
-                    </div>
-
-                    <div className="flex flex-col items-center justify-center border-l border-white/15">
-                      <div className="flex items-center justify-center gap-0.5 text-white/70 text-[9px] mb-0.5">
-                        <Users className="w-2.5 h-2.5 text-[#E8D1C5]" />
-                        <span>{t('races.slotLabel') || 'Slot'}</span>
-                      </div>
-                      <span className="text-xs font-black text-white">
-                        {totalQuota - totalSlotsTaken} <span className="text-[9px] font-normal text-white/80">{t('races.slotRemaining') || 'Sisa'}</span>
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="relative z-10 flex items-center pt-0.5 mt-auto">
-                    <button
-                      disabled={isSoldOut}
-                      type="button"
-                      className={`w-full py-1.5 sm:py-2 px-3 rounded-full border ${isSoldOut ? 'border-white/30 text-white/50 bg-black/20 cursor-not-allowed' : 'border-white/70 text-white bg-transparent hover:bg-white hover:text-stone-900 hover:border-white hover:shadow-md'} font-bold text-xs flex items-center justify-center gap-1.5 transition-all duration-300 active:scale-95 cursor-pointer`}
-                    >
-                      <span>{isSoldOut ? (t('registration.soldOut') || 'Sold Out') : (language === 'id' ? 'Daftar Sekarang' : 'Register Now')}</span>
-                      {!isSoldOut && <ArrowRight className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-1" />}
-                    </button>
-                  </div>
-
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
+        )}
+
+        {/* Vertical Pagination (Up/Down) - Right Side */}
+        <div className="hidden lg:flex flex-col items-center justify-center gap-2 py-4 pl-4 pr-2 sticky top-24">
+          <button
+            disabled={currentPage === 1 || totalPages <= 1}
+            onClick={() => {
+              setCurrentPage(p => p - 1);
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            className="p-2 rounded-full text-stone-400 disabled:opacity-20 hover:text-rose-500 transition cursor-pointer"
+          >
+            <ChevronUp className="w-6 h-6" />
+          </button>
+          
+          <div className="flex flex-col items-center relative py-2">
+            {/* Garis vertikal track */}
+            <div className="absolute top-0 bottom-0 w-0.5 bg-stone-200 dark:bg-stone-800 -z-10 rounded-full" />
+            
+            {(() => {
+              const effectiveTotalPages = Math.max(1, totalPages);
+              let startPage = Math.max(1, currentPage - 1);
+              let endPage = Math.min(effectiveTotalPages, startPage + 2);
+              if (endPage - startPage < 2) {
+                startPage = Math.max(1, endPage - 2);
+              }
+              
+              const visiblePages = [];
+              for (let i = startPage; i <= endPage; i++) {
+                visiblePages.push(i);
+              }
+
+              return visiblePages.map(pageNum => {
+                const isActive = currentPage === pageNum;
+                return (
+                  <button
+                    key={pageNum}
+                    onClick={() => {
+                      setCurrentPage(pageNum);
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    className={`w-8 h-8 rounded-full flex items-center justify-center my-1.5 text-xs font-bold transition-all ${
+                      isActive 
+                        ? 'bg-[#DA7F8F] text-white shadow-md scale-110' 
+                        : 'bg-white dark:bg-[#1C2129] border border-stone-200 dark:border-stone-800 text-stone-500 hover:text-[#DA7F8F] hover:border-[#DA7F8F]'
+                    }`}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              });
+            })()}
+          </div>
+
+          <button
+            disabled={currentPage === totalPages || totalPages <= 1}
+            onClick={() => {
+              setCurrentPage(p => p + 1);
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            className="p-2 rounded-full text-stone-400 disabled:opacity-20 hover:text-rose-500 transition cursor-pointer"
+          >
+            <ChevronDown className="w-6 h-6" />
+          </button>
         </div>
-      )}
+
+        {/* Horizontal Pagination for Mobile */}
+        <div className="lg:hidden flex items-center justify-center gap-4 py-4 w-full">
+          <button
+            disabled={currentPage === 1 || totalPages <= 1}
+            onClick={() => {
+              setCurrentPage(p => p - 1);
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            className="p-2.5 rounded-full bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 disabled:opacity-50 hover:bg-stone-200 dark:hover:bg-stone-700 transition cursor-pointer shadow-sm"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+          
+          <div className="flex items-center gap-2">
+            {(() => {
+              const effectiveTotalPages = Math.max(1, totalPages);
+              let startPage = Math.max(1, currentPage - 1);
+              let endPage = Math.min(effectiveTotalPages, startPage + 2);
+              if (endPage - startPage < 2) {
+                startPage = Math.max(1, endPage - 2);
+              }
+              
+              const visiblePages = [];
+              for (let i = startPage; i <= endPage; i++) {
+                visiblePages.push(i);
+              }
+
+              return visiblePages.map(pageNum => {
+                const isActive = currentPage === pageNum;
+                return (
+                  <button
+                    key={pageNum}
+                    onClick={() => {
+                      setCurrentPage(pageNum);
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+                      isActive 
+                        ? 'bg-[#DA7F8F] text-white shadow-md scale-110' 
+                        : 'bg-white dark:bg-[#1C2129] border border-stone-200 dark:border-stone-800 text-stone-500'
+                    }`}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              });
+            })()}
+          </div>
+
+          <button
+            disabled={currentPage === totalPages || totalPages <= 1}
+            onClick={() => {
+              setCurrentPage(p => p + 1);
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            className="p-2.5 rounded-full bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 disabled:opacity-50 hover:bg-stone-200 dark:hover:bg-stone-700 transition cursor-pointer shadow-sm"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

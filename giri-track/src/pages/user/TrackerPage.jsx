@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Navigation, ArrowLeft } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
@@ -8,6 +9,10 @@ export default function TrackerPage() {
   const { t } = useLanguage();
   const [searchParams] = useSearchParams();
   const selectedTrailId = searchParams.get('trailId') || '';
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, []);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 space-y-6 pb-12 text-[#2B3542] dark:text-[#FAF3F3]">

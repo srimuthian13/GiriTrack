@@ -280,19 +280,17 @@ export default function HistoryMapModal({ isOpen, onClose, record }) {
   const activeReplayCoordinates = coordinates.slice(0, replayIndex + 1);
   const currentReplayPoint = coordinates[replayIndex] || startPoint;
 
-  const [prevRecordId, setPrevRecordId] = useState(record?.id);
-  const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
-
-  if (record?.id !== prevRecordId || isOpen !== prevIsOpen) {
-    setPrevRecordId(record?.id);
-    setPrevIsOpen(isOpen);
-    setIsPlaying(false);
-    setReplayIndex(0);
-    setViewMode('photo');
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsPlaying(false);
+      setReplayIndex(0);
+      setViewMode('photo');
+    }, 0);
     if (replayIntervalRef.current) {
       clearInterval(replayIntervalRef.current);
     }
-  }
+    return () => clearTimeout(timer);
+  }, [record?.id, isOpen]);
 
   useEffect(() => {
     if (isPlaying) {

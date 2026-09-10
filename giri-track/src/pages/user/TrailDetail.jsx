@@ -6,7 +6,7 @@ import {
   Mountain,
   Clock,
   ArrowLeft,
-  Play,
+  Lock,
   Edit,
   Trash2,
   Shield,
@@ -15,7 +15,6 @@ import {
   User,
   Heart,
   Star,
-  CheckCircle2,
   CloudSun,
   Wind,
   Droplets,
@@ -281,7 +280,6 @@ export default function TrailDetail() {
   const [hoverRating, setHoverRating] = useState(0);
   const [reviewerName, setReviewerName] = useState(currentUser?.name || '');
   const [reviewComment, setReviewComment] = useState('');
-  const [reviewSuccess, setReviewSuccess] = useState(false);
 
   const trail = getTrailById(id);
 
@@ -297,12 +295,6 @@ export default function TrailDetail() {
     return () => clearTimeout(timer);
   }, [id]);
 
-  useEffect(() => {
-    if (currentUser?.name && !reviewerName) {
-      setReviewerName(currentUser.name);
-    }
-  }, [currentUser, reviewerName]);
-
   if (loading) {
     return <DetailSkeleton />;
   }
@@ -310,24 +302,32 @@ export default function TrailDetail() {
   const handleReviewSubmit = (e) => {
     e.preventDefault();
     if (rating === 0) {
-      alert('Silakan pilih rating bintang terlebih dahulu!');
+      showToast(t('reviews.starLabel') || 'Silakan pilih rating bintang terlebih dahulu!', {
+        type: 'error',
+        title: t('common.error') || 'Peringatan'
+      });
       return;
     }
     
+    const finalReviewer = (reviewerName || currentUser?.name || currentUser?.email || t('reviews.anonymous') || 'Pendaki').trim();
+
     addReview(trail.id, {
-      id: Date.now(),
-      reviewer: reviewerName,
+      userId: currentUser?.email || currentUser?.id,
+      userName: finalReviewer,
+      reviewer: finalReviewer,
+      userAvatar: currentUser?.avatar,
       rating: rating,
       comment: reviewComment,
-      date: new Date().toISOString()
+      date: new Date().toISOString().split('T')[0]
     });
 
-    setReviewSuccess(true);
-    setReviewerName('');
     setReviewComment('');
-    setRating(0);
+    setRating(5);
     setHoverRating(0);
-    setTimeout(() => setReviewSuccess(false), 5000);
+    showToast(t('reviews.successMsg') || 'Ulasan dan rating Anda berhasil disimpan!', {
+      type: 'success',
+      title: t('reviews.title') || 'Ulasan Terkirim'
+    });
   };
 
   const handleDownloadOfflineMap = () => {
@@ -413,7 +413,7 @@ export default function TrailDetail() {
   const displayRating = Number(trail.ratingAvg) > 0 ? Number(trail.ratingAvg).toFixed(1) : 'Baru';
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 space-y-8 pb-12 text-[#2B3542] dark:text-[#FAF3F3] transition-colors duration-300 ease-in-out">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 space-y-6 pb-16 text-[#2B3542] dark:text-[#FAF3F3] transition-colors duration-300 ease-in-out">
       
       {/* Back Button & Top Actions */}
       <div className="flex items-center justify-between">
@@ -666,21 +666,21 @@ export default function TrailDetail() {
       />
 
       {/* Rating & Reviews Section */}
-      <div className="bg-white/90 dark:bg-[#1C2129] rounded-3xl p-6 sm:p-8 border border-[#E1E5EA] dark:border-[#2C3440] shadow-sm space-y-6 transition-colors duration-300">
+      <div className="bg-white/90 dark:bg-[#1C2129] rounded-3xl p-5 sm:p-8 border border-[#E1E5EA] dark:border-[#2C3440] shadow-sm space-y-6 transition-colors duration-300">
         
         <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#E1E5EA] dark:border-[#2C3440] pb-5 gap-4">
           <div>
-            <h2 className="text-xl font-bold text-[#2B3542] dark:text-[#FAF3F3] flex items-center gap-2">
-              <MessageSquare className="w-5 h-5 text-[#DA7F8F]" />
-              <span>Rating & Ulasan Pendaki ({reviewsList.length})</span>
+            <h2 className="text-lg sm:text-xl font-bold text-[#2B3542] dark:text-[#FAF3F3] flex items-center gap-2">
+              <MessageSquare className="w-5 h-5 text-[#DA7F8F] shrink-0" />
+              <span>{t('reviews.title') || 'Rating & Ulasan Pendaki'} ({reviewsList.length})</span>
             </h2>
-            <p className="text-xs text-[#6B7C8C] dark:text-[#A7BBC7] mt-1">
-              Bagikan penilaian objektif mengenai keindahan pemandangan, medan, dan ketersediaan mata air.
+            <p className="text-xs text-[#6B7C8C] dark:text-[#A7BBC7] mt-1 leading-relaxed">
+              {t('reviews.subtitle') || 'Bagikan penilaian objektif mengenai keindahan pemandangan, medan, dan ketersediaan mata air.'}
             </p>
           </div>
 
-          <div className="flex items-center gap-3 bg-[#FAF3F3] dark:bg-[#252C36] px-4 py-2.5 rounded-2xl border border-[#E1E5EA] dark:border-[#2C3440] shrink-0">
-            <div className="text-3xl font-black text-[#2B3542] dark:text-[#FAF3F3]">
+          <div className="flex items-center gap-3 bg-[#FAF3F3] dark:bg-[#252C36] px-4 py-2.5 rounded-2xl border border-[#E1E5EA] dark:border-[#2C3440] shrink-0 self-start sm:self-auto">
+            <div className="text-2xl sm:text-3xl font-black text-[#2B3542] dark:text-[#FAF3F3]">
               {displayRating}
             </div>
             <div className="flex flex-col">
@@ -688,7 +688,7 @@ export default function TrailDetail() {
                 {[1, 2, 3, 4, 5].map((starIdx) => (
                   <Star
                     key={starIdx}
-                    className={`w-4 h-4 ${
+                    className={`w-3.5 sm:w-4 h-3.5 sm:h-4 ${
                       starIdx <= Math.round(Number(trail.ratingAvg) || 5)
                         ? 'fill-amber-400 text-amber-400'
                         : 'text-stone-300 dark:text-stone-600'
@@ -697,32 +697,54 @@ export default function TrailDetail() {
                 ))}
               </div>
               <span className="text-[10px] text-[#6B7C8C] dark:text-[#A7BBC7] font-semibold">
-                Rata-rata {reviewsList.length} ulasan
+                {t('reviews.avgRating') || 'Rata-rata'} {reviewsList.length} {t('reviews.reviewsCount') || 'ulasan'}
               </span>
             </div>
           </div>
         </div>
 
-        {!isAdmin && (
-          <form onSubmit={handleReviewSubmit} className="space-y-4 bg-[#FAF3F3]/80 dark:bg-[#252C36]/60 p-5 sm:p-6 rounded-2xl border border-[#E1E5EA] dark:border-[#2C3440] transition-colors duration-300">
-            <h3 className="text-sm font-bold text-[#2B3542] dark:text-[#FAF3F3] flex items-center gap-2">
-              <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
-              <span>Beri Penilaian & Tulis Pengalaman Mendaki</span>
-            </h3>
+        {/* Review Form or Auth Prompt */}
+        {!currentUser ? (
+          <div className="p-5 sm:p-6 rounded-2xl bg-[#FAF3F3]/80 dark:bg-[#252C36]/60 border border-[#E1E5EA] dark:border-[#2C3440] flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
+            <div className="space-y-1">
+              <h3 className="text-sm font-bold text-[#2B3542] dark:text-[#FAF3F3] flex items-center justify-center sm:justify-start gap-2">
+                <Lock className="w-4 h-4 text-[#DA7F8F] shrink-0" />
+                <span>{t('reviews.loginRequired') || 'Silakan masuk ke akun Anda terlebih dahulu untuk memberikan ulasan & penilaian jalur.'}</span>
+              </h3>
+              <p className="text-xs text-[#6B7C8C] dark:text-[#A7BBC7]">
+                Ulasan Anda akan tampil dengan nama profil dan foto akun Anda sendiri.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                localStorage.setItem('giritrack_intended_path', `/trails/${id}`);
+                navigate('/login');
+              }}
+              className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-[#DA7F8F] text-white hover:bg-[#c96c7d] text-xs font-bold transition shadow-sm cursor-pointer shrink-0"
+            >
+              {t('reviews.loginBtn') || 'Masuk untuk Menulis Ulasan'}
+            </button>
+          </div>
+        ) : !isAdmin && (
+          <form onSubmit={handleReviewSubmit} className="space-y-4 bg-[#FAF3F3]/80 dark:bg-[#252C36]/60 p-4 sm:p-6 rounded-2xl border border-[#E1E5EA] dark:border-[#2C3440] transition-colors duration-300">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <h3 className="text-sm font-bold text-[#2B3542] dark:text-[#FAF3F3] flex items-center gap-2">
+                <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
+                <span>{t('reviews.formTitle') || 'Beri Penilaian & Tulis Pengalaman Mendaki'}</span>
+              </h3>
+              <span className="text-[11px] text-[#6B7C8C] dark:text-[#A7BBC7]">
+                Masuk sebagai: <strong className="text-[#DA7F8F]">{currentUser?.name || currentUser?.email}</strong>
+              </span>
+            </div>
 
-            {reviewSuccess && (
-              <div className="p-3 rounded-xl bg-emerald-100 text-emerald-900 border border-emerald-300 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800 text-xs font-bold flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                <span>Ulasan dan rating Anda berhasil disimpan dan langsung diperbarui!</span>
-              </div>
-            )}
-
+            {/* Star Picker Responsive */}
             <div className="space-y-1.5">
               <label className="block text-xs font-bold text-[#6B7C8C] dark:text-[#A7BBC7]">
-                Pilih Skor Rating Bintang (1 - 5) *
+                {t('reviews.starLabel') || 'Pilih Skor Rating Bintang (1 - 5) *'}
               </label>
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-1 bg-white dark:bg-[#1C2129] px-3 py-2 rounded-xl border border-[#E1E5EA] dark:border-[#2C3440]">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+                <div className="flex items-center gap-1 bg-white dark:bg-[#1C2129] px-3 py-2 rounded-xl border border-[#E1E5EA] dark:border-[#2C3440] w-fit shadow-xs">
                   {[1, 2, 3, 4, 5].map((starNum) => {
                     const isFilled = starNum <= (hoverRating || rating);
                     return (
@@ -736,7 +758,7 @@ export default function TrailDetail() {
                         title={`${starNum} Bintang`}
                       >
                         <Star
-                          className={`w-6 h-6 transition-colors duration-150 ${
+                          className={`w-5 sm:w-6 h-5 sm:h-6 transition-colors duration-150 ${
                             isFilled
                               ? 'text-amber-400 fill-amber-400'
                               : 'text-stone-300 dark:text-stone-600'
@@ -747,7 +769,7 @@ export default function TrailDetail() {
                   })}
                 </div>
                 <span className="text-xs font-bold text-[#2B3542] dark:text-[#FAF3F3]">
-                  {rating === 5 ? '5.0 - Sangat Memuaskan & Indah' : `${rating}.0 Bintang`}
+                  {rating === 5 ? (t('reviews.star5') || '5.0 - Sangat Memuaskan & Indah') : `${rating}.0 ${t('reviews.starUnit') || 'Bintang'}`}
                 </span>
               </div>
             </div>
@@ -755,7 +777,7 @@ export default function TrailDetail() {
             <div className="grid grid-cols-1 gap-3">
               <div>
                 <label className="block text-xs font-bold text-[#6B7C8C] dark:text-[#A7BBC7] mb-1">
-                  Nama Pendaki / Username
+                  {t('reviews.nameLabel') || 'Nama Pendaki / Akun Pengulas'}
                 </label>
                 <div className="relative">
                   <User className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#A7BBC7]" />
@@ -763,33 +785,33 @@ export default function TrailDetail() {
                     type="text"
                     value={reviewerName}
                     onChange={(e) => setReviewerName(e.target.value)}
-                    placeholder="Contoh: Rangga Explorer"
-                    className="w-full pl-9 pr-3.5 py-2 rounded-xl border border-[#E1E5EA] dark:border-[#2C3440] bg-white dark:bg-[#1C2129] text-xs text-[#2B3542] dark:text-[#FAF3F3] focus:outline-none focus:ring-2 focus:ring-[#DA7F8F]/40 transition-all duration-200"
+                    placeholder={currentUser?.name || t('reviews.namePlaceholder') || 'Nama Anda'}
+                    className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-[#E1E5EA] dark:border-[#2C3440] bg-white dark:bg-[#1C2129] text-xs text-[#2B3542] dark:text-[#FAF3F3] focus:outline-none focus:ring-2 focus:ring-[#DA7F8F]/40 transition-all duration-200"
                   />
                 </div>
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-[#6B7C8C] dark:text-[#A7BBC7] mb-1">
-                  Ulasan & Catatan Kondisi Jalur *
+                  {t('reviews.commentLabel') || 'Ulasan & Catatan Kondisi Jalur *'}
                 </label>
                 <textarea
                   rows={3}
                   required
                   value={reviewComment}
                   onChange={(e) => setReviewComment(e.target.value)}
-                  placeholder="Bagikan kondisi jalur, ketersediaan sumber air, vegetasi, atau tips bagi pendaki lain..."
-                  className="w-full px-3.5 py-2 rounded-xl border border-[#E1E5EA] dark:border-[#2C3440] bg-white dark:bg-[#1C2129] text-xs text-[#2B3542] dark:text-[#FAF3F3] focus:outline-none focus:ring-2 focus:ring-[#DA7F8F]/40 transition-all duration-200"
+                  placeholder={t('reviews.commentPlaceholder') || 'Bagikan kondisi jalur, ketersediaan sumber air, vegetasi, atau tips bagi pendaki lain...'}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#E1E5EA] dark:border-[#2C3440] bg-white dark:bg-[#1C2129] text-xs text-[#2B3542] dark:text-[#FAF3F3] focus:outline-none focus:ring-2 focus:ring-[#DA7F8F]/40 transition-all duration-200"
                 />
               </div>
             </div>
 
             <button
               type="submit"
-              className="px-6 py-2.5 rounded-xl bg-[#DA7F8F] text-white hover:bg-[#c96c7d] font-bold text-xs cursor-pointer transition-all duration-200 active:scale-95 shadow-md flex items-center gap-2"
+              className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-[#DA7F8F] text-white hover:bg-[#c96c7d] font-bold text-xs cursor-pointer transition-all duration-200 active:scale-95 shadow-md flex items-center justify-center gap-2"
             >
               <Send className="w-4 h-4" />
-              <span>Kirim Ulasan & Rating</span>
+              <span>{t('reviews.submitBtn') || 'Kirim Ulasan & Rating'}</span>
             </button>
           </form>
         )}
@@ -800,20 +822,20 @@ export default function TrailDetail() {
             {reviewsList.map((rev) => (
               <div
                 key={rev.id}
-                className="p-4 sm:p-5 rounded-2xl bg-[#FAF3F3] dark:bg-[#252C36] border border-[#E1E5EA] dark:border-[#2C3440] space-y-2 transition-colors duration-300"
+                className="p-4 sm:p-5 rounded-2xl bg-[#FAF3F3] dark:bg-[#252C36] border border-[#E1E5EA] dark:border-[#2C3440] space-y-2.5 transition-colors duration-300"
               >
                 <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
                     <img
                       src={rev.userAvatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=200&auto=format&fit=crop'}
-                      alt={rev.userName}
+                      alt={rev.userName || 'Avatar'}
                       className="w-9 h-9 rounded-full object-cover border border-[#E1E5EA] dark:border-stone-700 shrink-0"
                     />
-                    <div>
-                      <h4 className="font-bold text-xs text-[#2B3542] dark:text-[#FAF3F3]">
-                        {rev.userName || 'Pendaki Giri'}
+                    <div className="min-w-0">
+                      <h4 className="font-bold text-xs text-[#2B3542] dark:text-[#FAF3F3] truncate">
+                        {rev.userName || rev.reviewer || rev.user || t('reviews.anonymous') || 'Pendaki'}
                       </h4>
-                      <div className="flex items-center gap-2 mt-0.5">
+                      <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                         <div className="flex items-center text-amber-500">
                           {[1, 2, 3, 4, 5].map((starIdx) => (
                             <Star
@@ -833,18 +855,18 @@ export default function TrailDetail() {
                     </div>
                   </div>
 
-                  {(isAdmin || currentUser?.id === rev.userId) && (
+                  {(isAdmin || currentUser?.id === rev.userId || currentUser?.email === rev.userId) && (
                     <button
                       onClick={() => deleteReview(trail.id, rev.id)}
-                      className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950 text-xs transition cursor-pointer"
-                      title="Hapus Ulasan Ini"
+                      className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950 text-xs transition cursor-pointer shrink-0"
+                      title={t('reviews.deleteTooltip') || 'Hapus Ulasan Ini'}
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   )}
                 </div>
 
-                <p className="text-xs text-[#2B3542]/90 dark:text-[#FAF3F3]/90 leading-relaxed pl-12">
+                <p className="text-xs text-[#2B3542]/90 dark:text-[#FAF3F3]/90 leading-relaxed pl-0 sm:pl-12 pt-1 sm:pt-0 break-words">
                   {rev.comment}
                 </p>
               </div>
@@ -852,7 +874,7 @@ export default function TrailDetail() {
           </div>
         ) : (
           <div className="p-6 text-center text-xs text-[#6B7C8C] dark:text-[#A7BBC7] bg-[#FAF3F3]/50 dark:bg-[#252C36]/50 rounded-2xl border border-dashed border-[#E1E5EA] dark:border-[#2C3440]">
-            Belum ada ulasan untuk jalur ini. Jadilah yang pertama memberikan ulasan dan rating bintang!
+            {t('reviews.emptyReviews') || 'Belum ada ulasan untuk jalur ini. Jadilah yang pertama memberikan ulasan dan rating bintang!'}
           </div>
         )}
       </div>

@@ -1,6 +1,5 @@
 import { useState, useRef } from 'react';
-import { X, MapPin, Clock, Camera, Upload, FileText, Image as ImageIcon, CheckCircle2, ChevronRight, Navigation, Zap } from 'lucide-react';
-import { useLanguage } from '../context/LanguageContext';
+import { X, MapPin, Clock, Camera, Upload, FileText, CheckCircle2, ChevronRight, Navigation, Zap } from 'lucide-react';
 import CameraCaptureModal from './CameraCaptureModal';
 
 export default function SaveActivityModal({ 
@@ -12,7 +11,6 @@ export default function SaveActivityModal({
   avgSpeed,
   defaultTitle = ''
 }) {
-  const { t } = useLanguage();
   const [title, setTitle] = useState(defaultTitle || `Jelajah Bebas - ${new Date().toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' })}`);
   const [notes, setNotes] = useState('');
   const [photos, setPhotos] = useState([]);
@@ -66,7 +64,6 @@ export default function SaveActivityModal({
     });
 
     if (fileInputRef.current) fileInputRef.current.value = '';
-    if (cameraInputRef.current) cameraInputRef.current.value = '';
   };
 
   const removePhoto = (index) => {

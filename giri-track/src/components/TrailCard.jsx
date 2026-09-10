@@ -1,4 +1,4 @@
-import { MapPin, Navigation, Mountain, Clock, Eye, Edit, Trash2, Lock, Heart, Star, Compass, ArrowRight } from 'lucide-react';
+import { MapPin, Navigation, Mountain, Clock, Edit, Trash2, Lock, Heart, Star, Compass, ArrowRight } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import { useTrail } from '../context/TrailContext';
@@ -25,7 +25,6 @@ export default function TrailCard({ trail, index, onDetail, onEdit, onDelete }) 
     estimated_time,
     image,
     description,
-    likes_count = 0,
     ratingAvg = 0,
     reviews = [],
     status = 'verified',

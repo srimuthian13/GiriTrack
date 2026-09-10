@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { ArrowRight, Compass } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
-const EARTH_TONES = ['#452829', '#233729', '#1E2836', '#3A231C'];
+const EARTH_TONES = ['#452829', '#233729', '#1E2836', '#3A231C', '#2C3E50'];
 
 const mockGuides = [
   {
@@ -37,44 +38,86 @@ const mockGuides = [
 ];
 
 export default function GuideStackCards() {
+  const { t } = useLanguage();
   const [hoveredIndex, setHoveredIndex] = useState(null);
   const [isVisible, setIsVisible] = useState(false);
   const containerRef = useRef(null);
 
   useEffect(() => {
+    const currentElement = containerRef.current;
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
           setIsVisible(true);
         }
       },
-      { threshold: 0.3 }
+      { threshold: 0.2 }
     );
 
-    if (containerRef.current) {
-      observer.observe(containerRef.current);
+    if (currentElement) {
+      observer.observe(currentElement);
     }
 
     return () => {
-      if (containerRef.current) {
-        observer.unobserve(containerRef.current);
+      if (currentElement) {
+        observer.unobserve(currentElement);
       }
     };
   }, []);
 
   return (
-    <section className="max-w-7xl mx-auto px-4 sm:px-6 my-16 overflow-hidden py-12" ref={containerRef}>
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold text-[#2B3542] dark:text-[#FAF3F3] flex items-center gap-2">
-          <Compass className="w-6 h-6 text-[#DA7F8F]" />
-          <span>Rekomendasi Panduan Jalur</span>
+    <section className="max-w-7xl mx-auto px-4 sm:px-6 my-12 sm:my-16 overflow-hidden py-8 sm:py-12" ref={containerRef}>
+      <div className="mb-6 sm:mb-8">
+        <h2 className="text-xl sm:text-2xl font-bold text-[#2B3542] dark:text-[#FAF3F3] flex items-center gap-2">
+          <Compass className="w-5 sm:w-6 h-5 sm:h-6 text-[#DA7F8F]" />
+          <span>{t('guideStack.title') || 'Rekomendasi Panduan Jalur'}</span>
         </h2>
         <p className="text-xs text-[#6B7C8C] dark:text-[#A7BBC7] mt-1">
-          Jelajahi berbagai gunung dengan panduan komprehensif kami.
+          {t('guideStack.subtitle') || 'Jelajahi berbagai gunung dengan panduan komprehensif kami.'}
         </p>
       </div>
 
-      <div className="flex justify-center items-center h-[450px]">
+      {/* Mobile: Horizontal scrollable cards */}
+      <div className="flex md:hidden overflow-x-auto gap-4 pb-4 px-1 -mx-4 px-4 snap-x snap-mandatory">
+        {mockGuides.map((guide, index) => {
+          const cardBgColor = EARTH_TONES[index % EARTH_TONES.length];
+          return (
+            <div
+              key={guide.id}
+              className="shrink-0 w-64 h-[400px] rounded-3xl overflow-hidden shadow-lg snap-center flex flex-col bg-white dark:bg-[#1C2129] border border-[#E1E5EA] dark:border-[#2C3440]"
+            >
+              <img
+                src={guide.image}
+                alt={guide.title}
+                className="h-44 w-full object-cover"
+              />
+              <div
+                className="flex-1 p-5 flex flex-col justify-between text-white"
+                style={{ backgroundColor: cardBgColor }}
+              >
+                <div>
+                  <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-white/70 mb-1.5">
+                    <Compass className="w-3.5 h-3.5 text-[#E8D1C5]" />
+                    <span>{t('guideStack.badge') || 'Panduan Jalur'}</span>
+                  </div>
+                  <h3 className="font-bold text-base leading-tight mb-2 line-clamp-2 drop-shadow-sm">{guide.title}</h3>
+                  <p className="text-xs text-white/80 line-clamp-3">{guide.description}</p>
+                </div>
+                <button
+                  type="button"
+                  className="mt-3 py-2 px-4 rounded-full border-2 border-white/70 text-xs font-bold text-white flex items-center justify-center gap-2 active:scale-95"
+                >
+                  <span>{t('guideStack.exploreBtn') || 'Jelajahi'}</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Desktop (md+): Interactive animated fan stack */}
+      <div className="hidden md:flex justify-center items-center h-[450px] relative">
         {mockGuides.map((guide, index) => {
           const isHovered = hoveredIndex === index;
           const isAnyHovered = hoveredIndex !== null;
@@ -83,11 +126,9 @@ export default function GuideStackCards() {
           // Calculate dynamic overlap
           let transformStyle;
           if (isVisible) {
-            // When visible, cards clump together
-            const offset = (index - 2) * (isAnyHovered ? 40 : 60); // Spread out more if hovered
+            const offset = (index - 2) * (isAnyHovered ? 40 : 60);
             transformStyle = `translateX(${offset}px)`;
           } else {
-            // Spread out widely before scroll
             const offset = (index - 2) * 200;
             transformStyle = `translateX(${offset}px)`;
           }
@@ -123,14 +164,14 @@ export default function GuideStackCards() {
                   <div>
                     <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-white/70 mb-2">
                       <Compass className="w-3.5 h-3.5 text-[#E8D1C5]" />
-                      <span>Panduan Jalur</span>
+                      <span>{t('guideStack.badge') || 'Panduan Jalur'}</span>
                     </div>
                     <h3 className="font-bold text-lg leading-tight mb-2 line-clamp-2 drop-shadow-sm">{guide.title}</h3>
                     <p className="text-xs text-white/80 line-clamp-3">{guide.description}</p>
                   </div>
 
                   <button className={`mt-4 py-2 px-4 rounded-full border-2 text-xs font-bold flex items-center justify-center gap-2 transition-all duration-300 ${isHovered ? 'bg-white text-stone-900 border-white shadow-lg' : 'border-white/70 text-white bg-transparent'}`}>
-                    <span>Jelajahi</span>
+                    <span>{t('guideStack.exploreBtn') || 'Jelajahi'}</span>
                     <ArrowRight className="w-4 h-4" />
                   </button>
                 </div>

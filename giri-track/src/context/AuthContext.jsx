@@ -39,6 +39,11 @@ export const AuthProvider = ({ children }) => {
 
   const [loadingGoogle, setLoadingGoogle] = useState(false);
 
+  // Modal Auth State
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const openAuthModal = () => setIsAuthModalOpen(true);
+  const closeAuthModal = () => setIsAuthModalOpen(false);
+
   useEffect(() => {
     if (user.isLoggedIn) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
@@ -83,7 +88,7 @@ export const AuthProvider = ({ children }) => {
       email: trimmedEmail,
       password,
       role: 'user',
-      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name.trim())}`,
+      avatar: '',
       registeredAt: new Date().toISOString()
     };
 
@@ -143,7 +148,7 @@ export const AuthProvider = ({ children }) => {
       const googleUser = {
         email: 'user.google@gmail.com',
         name: 'Pendaki Google',
-        avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80',
+        avatar: '',
         role: 'user',
         isLoggedIn: true
       };
@@ -224,6 +229,7 @@ export const AuthProvider = ({ children }) => {
     );
     setUsersDb(updatedUsersDb);
     localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(updatedUsersDb));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(newUserData));
     
     return true;
   };
@@ -273,6 +279,9 @@ export const AuthProvider = ({ children }) => {
         loginAsDemoAdmin,
         loginAsDemoUser,
         updateUserProfile,
+        isAuthModalOpen,
+        openAuthModal,
+        closeAuthModal,
       }}
     >
       {children}

@@ -4,6 +4,7 @@ import L from 'leaflet';
 import { Play, Pause, Square, MapPin, Gauge, Clock, Navigation, CheckCircle2, AlertCircle, Map as MapIcon } from 'lucide-react';
 import { useTrail } from '../context/TrailContext';
 import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../context/ToastContext';
 import SaveActivityModal from './SaveActivityModal';
@@ -65,6 +66,7 @@ function LiveMapAutoPan({ currentPos, pathCoordinates }) {
 export default function LiveTracker({ selectedTrailId, onSessionComplete }) {
   const { trails, addHistoryRecord } = useTrail();
   const { t } = useLanguage();
+  const { user } = useAuth();
   const { showToast } = useToast();
 
   const [trackingState, setTrackingState] = useState('idle'); // 'idle' | 'active' | 'paused'
@@ -202,6 +204,7 @@ export default function LiveTracker({ selectedTrailId, onSessionComplete }) {
 
     const record = {
       id: 'act_' + Date.now(),
+      userEmail: user?.email || '',
       trail_id: selectedTrail ? selectedTrail.id : null,
       trail_name: modalData.title,
       duration_seconds: durationSeconds,
@@ -224,7 +227,16 @@ export default function LiveTracker({ selectedTrailId, onSessionComplete }) {
       onSessionComplete(record);
     }
 
-    navigate('/history');
+    if (!user?.isLoggedIn && !user?.email) {
+      localStorage.setItem('giritrack_intended_path', '/history');
+      showToast('Aktivitas dicatat! Silakan masuk agar riwayat tersimpan di akun pribadi Anda.', {
+        type: 'info',
+        title: 'Masuk Akun'
+      });
+      navigate('/login');
+    } else {
+      navigate('/history');
+    }
   };
 
   const handleReset = () => {

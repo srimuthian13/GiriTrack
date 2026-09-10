@@ -3,7 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { 
   Settings, Plus, Save, Edit, Trash2, CheckCircle2, AlertCircle, 
   RefreshCw, Upload, Image as ImageIcon, Link as LinkIcon, X, 
-  Lock, LogIn, ShieldAlert, ShieldCheck, Clock, Check, Eye,
+  Lock, LogIn, ShieldCheck, Clock, Check,
   ArrowLeft, Compass, Camera
 } from 'lucide-react';
 import { useTrail } from '../../context/TrailContext';
@@ -13,7 +13,7 @@ import ModalConfirm from '../../components/ModalConfirm';
 import CameraCaptureModal from '../../components/CameraCaptureModal';
 
 export default function ManageTrail() {
-  const { trails, addTrail, updateTrail, deleteTrail, verifyTrail, resetTrails, locations, difficultyLevels } = useTrail();
+  const { trails, addTrail, updateTrail, deleteTrail, verifyTrail, resetTrails } = useTrail();
   const { isAdmin, isLoggedIn, user } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
@@ -68,12 +68,7 @@ export default function ManageTrail() {
 
   // Effect to prefill form if editing (Admin only)
   useEffect(() => {
-    if (editId) {
-      if (!isAdmin) {
-        // Regular user cannot edit existing trails
-        resetForm();
-        return;
-      }
+    if (editId && isAdmin) {
       const existing = trails.find((t) => String(t.id) === String(editId));
       if (existing) {
         const timer = setTimeout(() => {
@@ -86,13 +81,13 @@ export default function ManageTrail() {
             estimated_time: existing.estimated_time || '',
             image: existing.image || '',
             description: existing.description || '',
-            coordinatesRaw: JSON.stringify(existing.coordinates || []),
+            coordinatesRaw: existing.coordinates ? JSON.stringify(existing.coordinates) : '',
           });
         }, 0);
         return () => clearTimeout(timer);
       }
     }
-  }, [editId, trails, isAdmin, resetForm]);
+  }, [editId, trails, isAdmin]);
 
   // 1. GERBANG AUTENTIKASI: Jika belum login, cegah akses pengelolaan jalur
   if (!isLoggedIn) {

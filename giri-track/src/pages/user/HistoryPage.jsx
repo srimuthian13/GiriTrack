@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { History, Trash2, MapPin, Trophy, ArrowLeft } from 'lucide-react';
 import { useTrail } from '../../context/TrailContext';
@@ -12,8 +12,50 @@ export default function HistoryPage() {
   const { t, language } = useLanguage();
   const { user } = useAuth();
 
+  // Scroll to top on mount
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, []);
+
   const [selectedRecordIdForMap, setSelectedRecordIdForMap] = useState(null);
   const [mapModalOpen, setMapModalOpen] = useState(false);
+
+  const isLoggedIn = user?.isLoggedIn || !!user?.email;
+
+  if (!isLoggedIn) {
+    return (
+      <div className="max-w-md mx-auto my-16 px-4 animate-in fade-in zoom-in duration-300">
+        <div className="bg-white/90 dark:bg-[#1C2129] rounded-3xl p-6 sm:p-8 border border-[#E1E5EA] dark:border-[#2C3440] shadow-xl text-center space-y-5 text-[#2B3542] dark:text-[#FAF3F3]">
+          <div className="w-16 h-16 rounded-2xl bg-[#DA7F8F]/15 text-[#DA7F8F] flex items-center justify-center mx-auto shadow-inner">
+            <History className="w-8 h-8 text-[#DA7F8F]" />
+          </div>
+          <div>
+            <h2 className="text-xl sm:text-2xl font-black">{t('authGate.title') || 'Akses Akun Pribadi Diperlukan'}</h2>
+            <p className="text-xs text-[#6B7C8C] dark:text-[#A7BBC7] mt-1.5 leading-relaxed">
+              Silakan masuk ke akun GiriTrack Anda untuk melihat riwayat aktivitas GPS dan dokumentasi foto pendakian pribadi.
+            </p>
+          </div>
+          <div className="space-y-2.5 pt-2">
+            <button
+              onClick={() => {
+                localStorage.setItem('giritrack_intended_path', '/history');
+                navigate('/login');
+              }}
+              className="w-full py-3 rounded-2xl bg-[#DA7F8F] text-white hover:bg-[#c96c7d] font-bold text-xs shadow-md transition-all duration-200 active:scale-95 cursor-pointer flex items-center justify-center gap-2"
+            >
+              <span>{t('authGate.loginBtn') || 'Masuk Akun Sekarang'}</span>
+            </button>
+            <button
+              onClick={() => navigate('/')}
+              className="w-full py-2.5 rounded-2xl border border-[#E1E5EA] dark:border-[#2C3440] text-[#2B3542] dark:text-[#FAF3F3] hover:bg-[#FAF3F3] dark:hover:bg-[#252C36] font-semibold text-xs transition cursor-pointer"
+            >
+              {t('authGate.backHome') || 'Kembali ke Beranda'}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Filter history for current user
   const userHistory = history.filter(item => item.userEmail === user?.email);

@@ -1,4 +1,4 @@
-import { useContext } from 'react';
+import { useContext, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { RaceContext } from '../../context/RaceContext';
 import { useAuth } from '../../context/AuthContext';
@@ -11,13 +11,55 @@ export default function MyTickets() {
   const { currentUser, isAdmin } = useAuth();
   const { t, language } = useLanguage();
 
+  // Scroll to top on mount
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, []);
+
   // Filter tickets by current user email
+  const isLoggedIn = currentUser?.isLoggedIn || !!currentUser?.email;
+
+  if (!isLoggedIn) {
+    return (
+      <div className="max-w-md mx-auto my-16 px-4 animate-in fade-in zoom-in duration-300">
+        <div className="bg-white/90 dark:bg-[#1C2129] rounded-3xl p-6 sm:p-8 border border-[#E1E5EA] dark:border-[#2C3440] shadow-xl text-center space-y-5 text-[#2B3542] dark:text-[#FAF3F3]">
+          <div className="w-16 h-16 rounded-2xl bg-[#DA7F8F]/15 text-[#DA7F8F] flex items-center justify-center mx-auto shadow-inner">
+            <Ticket className="w-8 h-8 text-[#DA7F8F]" />
+          </div>
+          <div>
+            <h2 className="text-xl sm:text-2xl font-black">{t('authGate.title') || 'Akses Akun Pribadi Diperlukan'}</h2>
+            <p className="text-xs text-[#6B7C8C] dark:text-[#A7BBC7] mt-1.5 leading-relaxed">
+              Silakan masuk ke akun GiriTrack Anda untuk melihat tiket lomba dan status BIB yang telah Anda daftarkan.
+            </p>
+          </div>
+          <div className="space-y-2.5 pt-2">
+            <button
+              onClick={() => {
+                localStorage.setItem('giritrack_intended_path', '/my-tickets');
+                navigate('/login');
+              }}
+              className="w-full py-3 rounded-2xl bg-[#DA7F8F] text-white hover:bg-[#c96c7d] font-bold text-xs shadow-md transition-all duration-200 active:scale-95 cursor-pointer flex items-center justify-center gap-2"
+            >
+              <span>{t('authGate.loginBtn') || 'Masuk Akun Sekarang'}</span>
+            </button>
+            <button
+              onClick={() => navigate('/')}
+              className="w-full py-2.5 rounded-2xl border border-[#E1E5EA] dark:border-[#2C3440] text-[#2B3542] dark:text-[#FAF3F3] hover:bg-[#FAF3F3] dark:hover:bg-[#252C36] font-semibold text-xs transition cursor-pointer"
+            >
+              {t('authGate.backHome') || 'Kembali ke Beranda'}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const myTickets = registrations.filter(t => (t.userEmail || t.email) === currentUser?.email);
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-10 min-h-[70vh]">
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 space-y-6 pb-16 min-h-[70vh]">
       {/* Back Button */}
-      <div className="mb-6">
+      <div>
         <button
           type="button"
           onClick={() => navigate(-1)}
