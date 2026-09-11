@@ -1,4 +1,4 @@
-# GiriTrack
+<img width="1919" height="873" alt="Screenshot 2026-09-11 171958" src="https://github.com/user-attachments/assets/d4d67927-3228-4854-97c1-4153d5b07ccc" /># GiriTrack
 
 - **Live Demo:** [https://giri-track.vercel.app/](https://giri-track.vercel.app/)
 - **Video Presentasi:** [Google Drive](https://drive.google.com/drive/folders/1T3O2BUQTbMgvneL_Nmb7pLLxXebY09Yn?usp=sharing)
@@ -65,8 +65,8 @@ giri-track/
 *Aplikasi ini tidak mewajibkan penggunaan backend khusus. Data disimulasikan menggunakan **Context API** dan manipulasi State (Array Objects) di bagian Frontend. Sehingga aplikasi berjalan penuh secara mandiri (Standalone Client).*
 
 ## g. Screenshot Aplikasi
-*(Tambahkan gambar screenshot aplikasi dengan melampirkan tautan gambar repo Anda di bawah ini)*
-- **Beranda (Desktop):** `![Beranda](link-gambar-beranda.png)`
-- **Katalog (Pencarian & Filter):** `![Katalog](link-gambar-katalog.png)`
-- **Mobile View & Navigasi:** `![Mobile View](link-gambar-mobile.png)`
-- **Admin Panel (CRUD):** `![Admin Panel](link-gambar-admin.png)`
+
+- **Beranda (Desktop):** <img width="1919" height="876" alt="Beranda Desktop" src="https://github.com/user-attachments/assets/4af3466a-f74f-44d3-9dac-4739f010ab62" />
+- **Katalog (Pencarian & Filter):** <img width="1919" height="873" alt="Katalog Pencarian dan Filter" src="https://github.com/user-attachments/assets/c0e8712f-e8d1-4d3d-973e-3b3433fd830f" />
+- **Tampilan Mobile & Navigasi:** <img width="369" height="747" alt="Tampilan Mobile dan Navigasi" src="https://github.com/user-attachments/assets/20cfb899-cfd2-46ad-ae5a-65cb0de076f5" />
+- **Panel Admin (CRUD):** <img width="1919" height="881" alt="Panel Admin CRUD" src="https://github.com/user-attachments/assets/d494a621-88ec-40a6-9f42-0bd675314dea" />
