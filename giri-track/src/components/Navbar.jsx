@@ -28,7 +28,7 @@ import ModalConfirm from './ModalConfirm';
 import Logo from './Logo';
 
 export default function Navbar() {
-  const { language, toggleLanguage, t } = useLanguage();
+  const { t } = useLanguage();
   const { isAdmin, user, isLoggedIn, logout, openAuthModal } = useAuth();
   const { isDarkMode, toggleTheme } = useTheme();
   const { showToast } = useToast();
@@ -40,13 +40,12 @@ export default function Navbar() {
   
   // Dropdown States
   const [isExploreOpen, setIsExploreOpen] = useState(false);
-  const [isAdminOpen, setIsAdminOpen] = useState(false);
+
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [logoutModalOpen, setLogoutModalOpen] = useState(false);
 
   const exploreDropdownRef = useRef(null);
-  const adminDropdownRef = useRef(null);
   const profileDropdownRef = useRef(null);
 
   const handleGuestClick = (e) => {
@@ -54,7 +53,6 @@ export default function Navbar() {
       if (e) e.preventDefault();
       openAuthModal();
       setIsExploreOpen(false);
-      setIsAdminOpen(false);
       setMobileMenuOpen(false);
       return false;
     }
@@ -70,12 +68,7 @@ export default function Navbar() {
       ) {
         setIsExploreOpen(false);
       }
-      if (
-        adminDropdownRef.current &&
-        !adminDropdownRef.current.contains(event.target)
-      ) {
-        setIsAdminOpen(false);
-      }
+
       if (
         profileDropdownRef.current &&
         !profileDropdownRef.current.contains(event.target)
@@ -90,10 +83,8 @@ export default function Navbar() {
   // Close menus when route changes
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setIsExploreOpen(false);
-    setIsAdminOpen(false);
-    setIsProfileOpen(false);
-    setMobileMenuOpen(false);
+        setIsExploreOpen(false);
+        setIsProfileOpen(false);
   }, [location.pathname]);
 
   // Handle Global Search Submit
@@ -223,104 +214,8 @@ export default function Navbar() {
             {/* ========================================================= */}
             <div className="hidden md:flex items-center gap-2 lg:gap-3">
               
-              {/* Nav Link: Admin Dropdown or User Navigation */}
-              {isAdmin ? (
-                <div className="relative" ref={adminDropdownRef}>
-                  <button
-                    type="button"
-                    onClick={() => setIsAdminOpen(!isAdminOpen)}
-                    className={`px-3.5 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer border ${
-                      isAdminOpen || location.pathname.startsWith('/admin') || location.pathname === '/manage'
-                        ? 'text-[#DA7F8F] bg-[#DA7F8F]/10 dark:bg-[#DA7F8F]/15 border-[#DA7F8F]/40 shadow-sm'
-                        : 'text-[#2B3542] dark:text-[#FAF3F3] hover:text-[#DA7F8F] border-[#E1E5EA] dark:border-[#2C3440] bg-[#E1E5EA]/40 dark:bg-[#252C36]/50'
-                    }`}
-                  >
-                    <ShieldCheck className="w-3.5 h-3.5 text-[#DA7F8F]" />
-                    <span>Menu Administrator</span>
-                    <ChevronDown
-                      className={`w-3.5 h-3.5 transition-transform duration-200 ${
-                        isAdminOpen ? 'rotate-180 text-[#DA7F8F]' : ''
-                      }`}
-                    />
-                  </button>
-
-                  {/* Admin Dropdown Menu */}
-                  {isAdminOpen && (
-                    <div className="absolute right-0 mt-2 w-64 rounded-2xl bg-white dark:bg-[#1C2129] border border-[#E1E5EA] dark:border-[#2C3440] shadow-xl py-2 z-50 animate-in fade-in slide-in-from-top-2">
-                      <div className="px-3.5 py-1.5 text-[10px] font-bold uppercase tracking-wider text-[#A7BBC7] flex items-center gap-1.5 border-b border-[#E1E5EA] dark:border-[#2C3440] mb-1 pb-2">
-                        <ShieldCheck className="w-3.5 h-3.5 text-[#DA7F8F]" />
-                        <span>Pengelolaan Sistem</span>
-                      </div>
-
-                      <Link
-                        to="/admin"
-                        onClick={() => setIsAdminOpen(false)}
-                        className={`flex items-center gap-3 px-3.5 py-2.5 text-xs transition-colors ${
-                          location.pathname === '/admin'
-                            ? 'bg-[#DA7F8F]/10 text-[#DA7F8F] font-bold'
-                            : 'text-[#2B3542] dark:text-[#FAF3F3] hover:bg-[#FAF3F3] dark:hover:bg-[#252C36]'
-                        }`}
-                      >
-                        <HomeIcon className="w-4 h-4 text-[#DA7F8F] shrink-0" />
-                        <div>
-                          <p className="font-bold">Dashboard Admin</p>
-                          <p className="text-[10px] text-[#A7BBC7] font-normal">Panel statistik & ringkasan</p>
-                        </div>
-                      </Link>
-
-                      <Link
-                        to="/admin/races"
-                        onClick={() => setIsAdminOpen(false)}
-                        className={`flex items-center gap-3 px-3.5 py-2.5 text-xs transition-colors ${
-                          location.pathname === '/admin/races'
-                            ? 'bg-[#DA7F8F]/10 text-[#DA7F8F] font-bold'
-                            : 'text-[#2B3542] dark:text-[#FAF3F3] hover:bg-[#FAF3F3] dark:hover:bg-[#252C36]'
-                        }`}
-                      >
-                        <Activity className="w-4 h-4 text-[#DA7F8F] shrink-0" />
-                        <div>
-                          <p className="font-bold">Kelola Lomba</p>
-                          <p className="text-[10px] text-[#A7BBC7] font-normal">Event lari & catat finish</p>
-                        </div>
-                      </Link>
-
-                      <Link
-                        to="/manage"
-                        onClick={() => setIsAdminOpen(false)}
-                        className={`flex items-center gap-3 px-3.5 py-2.5 text-xs transition-colors ${
-                          location.pathname === '/manage'
-                            ? 'bg-[#DA7F8F]/10 text-[#DA7F8F] font-bold'
-                            : 'text-[#2B3542] dark:text-[#FAF3F3] hover:bg-[#FAF3F3] dark:hover:bg-[#252C36]'
-                        }`}
-                      >
-                        <Settings className="w-4 h-4 text-[#DA7F8F] shrink-0" />
-                        <div>
-                          <p className="font-bold">Kelola Jalur</p>
-                          <p className="text-[10px] text-[#A7BBC7] font-normal">Verifikasi & edit data rute</p>
-                        </div>
-                      </Link>
-
-                      <div className="border-t border-[#E1E5EA] dark:border-[#2C3440] my-1" />
-
-                      <Link
-                        to="/trails"
-                        onClick={() => setIsAdminOpen(false)}
-                        className={`flex items-center gap-3 px-3.5 py-2.5 text-xs transition-colors ${
-                          location.pathname === '/trails'
-                            ? 'bg-[#DA7F8F]/10 text-[#DA7F8F] font-bold'
-                            : 'text-[#2B3542] dark:text-[#FAF3F3] hover:bg-[#FAF3F3] dark:hover:bg-[#252C36]'
-                        }`}
-                      >
-                        <Compass className="w-4 h-4 text-[#DA7F8F] shrink-0" />
-                        <div>
-                          <p className="font-bold">Katalog Publik</p>
-                          <p className="text-[10px] text-[#A7BBC7] font-normal">Tampilan jalur versi pengguna</p>
-                        </div>
-                      </Link>
-                    </div>
-                  )}
-                </div>
-              ) : (
+              {/* Admin users will use the Profile Dropdown for navigation. Regular users see Beranda and Jelajah. */}
+              {!isAdmin && (
                 <>
                   <NavLink
                     to="/"
@@ -417,24 +312,7 @@ export default function Navbar() {
                 )}
               </button>
 
-              {/* Quick Utility 2: Language Toggle (Small Pill ID | EN) */}
-              <button
-                type="button"
-                onClick={toggleLanguage}
-                className="h-8 px-2.5 rounded-full flex items-center justify-center bg-[#E1E5EA]/70 dark:bg-[#252C36] border border-[#E1E5EA] dark:border-[#2C3440] text-[11px] font-bold font-mono tracking-wider text-[#2B3542] dark:text-[#FAF3F3] hover:scale-105 active:scale-95 transition cursor-pointer shadow-sm"
-                title="Ganti Bahasa (ID / EN)"
-              >
-                <span className={language === 'id' ? 'text-[#DA7F8F] font-black' : 'text-[#A7BBC7]'}>
-                  ID
-                </span>
-                <span className="mx-1 text-[#A7BBC7] font-normal">|</span>
-                <span className={language === 'en' ? 'text-[#DA7F8F] font-black' : 'text-[#A7BBC7]'}>
-                  EN
-                </span>
-              </button>
 
-              {/* Vertical Divider */}
-              <div className="h-4 w-px bg-[#E1E5EA] dark:bg-[#2C3440] mx-0.5" />
 
               {/* User Profile / Auth Action */}
               {isLoggedIn ? (
@@ -515,7 +393,7 @@ export default function Navbar() {
                               className="flex items-center gap-2.5 px-4 py-2 text-xs font-bold text-[#DA7F8F] hover:bg-[#DA7F8F]/10 transition"
                             >
                               <ShieldCheck className="w-4 h-4" />
-                              <span>Admin Dashboard</span>
+                              <span>Admin Dashboard Utama</span>
                             </Link>
                             <Link
                               to="/admin/races"
@@ -697,7 +575,7 @@ export default function Navbar() {
                     }
                   >
                     <ShieldCheck className="w-4 h-4 text-[#DA7F8F]" />
-                    <span>Admin Dashboard</span>
+                    <span>Dashboard Utama</span>
                   </NavLink>
                   <NavLink
                     to="/admin/races"
@@ -852,17 +730,7 @@ export default function Navbar() {
               )}
             </div>
 
-            {/* Language Toggle in Mobile */}
-            <div className="pt-2 flex items-center justify-between border-t border-[#E1E5EA] dark:border-[#2C3440] text-xs font-bold">
-              <span className="text-[#A7BBC7]">Bahasa / Language</span>
-              <button
-                type="button"
-                onClick={toggleLanguage}
-                className="px-3 py-1 rounded-full bg-[#E1E5EA]/70 dark:bg-[#252C36] border border-[#E1E5EA] dark:border-[#2C3440] text-xs font-mono font-bold uppercase cursor-pointer"
-              >
-                {language}
-              </button>
-            </div>
+
 
           </div>
         )}

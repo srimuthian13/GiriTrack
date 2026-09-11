@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
-import { User, Mail, Phone, Droplet, Lock, Camera, CheckCircle2, ShieldAlert, ArrowLeft, Upload } from 'lucide-react';
+import { User, Mail, Phone, Droplet, Lock, Camera, CheckCircle2, ShieldAlert, ArrowLeft, Trash2 } from 'lucide-react';
 import CameraCaptureModal from '../../components/CameraCaptureModal';
 
 export default function Profile() {
@@ -70,16 +70,56 @@ export default function Profile() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const compressAndSaveAvatar = (dataUrl) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const MAX_WIDTH = 300;
+      const MAX_HEIGHT = 300;
+      let width = img.width;
+      let height = img.height;
+
+      if (width > height) {
+        if (width > MAX_WIDTH) {
+          height *= MAX_WIDTH / width;
+          width = MAX_WIDTH;
+        }
+      } else {
+        if (height > MAX_HEIGHT) {
+          width *= MAX_HEIGHT / height;
+          height = MAX_HEIGHT;
+        }
+      }
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, width, height);
+      
+      const compressedBase64 = canvas.toDataURL('image/jpeg', 0.8);
+      setFormData(prev => ({ ...prev, avatar: compressedBase64 }));
+      
+      // Auto-save to context/localStorage
+      try {
+        updateUserProfile({ avatar: compressedBase64 });
+        setMessage('Foto profil berhasil diperbarui & disimpan otomatis!');
+        setTimeout(() => setMessage(''), 3000);
+      } catch (err) {
+        setError('Gagal menyimpan foto: ' + err.message);
+      }
+    };
+    img.src = dataUrl;
+  };
+
   const handleAvatarUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
-      if (file.size > 2 * 1024 * 1024) { // 2MB limit
-        setError('Ukuran file terlalu besar. Maksimal 2MB.');
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit before compression
+        setError('Ukuran file terlalu besar. Maksimal 5MB.');
         return;
       }
       const reader = new FileReader();
       reader.onloadend = () => {
-        setFormData({ ...formData, avatar: reader.result });
+        compressAndSaveAvatar(reader.result);
       };
       reader.readAsDataURL(file);
     }
@@ -180,18 +220,9 @@ export default function Profile() {
             </div>
             
             <div className="flex items-center gap-2 mt-3">
-              <button
-                type="button"
-                onClick={() => setIsCameraOpen(true)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-xs font-bold hover:bg-emerald-500/20 cursor-pointer transition"
-              >
+              <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-xs font-bold hover:bg-emerald-500/20 cursor-pointer transition">
                 <Camera className="w-3.5 h-3.5" />
-                <span>Foto Kamera</span>
-              </button>
-
-              <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#FAF3F3] dark:bg-[#252C36] border border-[#E1E5EA] dark:border-[#2C3440] text-[#2B3542] dark:text-[#FAF3F3] text-xs font-bold hover:border-[#DA7F8F] cursor-pointer transition">
-                <Upload className="w-3.5 h-3.5 text-[#DA7F8F]" />
-                <span>Upload File</span>
+                <span>Edit Gambar</span>
                 <input 
                   type="file" 
                   accept="image/*" 
@@ -199,8 +230,20 @@ export default function Profile() {
                   onChange={handleAvatarUpload}
                 />
               </label>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setFormData(prev => ({ ...prev, avatar: '' }));
+                  updateUserProfile({ avatar: '' });
+                }}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-700 dark:text-rose-300 text-xs font-bold hover:bg-rose-500/20 cursor-pointer transition"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Hapus</span>
+              </button>
             </div>
-            <p className="text-[11px] text-[#6B7C8C] dark:text-[#A7BBC7] mt-1.5">Foto kamera langsung atau upload file gambar (Maks. 2MB)</p>
+            <p className="text-[11px] text-[#6B7C8C] dark:text-[#A7BBC7] mt-1.5">Foto akan dikompresi dan disimpan secara otomatis</p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
@@ -324,7 +367,7 @@ export default function Profile() {
         isOpen={isCameraOpen}
         onClose={() => setIsCameraOpen(false)}
         onCapture={(base64) => {
-          setFormData((prev) => ({ ...prev, avatar: base64 }));
+          compressAndSaveAvatar(base64);
         }}
       />
     </div>

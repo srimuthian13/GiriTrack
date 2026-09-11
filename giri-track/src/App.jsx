@@ -5,7 +5,7 @@ import { ThemeProvider } from './context/ThemeContext';
 import { LanguageProvider } from './context/LanguageContext';
 import { TrailProvider } from './context/TrailContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { ToastProvider, useToast } from './context/ToastContext';
+import { ToastProvider } from './context/ToastContext';
 import { RaceProvider } from './context/RaceContext';
 import Navbar from './components/Navbar';
 
@@ -145,18 +145,12 @@ function Footer() {
 
 function ProtectedRoute({ children, adminOnly = false }) {
   const { isLoggedIn, isAdmin, openAuthModal, isAuthModalOpen } = useAuth();
-  const { showToast } = useToast();
 
   useEffect(() => {
     if (!isLoggedIn) {
       openAuthModal();
-    } else if (adminOnly && !isAdmin) {
-      showToast('Halaman ini khusus untuk Administrator GiriTrack!', {
-        type: 'error',
-        title: 'Akses Ditolak'
-      });
     }
-  }, [isLoggedIn, adminOnly, isAdmin, showToast, openAuthModal]);
+  }, [isLoggedIn, openAuthModal]);
 
   if (!isLoggedIn) {
     if (!isAuthModalOpen) {
@@ -181,7 +175,7 @@ function AppContent() {
       <Navbar />
       <AuthModal />
 
-      <main className="flex-1 pt-6 pb-20 md:pb-0">
+      <main className="flex-1 pb-20 md:pb-0">
         <AnimatePresence mode="wait">
           <motion.div
             key={location.pathname}
@@ -202,7 +196,7 @@ function AppContent() {
           <Route path="/events" element={<Navigate to="/races" replace />} />
           <Route path="/tracker" element={<ProtectedRoute><TrackerPage /></ProtectedRoute>} />
           <Route path="/history" element={<ProtectedRoute><HistoryPage /></ProtectedRoute>} />
-          <Route path="/manage" element={<ProtectedRoute adminOnly><ManageTrail /></ProtectedRoute>} />
+          <Route path="/manage" element={<ProtectedRoute><ManageTrail /></ProtectedRoute>} />
           <Route path="/my-tickets" element={<ProtectedRoute><MyTickets /></ProtectedRoute>} />
           <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
               <Route path="/admin" element={<ProtectedRoute adminOnly><AdminDashboard /></ProtectedRoute>} />

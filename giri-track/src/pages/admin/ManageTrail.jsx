@@ -13,12 +13,21 @@ import ModalConfirm from '../../components/ModalConfirm';
 import CameraCaptureModal from '../../components/CameraCaptureModal';
 
 export default function ManageTrail() {
-  const { trails, addTrail, updateTrail, deleteTrail, verifyTrail, resetTrails } = useTrail();
+  const { 
+    trails, addTrail, updateTrail, deleteTrail, verifyTrail, resetTrails,
+    locations, addLocation, deleteLocation,
+    difficultyLevels, addDifficultyLevel, deleteDifficultyLevel
+  } = useTrail();
   const { isAdmin, isLoggedIn, user } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [isCameraOpen, setIsCameraOpen] = useState(false);
+  
+  // Master Data States
+  const [newLocationName, setNewLocationName] = useState('');
+  const [newDiffLabel, setNewDiffLabel] = useState('');
+  const [newDiffBadgeColor, setNewDiffBadgeColor] = useState('emerald');
 
   const editId = searchParams.get('editId');
 
@@ -257,6 +266,37 @@ export default function ManageTrail() {
 
   const pendingTrailsCount = trails.filter(t => t.status === 'pending').length;
 
+  const handleAddLocation = (e) => {
+    e.preventDefault();
+    if (!newLocationName.trim()) return;
+    addLocation({ name: newLocationName.trim() });
+    setNewLocationName('');
+  };
+
+  const handleAddDifficultyLevel = (e) => {
+    e.preventDefault();
+    if (!newDiffLabel.trim()) return;
+
+    let badgeClass = 'bg-stone-100 text-stone-800 dark:bg-stone-800 dark:text-stone-300 border-stone-300';
+    if (newDiffBadgeColor === 'emerald') {
+      badgeClass = 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border-emerald-300';
+    } else if (newDiffBadgeColor === 'amber') {
+      badgeClass = 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border-amber-300';
+    } else if (newDiffBadgeColor === 'rose') {
+      badgeClass = 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 border-rose-300';
+    } else if (newDiffBadgeColor === 'purple') {
+      badgeClass = 'bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300 border-purple-300';
+    }
+
+    addDifficultyLevel({
+      label: newDiffLabel.trim(),
+      badgeClass,
+      color: newDiffBadgeColor,
+    });
+    setNewDiffLabel('');
+    setNewDiffBadgeColor('emerald');
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 space-y-6 pb-12 text-[#2B3542] dark:text-[#FAF3F3]">
       
@@ -264,7 +304,7 @@ export default function ManageTrail() {
       <div>
         <button
           type="button"
-          onClick={() => navigate(-1)}
+          onClick={() => navigate('/admin')}
           className="inline-flex items-center gap-2 text-xs font-bold text-[#6B7C8C] dark:text-[#A7BBC7] hover:text-[#DA7F8F] dark:hover:text-[#DA7F8F] transition-all cursor-pointer active:scale-95"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -304,7 +344,12 @@ export default function ManageTrail() {
         <div className="flex flex-wrap items-center gap-2.5">
           <button
             type="button"
-            onClick={() => navigate('/trails')}
+            onClick={() => {
+              const listEl = document.getElementById('trail-list-section');
+              if (listEl) {
+                listEl.scrollIntoView({ behavior: 'smooth' });
+              }
+            }}
             className="px-4 py-2 text-xs font-bold rounded-xl bg-[#DA7F8F] text-white hover:bg-[#c96c7d] shadow-sm transition flex items-center gap-2 cursor-pointer active:scale-95"
             title="Buka Daftar Jalur Pendakian"
           >
@@ -339,8 +384,8 @@ export default function ManageTrail() {
       )}
 
       {/* Form Container */}
-      <div className="bg-white/90 dark:bg-[#1C2129] rounded-3xl p-6 sm:p-8 shadow-lg border border-[#E1E5EA] dark:border-[#2C3440] space-y-6">
-        <div className="flex items-center justify-between border-b border-[#E1E5EA] dark:border-[#2C3440] pb-4">
+      <div className="bg-white/90 dark:bg-[#1C2129] rounded-3xl p-4 sm:p-5 shadow-lg border border-[#E1E5EA] dark:border-[#2C3440] space-y-4">
+        <div className="flex items-center justify-between border-b border-[#E1E5EA] dark:border-[#2C3440] pb-3">
           <h2 className="text-xl font-bold text-[#2B3542] dark:text-[#FAF3F3] flex items-center gap-2">
             {editId && isAdmin ? <Edit className="w-5 h-5 text-[#DA7F8F]" /> : <Plus className="w-5 h-5 text-[#DA7F8F]" />}
             <span>
@@ -666,8 +711,8 @@ export default function ManageTrail() {
       </div>
 
       {/* Existing Trails Table */}
-      <div className="bg-white/90 dark:bg-[#1C2129] rounded-3xl p-6 shadow-lg border border-[#E1E5EA] dark:border-[#2C3440] space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#E1E5EA] dark:border-[#2C3440] pb-3">
+      <div id="trail-list-section" className="bg-white/90 dark:bg-[#1C2129] rounded-3xl p-4 sm:p-5 shadow-lg border border-[#E1E5EA] dark:border-[#2C3440] space-y-3 mt-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#E1E5EA] dark:border-[#2C3440] pb-2">
           <h2 className="text-xl font-bold text-[#2B3542] dark:text-[#FAF3F3]">
             Daftar Jalur Pendakian Terdaftar ({trails.length})
           </h2>
@@ -681,15 +726,15 @@ export default function ManageTrail() {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
-              <tr className="border-b border-[#E1E5EA] dark:border-[#2C3440] text-[#6B7C8C] dark:text-[#A7BBC7]">
-                <th className="py-3 px-3">Foto</th>
-                <th className="py-3 px-3">Nama Jalur</th>
-                <th className="py-3 px-3">Lokasi</th>
-                <th className="py-3 px-3">Kesulitan</th>
-                <th className="py-3 px-3">Status</th>
-                <th className="py-3 px-3">Jarak</th>
-                <th className="py-3 px-3">Elevasi</th>
-                <th className="py-3 px-3 text-right">{isAdmin ? 'Aksi Admin' : 'Status & Info'}</th>
+              <tr className="border-b border-[#E1E5EA] dark:border-[#2C3440] text-[#6B7C8C] dark:text-[#A7BBC7] text-[10px] uppercase">
+                <th className="py-2 px-2">Foto</th>
+                <th className="py-2 px-2">Nama Jalur</th>
+                <th className="py-2 px-2">Lokasi</th>
+                <th className="py-2 px-2">Kesulitan</th>
+                <th className="py-2 px-2">Status</th>
+                <th className="py-2 px-2">Jarak</th>
+                <th className="py-2 px-2">Elevasi</th>
+                <th className="py-2 px-2 text-right">{isAdmin ? 'Aksi Admin' : 'Status & Info'}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#E1E5EA] dark:divide-[#2C3440]">
@@ -698,82 +743,82 @@ export default function ManageTrail() {
 
                 return (
                   <tr key={tItem.id} className="hover:bg-[#FAF3F3] dark:hover:bg-[#252C36] transition">
-                    <td className="py-2.5 px-3">
+                    <td className="py-2 px-2">
                       <img
                         src={tItem.image || 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?q=80&w=1000&auto=format&fit=crop'}
                         alt={tItem.name}
-                        className="w-10 h-10 rounded-xl object-cover border border-[#E1E5EA]"
+                        className="w-8 h-8 rounded-lg object-cover border border-[#E1E5EA]"
                       />
                     </td>
-                    <td className="py-3 px-3 font-bold text-[#2B3542] dark:text-[#FAF3F3]">
+                    <td className="py-2 px-2 font-bold text-[#2B3542] dark:text-[#FAF3F3]">
                       <div className="flex flex-col">
                         <span>{tItem.name}</span>
                         {tItem.submittedBy && (
-                          <span className="text-[10px] text-[#A7BBC7] font-normal">
-                            Diajukan oleh: {tItem.submittedBy}
+                          <span className="text-[9px] text-[#A7BBC7] font-normal">
+                            Oleh: {tItem.submittedBy}
                           </span>
                         )}
                       </div>
                     </td>
-                    <td className="py-3 px-3 text-[#6B7C8C] dark:text-[#A7BBC7]">
+                    <td className="py-2 px-2 text-[#6B7C8C] dark:text-[#A7BBC7]">
                       {tItem.location}
                     </td>
-                    <td className="py-3 px-3">
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#E1E5EA] text-[#2B3542] dark:bg-[#252C36] dark:text-[#FAF3F3]">
+                    <td className="py-2 px-2">
+                      <span className="px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-[#E1E5EA] text-[#2B3542] dark:bg-[#252C36] dark:text-[#FAF3F3]">
                         {tItem.difficulty}
                       </span>
                     </td>
-                    <td className="py-3 px-3">
+                    <td className="py-2 px-2">
                       {isPending ? (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
-                          <Clock className="w-3 h-3" />
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
+                          <Clock className="w-2.5 h-2.5" />
                           <span>Pending</span>
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
-                          <ShieldCheck className="w-3 h-3" />
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+                          <ShieldCheck className="w-2.5 h-2.5" />
                           <span>Verified</span>
                         </span>
                       )}
                     </td>
-                    <td className="py-3 px-3 text-[#6B7C8C] dark:text-[#A7BBC7]">
+                    <td className="py-2 px-2 text-[#6B7C8C] dark:text-[#A7BBC7]">
                       {tItem.distance_km} km
                     </td>
-                    <td className="py-3 px-3 text-[#6B7C8C] dark:text-[#A7BBC7]">
-                      {tItem.elevation_m} mdpl
+                    <td className="py-2 px-2 text-[#6B7C8C] dark:text-[#A7BBC7]">
+                      {tItem.elevation_m} m
                     </td>
-                    <td className="py-3 px-3 text-right space-x-1">
+                    <td className="py-2 px-2 text-right space-x-1">
                       {isAdmin ? (
-                        <div className="inline-flex items-center gap-1.5">
+                        <div className="inline-flex items-center gap-1">
                           {/* Admin Approve Button for Pending Trails */}
                           {isPending && (
                             <button
                               onClick={() => handleApproveTrail(tItem.id)}
-                              className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] shadow-sm transition-all active:scale-95 flex items-center gap-1 cursor-pointer"
+                              className="px-2 py-1 rounded bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[10px] shadow-sm transition-all active:scale-95 flex items-center gap-1 cursor-pointer"
                               title="Setujui Jalur Ini"
                             >
-                              <Check className="w-3.5 h-3.5" />
+                              <Check className="w-3 h-3" />
                               <span>Setujui</span>
                             </button>
                           )}
                           <button
                             onClick={() => handleEditClick(tItem)}
-                            className="p-1.5 rounded-lg bg-[#E1E5EA] text-[#DA7F8F] dark:bg-[#252C36] hover:bg-[#A7BBC7]/30 cursor-pointer"
+                            className="p-1 rounded bg-[#E1E5EA] text-[#DA7F8F] dark:bg-[#252C36] hover:bg-[#A7BBC7]/30 cursor-pointer"
                             title="Edit Jalur"
                           >
-                            <Edit className="w-3.5 h-3.5" />
+                            <Edit className="w-3 h-3" />
                           </button>
                           <button
                             onClick={() => handleDeleteClick(tItem.id)}
-                            className="p-1.5 rounded-lg bg-[#E1E5EA] text-rose-600 dark:bg-[#252C36] dark:text-rose-400 hover:bg-rose-100 cursor-pointer"
+                            className="p-1 rounded bg-[#E1E5EA] text-rose-600 dark:bg-[#252C36] dark:text-rose-400 hover:bg-rose-100 cursor-pointer"
                             title="Hapus Jalur"
                           >
-                            <Trash2 className="w-3.5 h-3.5" />
+                            <Trash2 className="w-3 h-3" />
                           </button>
                         </div>
                       ) : (
-                        <span className="text-[11px] text-[#A7BBC7] italic">
-                          {isPending ? 'Menunggu Review Admin' : 'Terverifikasi'}
+                        <span className="text-[10px] text-[#A7BBC7] italic">
+                          {isPending ? 'Menunggu Admin' : 'Terverifikasi'}
                         </span>
                       )}
                     </td>
@@ -788,11 +833,143 @@ export default function ManageTrail() {
       {/* Modal Confirm Delete */}
       <ModalConfirm
         isOpen={deleteModalOpen}
-        onCancel={() => setDeleteModalOpen(false)}
         onConfirm={handleConfirmDelete}
+        onCancel={() => setDeleteModalOpen(false)}
+        title={t('modal.deleteTitle')}
+        message={t('modal.deleteMessage')}
       />
 
-      {/* Live Camera Modal */}
+      {/* ========================================================= */}
+      {/* MANAJEMEN MASTER DATA (WILAYAH & KESULITAN) - Admin Only */}
+      {/* ========================================================= */}
+      {isAdmin && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-12">
+          
+          {/* Master 1: Lokasi / Wilayah */}
+          <div className="bg-white/90 dark:bg-[#1C2129] border border-[#E1E5EA] dark:border-[#2C3440] rounded-3xl p-6 shadow-sm space-y-5">
+            <div className="flex items-center justify-between border-b border-[#E1E5EA] dark:border-[#2C3440] pb-3">
+              <h2 className="text-base font-bold text-[#2B3542] dark:text-[#FAF3F3] flex items-center gap-2">
+                <Settings className="w-4 h-4 text-[#DA7F8F]" />
+                <span>Master Data Wilayah / Lokasi ({locations?.length || 0})</span>
+              </h2>
+            </div>
+
+            {/* Add Location Form */}
+            <form onSubmit={handleAddLocation} className="flex gap-2">
+              <input
+                type="text"
+                value={newLocationName}
+                onChange={(e) => setNewLocationName(e.target.value)}
+                placeholder="Tambah nama wilayah (cth: Sumatera Barat)..."
+                className="flex-1 px-3.5 py-2 rounded-xl border border-[#E1E5EA] dark:border-[#2C3440] bg-[#FAF3F3] dark:bg-[#252C36] text-xs text-[#2B3542] dark:text-[#FAF3F3] focus:outline-none focus:ring-2 focus:ring-[#DA7F8F]/40"
+              />
+              <button
+                type="submit"
+                disabled={!newLocationName.trim()}
+                className="px-4 py-2 rounded-xl bg-[#DA7F8F] text-white hover:bg-[#c96c7d] text-xs font-bold transition shrink-0 cursor-pointer disabled:opacity-50"
+              >
+                Tambah
+              </button>
+            </form>
+
+            {/* List of Locations */}
+            <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
+              {(locations || []).map((loc) => {
+                const trailCount = trails.filter(
+                  (t) => t.locationId === loc.id || (t.location && t.location.includes(loc.name))
+                ).length;
+
+                return (
+                  <div
+                    key={loc.id}
+                    className="p-3 rounded-2xl bg-[#FAF3F3] dark:bg-[#252C36] border border-[#E1E5EA] dark:border-[#2C3440] flex items-center justify-between text-xs"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold">{loc.name}</span>
+                      <span className="text-[10px] text-[#6B7C8C] dark:text-[#A7BBC7] font-mono">
+                        ({trailCount} Jalur)
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => deleteLocation(loc.id)}
+                      className="p-1 text-rose-600 hover:bg-rose-100 rounded-lg transition cursor-pointer"
+                      title="Hapus Wilayah"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Master 2: Tingkat Kesulitan */}
+          <div className="bg-white/90 dark:bg-[#1C2129] border border-[#E1E5EA] dark:border-[#2C3440] rounded-3xl p-6 shadow-sm space-y-5">
+            <div className="flex items-center justify-between border-b border-[#E1E5EA] dark:border-[#2C3440] pb-3">
+              <h2 className="text-base font-bold text-[#2B3542] dark:text-[#FAF3F3] flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-[#DA7F8F]" />
+                <span>Master Tingkat Kesulitan ({(difficultyLevels || []).length})</span>
+              </h2>
+            </div>
+
+            {/* Add Difficulty Form */}
+            <form onSubmit={handleAddDifficultyLevel} className="space-y-3">
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={newDiffLabel}
+                  onChange={(e) => setNewDiffLabel(e.target.value)}
+                  placeholder="Mis: Sangat Ekstrem"
+                  className="flex-1 px-3 py-2 rounded-xl border border-[#E1E5EA] dark:border-[#2C3440] bg-[#FAF3F3] dark:bg-[#252C36] text-xs focus:outline-none"
+                />
+                <button
+                  type="submit"
+                  disabled={!newDiffLabel.trim()}
+                  className="px-4 py-2 rounded-xl bg-[#DA7F8F] text-white font-bold text-xs hover:bg-[#c96c7d] transition disabled:opacity-50 cursor-pointer"
+                >
+                  Tambah
+                </button>
+              </div>
+              <div className="flex items-center gap-2 text-xs">
+                <span className="text-[#6B7C8C] dark:text-[#A7BBC7] font-semibold">Warna Badge:</span>
+                {['emerald', 'amber', 'rose', 'purple', 'stone'].map(color => (
+                  <button
+                    key={color}
+                    type="button"
+                    onClick={() => setNewDiffBadgeColor(color)}
+                    className={`w-6 h-6 rounded-full border-2 cursor-pointer transition-all ${
+                      newDiffBadgeColor === color ? 'border-[#2B3542] dark:border-[#FAF3F3] scale-110' : 'border-transparent hover:scale-110'
+                    } bg-${color}-500`}
+                    aria-label={`Set color to ${color}`}
+                  />
+                ))}
+              </div>
+            </form>
+
+            {/* Difficulties List */}
+            <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2">
+              {(difficultyLevels || []).map((diff) => (
+                <div key={diff.id} className="flex items-center justify-between p-3 rounded-xl bg-[#FAF3F3] dark:bg-[#252C36] border border-[#E1E5EA] dark:border-[#2C3440]">
+                  <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold border ${diff.badgeClass}`}>
+                    {diff.label}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => deleteDifficultyLevel(diff.id)}
+                    className="p-1 text-rose-600 hover:bg-rose-100 rounded-lg transition cursor-pointer"
+                    title="Hapus Tingkat Kesulitan"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Camera Feature */}
       <CameraCaptureModal
         isOpen={isCameraOpen}
         onClose={() => setIsCameraOpen(false)}

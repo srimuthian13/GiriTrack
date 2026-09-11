@@ -1,5 +1,7 @@
 # GiriTrack
 
+- **Live Demo:** [https://giri-track.vercel.app/](https://giri-track.vercel.app/)
+- **Video Presentasi:** [Google Drive](https://drive.google.com/drive/folders/1T3O2BUQTbMgvneL_Nmb7pLLxXebY09Yn?usp=sharing)
 ## a. Nama dan Deskripsi Aplikasi
 **GiriTrack** adalah aplikasi web manajemen pendakian gunung dan kompetisi lari *trail*. Aplikasi ini dirancang untuk membantu para pendaki dan pelari alam (*trail runners*) menemukan rute pendakian populer, melihat jadwal kompetisi *trail run*, mencatat riwayat pendakian, dan berbagi *review* (ulasan) dengan komunitas. Dilengkapi dengan fitur khusus untuk Admin dalam mengelola (CRUD) master data jalur pendakian, kompetisi, dan tingkat kesulitan rute.
 

@@ -147,6 +147,8 @@ export default function Trails() {
     setCurrentPage(1);
   };
 
+  const validFavoritesCount = favorites.filter(id => trails.some(t => String(t.id) === id)).length;
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 space-y-4 pb-10 text-[#2B3542] dark:text-[#FAF3F3] transition-colors duration-300 ease-in-out">
       
@@ -191,7 +193,7 @@ export default function Trails() {
             <Heart className={`w-3.5 h-3.5 ${showOnlyFavorites ? 'fill-white' : 'text-[#DA7F8F]'}`} />
             <span>{showOnlyFavorites ? 'Favorit Saya' : 'Lihat Favorit'}</span>
             <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-black/10 dark:bg-white/10 font-mono">
-              {favorites.length}
+              {validFavoritesCount}
             </span>
           </button>
 

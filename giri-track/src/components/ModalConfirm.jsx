@@ -9,6 +9,7 @@ export default function ModalConfirm({
   subtitle,
   message,
   confirmText,
+  type = 'danger',
 }) {
   const { t } = useLanguage();
 
@@ -28,7 +29,11 @@ export default function ModalConfirm({
 
         {/* Modal Header */}
         <div className="flex items-center gap-3">
-          <div className="p-3 rounded-2xl bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-900 shrink-0">
+          <div className={`p-3 rounded-2xl border shrink-0 ${
+            type === 'warning' 
+              ? 'bg-amber-100 dark:bg-amber-950 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-900'
+              : 'bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-900'
+          }`}>
             <AlertTriangle className="w-6 h-6" />
           </div>
           <div>
@@ -36,7 +41,7 @@ export default function ModalConfirm({
               {title || t('modal.deleteTitle')}
             </h3>
             <p className="text-xs text-[#6B7C8C] dark:text-[#A7BBC7]">
-              {subtitle || t('modal.deleteWarning')}
+              {subtitle || (type === 'danger' ? t('modal.deleteWarning') : '')}
             </p>
           </div>
         </div>
@@ -57,9 +62,13 @@ export default function ModalConfirm({
           
           <button
             onClick={onConfirm}
-            className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-rose-600 text-white hover:bg-rose-700 font-bold text-xs transition duration-200 cursor-pointer shadow-md active:scale-95 text-center"
+            className={`w-full sm:w-auto px-4 py-2.5 rounded-xl font-bold text-white text-xs transition duration-200 cursor-pointer shadow-md active:scale-95 text-center ${
+              type === 'warning'
+                ? 'bg-amber-500 hover:bg-amber-600'
+                : 'bg-rose-600 hover:bg-rose-700'
+            }`}
           >
-            {confirmText || t('btn.confirmDelete')}
+            {confirmText || (type === 'danger' ? t('btn.confirmDelete') : 'Konfirmasi')}
           </button>
         </div>
 

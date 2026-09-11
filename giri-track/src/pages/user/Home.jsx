@@ -103,10 +103,10 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="-mt-6 space-y-12 pb-12 text-[#2B3542] dark:text-[#FAF3F3]">
+    <div className="space-y-12 pb-12 text-[#2B3542] dark:text-[#FAF3F3]">
       
       {/* 1. Immersive Full-Screen Edge-to-Edge Hero Banner */}
-      <section className="relative w-screen left-1/2 right-1/2 -mx-[50vw] h-[calc(100vh-64px)] flex flex-col justify-between overflow-hidden px-6 md:px-12 py-4 text-white shadow-2xl">
+      <section className="relative w-full h-[calc(100vh-64px)] flex flex-col justify-between overflow-hidden px-6 md:px-12 py-4 text-white shadow-2xl">
         {/* Background image & overlays */}
         {heroSlides.map((slide, index) => {
           const isActive = index === activeSlide;

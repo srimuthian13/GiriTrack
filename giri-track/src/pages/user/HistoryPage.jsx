@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { History, Trash2, MapPin, Trophy, ArrowLeft } from 'lucide-react';
+import { History, Trash2, Trophy, ArrowLeft, Eye } from 'lucide-react';
 import { useTrail } from '../../context/TrailContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
@@ -196,10 +196,10 @@ export default function HistoryPage() {
                       {/* View Route Map Button */}
                       <button
                         onClick={() => handleOpenMap(item)}
-                        className="px-3 py-1.5 rounded-xl bg-[#DA7F8F] text-white hover:bg-[#c96c7d] font-bold text-xs transition cursor-pointer shadow-sm inline-flex items-center gap-1"
+                        className="p-1.5 rounded-xl bg-[#DA7F8F] text-white hover:bg-[#c96c7d] cursor-pointer inline-flex items-center"
+                        title={t('btn.viewMap')}
                       >
-                        <MapPin className="w-3.5 h-3.5" />
-                        <span>{t('btn.viewMap')}</span>
+                        <Eye className="w-3.5 h-3.5" />
                       </button>
 
                       {/* Delete Button */}
