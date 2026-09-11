@@ -2,6 +2,12 @@
 
 - **Live Demo:** [https://giri-track.vercel.app/](https://giri-track.vercel.app/)
 - **Video Presentasi:** [Google Drive](https://drive.google.com/drive/folders/1T3O2BUQTbMgvneL_Nmb7pLLxXebY09Yn?usp=sharing)
+- **Portofolio :** [portofolio-sri-muthia.vercel.app](https://portofolio-sri-muthia.vercel.app/)
+
+# Akun Demo
+- **Username : ** admin@giritrack.com
+- **Password : ** admin123
+  
 ## a. Nama dan Deskripsi Aplikasi
 **GiriTrack** adalah aplikasi web manajemen pendakian gunung dan kompetisi lari *trail*. Aplikasi ini dirancang untuk membantu para pendaki dan pelari alam (*trail runners*) menemukan rute pendakian populer, melihat jadwal kompetisi *trail run*, mencatat riwayat pendakian, dan berbagi *review* (ulasan) dengan komunitas. Dilengkapi dengan fitur khusus untuk Admin dalam mengelola (CRUD) master data jalur pendakian, kompetisi, dan tingkat kesulitan rute.
 
@@ -23,7 +29,10 @@ Proyek ini dibangun secara modern tanpa *template*, menggunakan tumpukan teknolo
 - **State Management:** React Context API & React Hooks (`useState`, `useContext`, `useEffect`, `useMemo`)
 - **Package Manager:** `pnpm`
 - **Modern JavaScript:** Ekstensif menggunakan ES6 (let/const, Arrow Functions, Template Literals, Destructuring, Spread Operator, dan Rest Parameters).
+- **GPS :** Leaflet, React-Leaflet
+- **Icons :** Lucide React
 - **Simulasi Database:** Array Object statis dan manipulasi Context State (berlaku dinamis di *runtime*)
+- **Deployment :** Vercel
 
 ## d. Struktur Folder Proyek
 Proyek ini sepenuhnya berbasis *frontend* (tidak ada repositori *backend* terpisah).
