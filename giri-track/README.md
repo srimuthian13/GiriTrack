@@ -1,4 +1,4 @@
-<img width="1919" height="873" alt="Screenshot 2026-09-11 171958" src="https://github.com/user-attachments/assets/d4d67927-3228-4854-97c1-4153d5b07ccc" /># GiriTrack
+# GiriTrack
 
 - **Live Demo:** [https://giri-track.vercel.app/](https://giri-track.vercel.app/)
 - **Video Presentasi:** [Google Drive](https://drive.google.com/drive/folders/1T3O2BUQTbMgvneL_Nmb7pLLxXebY09Yn?usp=sharing)
